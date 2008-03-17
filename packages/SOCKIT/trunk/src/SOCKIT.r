@@ -1,0 +1,88 @@
+#include "XOPStandardHeaders.r"
+
+resource 'vers' (1) {						/* XOP version info */
+	0x01, 0x00, final, 0x00, 0,				/* version bytes and country integer */
+	"1.00",
+	"1.00, © 1993 WaveMetrics, Inc., all rights reserved."
+};
+
+resource 'vers' (2) {						/* Igor version info */
+	0x02, 0x00, release, 0x00, 0,			/* version bytes and country integer */
+	"2.00",
+	"(for Igor Pro 2.00 or later)"
+};
+
+resource 'STR#' (1100) {					/* custom error messages */
+	{
+		/* [1] */
+		"iPeek requires Igor Pro 5.04 or later.",
+		/* [2] */
+		"iPeek XOP was called to execute an unknown function.",
+		/* [3] */
+		"Input string is non-existent.",
+        /* [4] */
+        "Unable to resolve host.",
+        /* [5] */
+        "Unable to allocate socket.",
+        /* [6] */
+        "Unable to connect to server.",
+        /* [7] */
+        "Unable to send data to server.",
+		/* [8] */
+		"Wave in use.",
+		/* [9] */
+		"Socket not connected to anything.",
+		/* [10] */
+		"Processor function not compiled, or not available.",
+	}
+};
+
+/* no menu item */
+
+resource 'XOPI' (1100) {
+	XOP_VERSION,							// XOP protocol version.
+	DEV_SYS_CODE,							// Development system information.
+	0,										// Obsolete - set to zero.
+	0,										// Obsolete - set to zero.
+	XOP_TOOLKIT_VERSION,					// XOP Toolkit version.
+};
+
+resource 'XOPF' (1100) {
+	{
+		"SOCKITsendMsg",							/* function name */
+		F_IO | F_EXTERNAL,					/* function category (string) */
+		NT_FP64,						/* return value type */			
+		{
+			NT_FP64,						/* socket number */
+			HSTRING_TYPE,					/* message */
+		},
+		
+		"SOCKITopenConnection",
+		F_IO | F_EXTERNAL,
+		NT_FP64,
+		{
+		HSTRING_TYPE,
+		NT_FP64,
+		WAVE_TYPE,
+		HSTRING_TYPE,
+		HSTRING_TYPE,
+		NT_FP64,
+		},
+
+		"SOCKITcloseConnection",
+		F_IO | F_EXTERNAL,
+		NT_FP64,
+		{
+		NT_FP64,
+//		HSTRING_TYPE,
+		},
+		"SOCKITregisterProcessor",							/* function name */
+		F_IO | F_EXTERNAL,					/* function category (string) */
+		NT_FP64,						/* return value type */			
+		{
+			NT_FP64,						/* socket number */
+			HSTRING_TYPE,					/* processor */
+		},
+
+	}
+};
