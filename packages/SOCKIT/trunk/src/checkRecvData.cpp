@@ -105,7 +105,7 @@ int outputBufferDataToWave(long sockNum, waveHndl wavH, const char *buf, const c
 			snprintf(pointsToDeleteStr,sizeof(pointsToDeleteStr),"%d,",pointsToDelete);
 			strlcat(cmd,pointsToDeleteStr,sizeof(cmd));
 			strlcat(cmd,pathName,sizeof(cmd));
-			if(err = XOPCommand2(cmd,0,1))
+			if(err = XOPCommand2(cmd,0,0))
 				goto done;
 		}
 		
