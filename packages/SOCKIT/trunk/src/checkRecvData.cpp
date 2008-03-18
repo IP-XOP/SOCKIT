@@ -5,6 +5,7 @@
 
 using namespace std;
 
+
 /**
 •make/t poo
 •variable sock = csockitopenconnection("www.wavemetrics.com",80,poo,"","",1)
@@ -13,16 +14,26 @@ using namespace std;
 
 int GetHourMinuteSecond(long* h, long* m, long* s)
 {
+#ifdef _MACINTOSH_
 	DateTimeRec date;
 	
 	GetTime(&date);
 	*h = date.hour;
 	*m = date.minute;
 	*s = date.second;
+#endif
+#ifdef _WINDOWS_
+	SYSTEMTIME st;
+	
+	GetLocalTime(&st);
+	*h = st.wHour;
+	*m = st.wMinute;
+	*s = st.wSecond;
+#endif
 	return 0;
 }
 
-int outputBufferDataToWave(long sockNum, waveHndl wavH, const char *buf, const char *tokenizer){
+int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, Handle writebuffer, const char *tokenizer){
 	int err = 0;
 	
 	extern currentConnections openConnections;
@@ -33,7 +44,7 @@ int outputBufferDataToWave(long sockNum, waveHndl wavH, const char *buf, const c
 	
 	Handle textH = NULL;
 	vector<string> tokens;
-	long ii = 0;
+	SOCKET ii = 0;
 	
 	DataFolderHandle dfH;
 	char pathName[MAXCMDLEN+1];
@@ -41,19 +52,29 @@ int outputBufferDataToWave(long sockNum, waveHndl wavH, const char *buf, const c
 	char cmd[MAXCMDLEN+1];
 	char pointsToDeleteStr[MAXCMDLEN+1];
 	long pointsToDelete = 0;
-	
+
+	char *buf = NULL;
+
 	long hour,min,sec;
 	char timebuf[10];
 	
 	SOCKITcallProcessorStruct callProcessor;
 	double result;
 	
-	textH = NewHandle(strlen(buf)-1); 
+	textH = NewHandle(10); 
 	if (textH == NULL) {
 		err = NOMEM; 
 		goto done;
 	}
 	
+	buf = (char*)malloc(sizeof(char)*GetHandleSize(writebuffer)+1);
+	if(buf == NULL){
+		err = NOMEM;
+		goto done;
+	}
+	if(err = GetCStringFromHandle(writebuffer,buf,sizeof(char)*GetHandleSize(writebuffer)))
+		goto done;
+
 	Tokenize(buf, tokens, tokenizer);
 	
 	for(ii=0 ; ii< tokens.size(); ii++){
@@ -122,25 +143,32 @@ int outputBufferDataToWave(long sockNum, waveHndl wavH, const char *buf, const c
 done:
 		if(textH!=NULL)
 			DisposeHandle(textH);
-	
+		if(buf != NULL)
+			free(buf);
 	return err;
 }
 
 int checkRecvData(){
 	int err = 0;
 	extern currentConnections openConnections;
-	int maxSockNum = openConnections.maxSockNumber;
+	
+	#ifdef _WINDOWS_
+	extern WSADATA globalWsaData;
+	#endif
+	
+	SOCKET maxSockNum = openConnections.maxSockNumber;
 	
 	char buf[BUFLEN+1];
-	char *writebuffer = NULL;
+	Handle writebuffer = NULL;
+
 	int iters =0;
 	long charsread = 0;
-	char ending = '\0';
+	char *ending = "\0";
 	
 	char report[MAX_MSG_LEN+1];
 	int rc = -1, res = 0;
-	int ii;
-	char* output;
+	SOCKET ii;
+	char* output = NULL;
 	fd_set tempset;
 	FD_ZERO(&tempset);
 	
@@ -148,27 +176,28 @@ int checkRecvData(){
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
 	
-	writebuffer = (char*)malloc(1);
-	if(writebuffer == NULL){
-		err = NOMEM;
-		goto done;
-	}
-	
-	memset(writebuffer,0,1);
-	
 	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
 	res = select(maxSockNum+1,&tempset,0,0,&timeout);
-	
+
 	for (ii=0; ii<maxSockNum+1; ii++) { 
+		writebuffer = NewHandle(0);
+		if(writebuffer == NULL){
+			err = NOMEM;
+			goto done;
+		}
+		iters = 0;
+		charsread = 0;
+
 		if (FD_ISSET(ii, &tempset)) {
 			while(FD_ISSET(ii, &tempset)){
 				iters += 1;
-				writebuffer = (char*)realloc(writebuffer,BUFLEN*iters);
-				if(writebuffer == NULL){
-					err = NOMEM;
-					goto done;
-				}
-				rc = read(ii, buf, BUFLEN); 
+
+#ifdef _MACINTOSH_
+				rc = read(ii, buf, BUFLEN);
+#endif
+#ifdef _WINDOWS_
+				rc = recv(ii, buf, BUFLEN,0);
+#endif
 				charsread += rc;
 				
 				if (rc < 0) { 
@@ -178,39 +207,46 @@ int checkRecvData(){
 					SOCKITcloseWorker(ii);
 					break;
 				} else if(rc > 0){
-					
+					if(err = PtrAndHand(buf,writebuffer,rc))
+						goto done;	
 				} else if (rc == 0)
 					break;
 	//			timeout.tv_sec = 10.0;
 
 				memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
 				res = select(maxSockNum+1,&tempset,0,0,&timeout);
-				strlcat(writebuffer,buf,BUFLEN);
 			}
-			if(charsread){
-				*(writebuffer+charsread) = ending;
+			if(charsread>0){
+				if(err = PtrAndHand(ending,writebuffer,rc))
+					goto done;
 				if(openConnections.bufferWaves[ii].toPrint == true){
 					snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", ii);
 					XOPNotice(report);
 					output = NtoCR(writebuffer, "\n","\r");
 					XOPNotice(output);
+					if(output){
+						free(output);
+						output = NULL;
+					}
 				}
 				if(err = outputBufferDataToWave(ii, openConnections.bufferWaves[ii].bufferWave, writebuffer, openConnections.bufferWaves[ii].tokenizer))
 					goto done;
-					
-				charsread = 0;
-
 			}
+
 	//		timeout.tv_sec = 0.;
+		}
+		if(writebuffer){
+			DisposeHandle(writebuffer);
+			writebuffer = NULL;	
 		}
 	}
 	
 done:
-		FD_ZERO(&tempset);
+	FD_ZERO(&tempset);
 	if(output!= NULL)
 		free(output);
-	if(writebuffer)
-		free(writebuffer);
+	if(writebuffer != NULL)
+		DisposeHandle(writebuffer);
 	
 	return err;
 }

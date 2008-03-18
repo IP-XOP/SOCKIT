@@ -2,22 +2,41 @@
 
 /* Include the necessary networking gubbins */
 #include <stdio.h>
+
+
+#ifdef _MACINTOSH_
+#include <netdb.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <sys/time.h>
+#define SOCKET int
+#endif
+
+#ifdef _WINDOWS_
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <Iphlpapi.h>
+#include <conio.h>
+#include <time.h>
+#define snprintf _snprintf
+#define close closesocket
+#define read recv
+#endif
+
+#include <errno.h>
 #include <map>
 #include <algorithm>
 #include <vector>
 #include <string.h>
+
+
 using namespace std;
 
 #define REQUIRES_IGOR_200 1 + FIRST_XOP_ERR
-#define UNKNOWN_XFUNC 2 + FIRST_XOP_ERR
+#define NO_WINSOCK 2 + FIRST_XOP_ERR
 #define NO_INPUT_STRING 3 + FIRST_XOP_ERR
 #define BAD_HOST_RESOLV 4 + FIRST_XOP_ERR
 #define SOCKET_ALLOC_FAILED 5 + FIRST_XOP_ERR
@@ -44,8 +63,8 @@ typedef struct waveBufferInfoStruct {
 /* A structure to hold all the socket IO information */
 typedef struct currentConnections {
 	fd_set readSet;
-	int maxSockNumber;
-	std::map<int,waveBufferInfoStruct> bufferWaves;	//socket descriptor, wave buffer, containing the recv messages.
+	SOCKET maxSockNumber;
+	std::map<SOCKET,waveBufferInfoStruct> bufferWaves;	//socket descriptor, wave buffer, containing the recv messages.
 	
 }currentConnections, *currentConnectionsPtr;
 
@@ -87,11 +106,11 @@ typedef struct SOCKITcallProcessorStruct {
 
 /* in SOCKITcloseConnection */
 void resetMaxSocketNumber();
-int SOCKITcloseWorker(int socketToClose);
+int SOCKITcloseWorker(SOCKET socketToClose);
 int checkIfWaveInUseAsBuf(waveHndl wav);
 
 /*in NtoCR.cpp */
-char* NtoCR(char*,  char*,char*);
+char* NtoCR(Handle,  char*, char*);
 
 /*in SOCKITsendMsg.cpp*/
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
@@ -109,8 +128,8 @@ void Tokenize(const char *str, vector<string>& tokens,  const char* delimiters);
 
 /* in SOCKITprocessor.cpp */
 int checkProcessor(const char *processor, FunctionInfo *fip);
-int registerProcessor(long sockNum, const char *processor);
-int deRegisterProcessor(long sockNum);
+int registerProcessor(SOCKET sockNum, const char *processor);
+int deRegisterProcessor(SOCKET sockNum);
 
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITprocessorStruct {
@@ -122,3 +141,7 @@ typedef struct SOCKITprocessorStruct {
 
 int SOCKITregisterProcessor(SOCKITprocessorStruct*);
 
+#ifdef _WINDOWS_
+size_t strlcpy(char *d, const char *s, size_t bufsize);
+size_t strlcat(char *d, const char *s, size_t bufsize);
+#endif

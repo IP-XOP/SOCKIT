@@ -5,9 +5,13 @@ SOCKITsendMsg(SOCKITsendMsgStruct *p){
 	int err = 0;
 	
 	extern currentConnections openConnections;
+	
+	#ifdef _WINDOWS_
+	extern WSADATA globalWsaData;
+	#endif
 
     int rc = 0, ii=0;
-    int socketToWrite = -1;
+    SOCKET socketToWrite = -1;
 	int res = 0;
 	
 	char buf[BUFLEN+1];
@@ -15,7 +19,7 @@ SOCKITsendMsg(SOCKITsendMsgStruct *p){
 	char report[MAX_MSG_LEN+1];
 	char *output = NULL;			//get rid of the carriage returns
 
-	int maxSockNum = openConnections.maxSockNumber;
+	SOCKET maxSockNum = openConnections.maxSockNumber;
 	
 	fd_set tempset;
 	FD_ZERO(&tempset);
@@ -63,10 +67,11 @@ SOCKITsendMsg(SOCKITsendMsgStruct *p){
 	if(FD_ISSET(socketToWrite,&tempset)){
 		rc = send(socketToWrite,buf,sizeof(buf),0);
 		if(rc >= 0){
-			output = NtoCR(buf, "\n","\r");
+//			output = NtoCR((const char*)buf, "\n","\r");
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", socketToWrite);
 			XOPNotice(report);
-			XOPNotice(output);
+			snprintf(buf,sizeof(buf),"%s\r",buf);
+			XOPNotice(buf);
 			p->retval = 0;
 			goto done;
 		} else if (rc < 0) {

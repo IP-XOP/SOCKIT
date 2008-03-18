@@ -5,16 +5,19 @@ SOCKITopenConnection(SOCKITopenConnectionStruct *p){
 	int err = 0;
 	
 	extern currentConnections openConnections;
-
-    int rc;
-    int sockNum = -1;
+	#ifdef _WINDOWS_
+	extern WSADATA globalWsaData;
+	#endif
+	
+	int rc;
+    SOCKET sockNum = -1;
     long port; 
 	int res = 0;
 	
 	char host[MAX_URL_LEN+1];
 	char report[MAX_MSG_LEN+1];
 	char processor[MAX_OBJ_NAME+1];
-	int maxSockNum = openConnections.maxSockNumber;
+	SOCKET maxSockNum = openConnections.maxSockNumber;
 	
 	fd_set tempset;
 	FD_ZERO(&tempset);
@@ -22,13 +25,14 @@ SOCKITopenConnection(SOCKITopenConnectionStruct *p){
 	struct timeval timeout;
 	timeout.tv_sec = 10;
 	timeout.tv_usec = 0;
-	
+
 	struct sockaddr_in  sa;
+
     struct hostent*     hen;
     struct waveBufferInfoStruct bufferInfoStruct;
 	
 	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
-	 
+
     /* From XOP programming guide p337 */
     /*GetCStringFromHandle(p->host, host, sizeof(host)-1);*/
     /* Address resolution */
@@ -52,6 +56,20 @@ SOCKITopenConnection(SOCKITopenConnectionStruct *p){
 	} else {
 		if(err = GetCStringFromHandle(p->IPaddress, host, sizeof(host)))
 			goto done;
+/**
+#ifdef _WINDOWS_
+    if (isalpha(host[0])) {        
+         hen = gethostbyname(host);
+    } else {
+        sa.s_addr = inet_addr(host);
+        if (sa.s_addr == INADDR_NONE) {
+           err = BAD_HOST_RESOLV;
+           goto done;
+        } else
+            hen = gethostbyaddr((char *) &sa, 4, AF_INET);
+    }
+#endif
+**/
 		hen = gethostbyname(host);
 		if (!hen){
 			err = BAD_HOST_RESOLV;
@@ -87,7 +105,6 @@ SOCKITopenConnection(SOCKITopenConnectionStruct *p){
 	}
     
 	/* Connect to server */
-	/* in non-blocking mode*/
 		
     rc = connect(sockNum, (struct sockaddr *)&sa, sizeof(sa));
 	res = select(maxSockNum+1,0,&tempset,0,&timeout);
@@ -130,8 +147,6 @@ SOCKITopenConnection(SOCKITopenConnectionStruct *p){
 			goto done;
 		}
 	}
-	
-
 	
 		
 done:

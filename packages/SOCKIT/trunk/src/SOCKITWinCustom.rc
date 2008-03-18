@@ -1,0 +1,89 @@
+/*
+easyHttp.c -- An XOP for curvefitting via Differential Evolution.
+@copyright: Andrew Nelson and the Australian Nuclear Science and Technology Organisation 2007.
+*/
+
+
+#include "XOPResources.h"			// Defines XOP-specific symbols.
+
+1100 STR#							// Custom error messages.
+BEGIN
+/* [1] */
+		"iPeek requires Igor Pro 5.04 or later.\0",
+		/* [2] */
+		"No winsock lib available.\0",
+		/* [3] */
+		"Input string is non-existent.\0",
+        /* [4] */
+        "Unable to resolve host.\0",
+        /* [5] */
+        "Unable to allocate socket.\0",
+        /* [6] */
+        "Unable to connect to server.\0",
+        /* [7] */
+        "Unable to send data to server.\0",
+		/* [8] */
+		"Wave in use.\0",
+		/* [9] */
+		"Socket not connected to anything.\0",
+		/* [10] */
+		"Processor function not compiled, or not available.\0",    
+	// You can add error messages here.
+
+	0,								// NOTE: 0 required to terminate the resource.
+END
+
+1101 STR#							// Misc strings that Igor looks for.
+BEGIN
+	"-1\0",							// -1 means we don't want to add a menu item via STR# 1101. We add it via the XMI1 reource.
+	"---\0",						// IGOR ignores item 2 because item 1 is -1.
+	"SOCKIT Help\0",			// Name of XOP's help file.
+	"\0"							// NOTE: NULL required to terminate the resource.
+END
+
+1100 XOPI							// XOPI - Describes general XOP properties to IGOR. 
+BEGIN
+	XOP_VERSION,					// Version number of host XOP system.
+	DEV_SYS_CODE,					// Code for development system used to make XOP
+	0,								// True if XOP requires hierarchical menus
+	0,								// True if XOP requires math coprocessor
+	0								// True if XOP requires MMU
+END
+
+
+1100 XOPF							// Describes functions added by XOP to IGOR.
+BEGIN			
+		"SOCKITsendMsg\0",							/* function name */
+		F_IO | F_EXTERNAL,					/* function category (string) */
+		NT_FP64,						/* return value type */			
+			NT_FP64,						/* socket number */
+			HSTRING_TYPE,					/* message */
+			0,
+		
+		"SOCKITopenConnection\0",
+		F_IO | F_EXTERNAL,
+		NT_FP64,
+		HSTRING_TYPE,
+		NT_FP64,
+		WAVE_TYPE,
+		HSTRING_TYPE,
+		HSTRING_TYPE,
+		NT_FP64,
+		0,
+
+		"SOCKITcloseConnection\0",
+		F_IO | F_EXTERNAL,
+		NT_FP64,
+		NT_FP64,
+		0,
+//		HSTRING_TYPE,
+
+		"SOCKITregisterProcessor\0",							/* function name */
+		F_IO | F_EXTERNAL,					/* function category (string) */
+		NT_FP64,						/* return value type */			
+			NT_FP64,						/* socket number */
+			HSTRING_TYPE,					/* processor */
+			0,
+
+0,
+END

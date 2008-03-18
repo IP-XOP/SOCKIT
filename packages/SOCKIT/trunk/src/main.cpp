@@ -15,18 +15,9 @@ currentConnections openConnections;
 HOST_IMPORT int main(IORecHandle ioRecHandle);
 #endif	
 #ifdef _WINDOWS_
+WSADATA globalWsaData;
 HOST_IMPORT void main(IORecHandle ioRecHandle);
 #endif
-
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
-struct PeekDataParams  {
-    /* Handle instrument;
-    uint port;
-    Handle host;*/
-    Handle result; 
-};
-typedef struct PeekDataParams PeekDataParams;
-#include "XOPStructureAlignmentReset.h"
 
 
 static int XOPIdle(){
@@ -35,7 +26,24 @@ static int XOPIdle(){
 //XOPNotice("Idling\r");
 //check if any have closed, check if there are messages to receive.
 	int err = 0;
+	unsigned long ticks = 0;							// Current tick count.
+	static unsigned long lastTicks = 0;				// Ticks last time XOP idled.
+/**		
+	#ifdef _MACINTOSH_
+		ticks = TickCount();						// Find current ticks.
+		if (ticks < lastTicks+60)					// Update every second.
+			return err ;
+	#endif
+	
+	#ifdef _WINDOWS_
+		ticks = GetTickCount();						// Find current ticks.
+		if (ticks < lastTicks+1000)					// Update every second.
+			return err;
+	#endif
+**/	
 	err = checkRecvData();
+	lastTicks = ticks;
+
 
 	return err;
 }
@@ -97,6 +105,9 @@ XOPEntry(void)
 			}
 			FD_ZERO((&openConnections.readSet));
 			openConnections.maxSockNumber = 0;
+#ifdef _WINDOWS_
+			WSACleanup( );
+#endif
 			break;
 		case OBJINUSE:
 			//if we're going to tell it to write to buffer, then you can't get rid of the buffer.
@@ -122,12 +133,29 @@ XOPEntry(void)
 	ioRecHandle to the address to be called for future messages.
 */
 
-HOST_IMPORT int
-main(IORecHandle ioRecHandle)
+#ifdef _WINDOWS_
+HOST_IMPORT void main(IORecHandle ioRecHandle)
+#endif
+#ifdef _MACINTOSH_
+HOST_IMPORT int main(IORecHandle ioRecHandle)
+#endif
 {	
 	XOPInit(ioRecHandle);							/* do standard XOP initialization */
 	SetXOPEntry(XOPEntry);							/* set entry point for future calls */
 	SetXOPType((long)(RESIDENT | IDLES));			// Specify XOP to stick around and to receive IDLE messages.
+
+#ifdef _WINDOWS_
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	extern WSADATA globalWsaData;
+#endif
+
+	#ifdef _WINDOWS_
+	if(WSAStartup(MAKEWORD(2, 2), &wsaData)){
+		WSACleanup( );				
+		SetXOPResult(NO_WINSOCK);   
+	}
+	#endif
 
 	if (igorVersion < 200)
 		SetXOPResult(REQUIRES_IGOR_200);
