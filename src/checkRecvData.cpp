@@ -199,8 +199,7 @@ int checkRecvData(){
 					goto done;
 					
 				charsread = 0;
-				snprintf(report,sizeof(report),"iters %d \r", iters);
-					XOPNotice(report);
+
 			}
 	//		timeout.tv_sec = 0.;
 		}
