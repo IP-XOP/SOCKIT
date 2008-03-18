@@ -5,6 +5,12 @@
 
 using namespace std;
 
+/**
+•make/t poo
+•variable sock = csockitopenconnection("www.wavemetrics.com",80,poo,"","",1)
+•sockitsendmsg(sock,"GET / \r\n")
+**/
+
 int GetHourMinuteSecond(long* h, long* m, long* s)
 {
 	DateTimeRec date;
@@ -20,7 +26,7 @@ int outputBufferDataToWave(long sockNum, waveHndl wavH, const char *buf, const c
 	int err = 0;
 	
 	extern currentConnections openConnections;
-
+	
 	long numDimensions = 2; 
 	long dimensionSizes[MAX_DIMENSIONS+1]; 
 	long indices[MAX_DIMENSIONS];
@@ -110,12 +116,12 @@ int outputBufferDataToWave(long sockNum, waveHndl wavH, const char *buf, const c
 			if(err = CallFunction(openConnections.bufferWaves[sockNum].processorfip,&callProcessor,&result))
 				goto done;
 		}
-
+		
 		//WaveHandleModified(wavH);
 	}
-		   done:
-	if(textH!=NULL)
-		DisposeHandle(textH);
+done:
+		if(textH!=NULL)
+			DisposeHandle(textH);
 	
 	return err;
 }
@@ -126,6 +132,11 @@ int checkRecvData(){
 	int maxSockNum = openConnections.maxSockNumber;
 	
 	char buf[BUFLEN+1];
+	char *writebuffer = NULL;
+	int iters =0;
+	long charsread = 0;
+	char ending = '\0';
+	
 	char report[MAX_MSG_LEN+1];
 	int rc = -1, res = 0;
 	int ii;
@@ -137,16 +148,29 @@ int checkRecvData(){
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
 	
-	memset(buf,0,BUFLEN+1);
+	writebuffer = (char*)malloc(1);
+	if(writebuffer == NULL){
+		err = NOMEM;
+		goto done;
+	}
+	
+	memset(writebuffer,0,1);
 	
 	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
-	
 	res = select(maxSockNum+1,&tempset,0,0,&timeout);
 	
 	for (ii=0; ii<maxSockNum+1; ii++) { 
-		if (FD_ISSET(ii, &tempset)) { 
-			while(1){
+		if (FD_ISSET(ii, &tempset)) {
+			while(FD_ISSET(ii, &tempset)){
+				iters += 1;
+				writebuffer = (char*)realloc(writebuffer,BUFLEN*iters);
+				if(writebuffer == NULL){
+					err = NOMEM;
+					goto done;
+				}
 				rc = read(ii, buf, BUFLEN); 
+				charsread += rc;
+				
 				if (rc < 0) { 
 					snprintf(report,sizeof(report),"SOCKIT err: problem reading socket descriptor %d, disconnection???\r", ii );
 					XOPNotice(report);
@@ -154,24 +178,40 @@ int checkRecvData(){
 					SOCKITcloseWorker(ii);
 					break;
 				} else if(rc > 0){
-					if(openConnections.bufferWaves[ii].toPrint == true){
-						snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", ii);
-						XOPNotice(report);
-						output = NtoCR(buf, "\n","\r");
-						XOPNotice(output);
-					}
-					if(err = outputBufferDataToWave(ii, openConnections.bufferWaves[ii].bufferWave, buf, openConnections.bufferWaves[ii].tokenizer))
-						goto done;
+					
 				} else if (rc == 0)
 					break;
+	//			timeout.tv_sec = 10.0;
+
+				memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
+				res = select(maxSockNum+1,&tempset,0,0,&timeout);
+				strlcat(writebuffer,buf,BUFLEN);
 			}
+			if(charsread){
+				*(writebuffer+charsread) = ending;
+				if(openConnections.bufferWaves[ii].toPrint == true){
+					snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", ii);
+					XOPNotice(report);
+					output = NtoCR(writebuffer, "\n","\r");
+					XOPNotice(output);
+				}
+				if(err = outputBufferDataToWave(ii, openConnections.bufferWaves[ii].bufferWave, writebuffer, openConnections.bufferWaves[ii].tokenizer))
+					goto done;
+					
+				charsread = 0;
+				snprintf(report,sizeof(report),"iters %d \r", iters);
+					XOPNotice(report);
+			}
+	//		timeout.tv_sec = 0.;
 		}
 	}
-  	
+	
 done:
 		FD_ZERO(&tempset);
 	if(output!= NULL)
 		free(output);
+	if(writebuffer)
+		free(writebuffer);
 	
 	return err;
 }

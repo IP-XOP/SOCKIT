@@ -7,9 +7,9 @@ resource 'vers' (1) {						/* XOP version info */
 };
 
 resource 'vers' (2) {						/* Igor version info */
-	0x02, 0x00, release, 0x00, 0,			/* version bytes and country integer */
-	"2.00",
-	"(for Igor Pro 2.00 or later)"
+	0x05, 0x00, release, 0x00, 0,			/* version bytes and country integer */
+	"5.00",
+	"(for Igor Pro 5.00 or later)"
 };
 
 resource 'STR#' (1100) {					/* custom error messages */
@@ -45,6 +45,14 @@ resource 'XOPI' (1100) {
 	0,										// Obsolete - set to zero.
 	0,										// Obsolete - set to zero.
 	XOP_TOOLKIT_VERSION,					// XOP Toolkit version.
+};
+
+resource 'STR#' (1101) {					// Misc strings for XOP.
+	{
+		"-1",								// This item is no longer supported by the Carbon XOP Toolkit.
+		"No Menu Item",						// This item is no longer supported by the Carbon XOP Toolkit.
+		"SOCKIT Help",					// Name of XOP's help file.
+	}
 };
 
 resource 'XOPF' (1100) {
