@@ -33,7 +33,7 @@ int checkIfWaveInUseAsBuf(waveHndl wav){
 	return inUse;
 }
 
-int SOCKITcloseWorker(int socketToClose){
+int SOCKITcloseWorker(SOCKET socketToClose){
 	int err = 0;
 
 	extern currentConnections openConnections;
@@ -63,10 +63,10 @@ return err;
 int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 	int err = 0;
 	
-	int socketToClose = 0;
+	SOCKET socketToClose = 0;
 	
 	extern currentConnections openConnections;
-	int ii;
+	SOCKET ii;
  	
 	if(!p->socketToClose){
 		err = OH_EXPECTED_NUMBER;

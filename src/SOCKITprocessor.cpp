@@ -1,6 +1,6 @@
 #include "SOCKIT.h"
 
-int registerProcessor(long sockNum, const char *processor){
+int registerProcessor(SOCKET sockNum, const char *processor){
 	int err=0;
 	
 	extern currentConnections openConnections;
@@ -31,7 +31,7 @@ done:
 		return err;
 }
 
-int deRegisterProcessor(long sockNum){
+int deRegisterProcessor(SOCKET sockNum){
 	int err=0;
 	extern currentConnections openConnections;
 	
