@@ -80,7 +80,7 @@ SOCKITopenConnection(SOCKITopenConnectionStruct *p){
         XOPNotice("SOCKITmsg: Failed to create new socket\r");
         goto done;
     }
-	
+
 	FD_SET(sockNum,&tempset);
 	if(sockNum > openConnections.maxSockNumber){
 		maxSockNum = sockNum;
