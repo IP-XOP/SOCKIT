@@ -10,7 +10,7 @@ SOCKITsendMsg(SOCKITsendMsgStruct *p){
 	extern WSADATA globalWsaData;
 	#endif
 
-    int rc = 0, ii=0;
+    int rc = 0;
     SOCKET socketToWrite = -1;
 	int res = 0;
 	
@@ -65,20 +65,20 @@ SOCKITsendMsg(SOCKITsendMsgStruct *p){
 		p->retval = -1;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
-		rc = send(socketToWrite,buf,sizeof(buf),0);
+		rc = send(socketToWrite,buf,strlen(buf),0);
 		if(rc >= 0){
 //			output = NtoCR((const char*)buf, "\n","\r");
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", socketToWrite);
 			XOPNotice(report);
-			snprintf(buf,sizeof(buf),"%s\r",buf);
+			snprintf(report,sizeof(report),"%s\r",buf);
 			XOPNotice(buf);
 			p->retval = 0;
 			goto done;
 		} else if (rc < 0) {
-			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", ii );
+			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", socketToWrite );
 			XOPNotice(report);
 			// Closed connection or error 
-			SOCKITcloseWorker(ii);
+			SOCKITcloseWorker(socketToWrite);
 			p->retval = -1;
 		}
 	} else {

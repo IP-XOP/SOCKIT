@@ -34,6 +34,8 @@ resource 'STR#' (1100) {					/* custom error messages */
 		"Socket not connected to anything.",
 		/* [10] */
 		"Processor function not compiled, or not available.",
+		/* [11] */
+		"Problem writing to file.",
 	}
 };
 
@@ -90,6 +92,15 @@ resource 'XOPF' (1100) {
 		{
 			NT_FP64,						/* socket number */
 			HSTRING_TYPE,					/* processor */
+		},
+		"SOCKITsendnrecv",							/* function name */
+		F_IO | F_EXTERNAL,					/* function category (string) */
+		NT_FP64,						/* return value type */			
+		{
+			NT_FP64,						/* socket number */
+			HSTRING_TYPE,					/* message */
+			NT_FP64,						/*timeout*/
+			HSTRING_TYPE,					/*filename*/
 		},
 
 	}

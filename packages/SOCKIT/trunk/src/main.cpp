@@ -71,6 +71,8 @@ RegisterFunction()
 			break;
 		case 3:
 			return((long)SOCKITregisterProcessor);
+		case 4:
+			return((long)SOCKITsendnrecv);
 			break;
 	}
 	return(NIL);

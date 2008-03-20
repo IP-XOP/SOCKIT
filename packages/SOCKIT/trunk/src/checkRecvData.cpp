@@ -175,7 +175,7 @@ int checkRecvData(){
 	struct timeval timeout;
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
-	
+
 	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
 	res = select(maxSockNum+1,&tempset,0,0,&timeout);
 
@@ -193,7 +193,7 @@ int checkRecvData(){
 				iters += 1;
 
 #ifdef _MACINTOSH_
-				rc = read(ii, buf, BUFLEN);
+				rc = recv(ii, buf, BUFLEN,0);
 #endif
 #ifdef _WINDOWS_
 				rc = recv(ii, buf, BUFLEN,0);
@@ -211,7 +211,7 @@ int checkRecvData(){
 						goto done;	
 				} else if (rc == 0)
 					break;
-	//			timeout.tv_sec = 10.0;
+				timeout.tv_sec = 3;
 
 				memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
 				res = select(maxSockNum+1,&tempset,0,0,&timeout);
@@ -233,7 +233,7 @@ int checkRecvData(){
 					goto done;
 			}
 
-	//		timeout.tv_sec = 0.;
+			timeout.tv_sec = 0.;
 		}
 		if(writebuffer){
 			DisposeHandle(writebuffer);
