@@ -45,6 +45,7 @@ using namespace std;
 #define WAVE_IN_USE 8 +FIRST_XOP_ERR
 #define SOCKET_NOT_CONNECTED 9 + FIRST_XOP_ERR
 #define PROCESSOR_NOT_AVAILABLE 10 + FIRST_XOP_ERR
+#define PROBLEM_WRITING_TO_FILE 10 + FIRST_XOP_ERR
 
 #define BUFLEN 4096
 #define MAX_URL_LEN 256
@@ -65,7 +66,6 @@ typedef struct currentConnections {
 	fd_set readSet;
 	SOCKET maxSockNumber;
 	std::map<SOCKET,waveBufferInfoStruct> bufferWaves;	//socket descriptor, wave buffer, containing the recv messages.
-	
 }currentConnections, *currentConnectionsPtr;
 
 
@@ -82,6 +82,7 @@ typedef struct SOCKITopenConnectionStruct {
 	DOUBLE retval;		//what socket descriptor is opened.
 }SOCKITopenConnectionStruct, *SOCKITopenConnectionStructPtr;
 #include "XOPStructureAlignmentReset.h"
+
 int SOCKITopenConnection(SOCKITopenConnectionStructPtr );
 
 /* in SOCKITopenConnection.c */
@@ -90,11 +91,12 @@ typedef struct SOCKITcloseConnectionStruct {
 	DOUBLE socketToClose;
 	DOUBLE retval;
 }SOCKITcloseConnectionStruct, *SOCKITcloseConnectionStructPtr;
-
 #include "XOPStructureAlignmentReset.h"
+
 int SOCKITcloseConnection(SOCKITcloseConnectionStructPtr);
 
 /* in checkRecvData.c */
+int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, Handle writebuffer, const char *tokenizer);
 int checkRecvData();
 
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
@@ -102,7 +104,7 @@ typedef struct SOCKITcallProcessorStruct {
 	Handle bufferWave;
 	DOUBLE entryRow;
 }SOCKITcallProcessorStruct, *SOCKITcallProcessorStructPtr;
-
+#include "XOPStructureAlignmentReset.h"
 
 /* in SOCKITcloseConnection */
 void resetMaxSocketNumber();
@@ -119,8 +121,8 @@ typedef struct SOCKITsendMsgStruct {
 	DOUBLE socketToWrite;
 	DOUBLE retval;		
 }SOCKITsendMsgStruct, *SOCKITsendMsgStructPtr;
-
 #include "XOPStructureAlignmentReset.h"
+
 int SOCKITsendMsg(SOCKITsendMsgStruct *p);
 
 /* in StringTokenizer.cpp */
@@ -141,7 +143,52 @@ typedef struct SOCKITprocessorStruct {
 
 int SOCKITregisterProcessor(SOCKITprocessorStruct*);
 
+/* in SOCKITsendnrecv.cpp */
+#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+typedef struct SOCKITsendnrecvStruct{
+	Handle fileName;
+	DOUBLE timeout;
+	Handle message;
+	DOUBLE sockNum;
+	DOUBLE retval;
+} SOCKITsendnrecvStruct, *SOCKITsendnrecvStructPtr;
+#include "XOPStructureAlignmentReset.h"
+
+int SOCKITsendnrecv(SOCKITsendnrecvStruct *p);
+
 #ifdef _WINDOWS_
 size_t strlcpy(char *d, const char *s, size_t bufsize);
 size_t strlcat(char *d, const char *s, size_t bufsize);
 #endif
+
+struct MemoryStruct {
+	char *memory;
+	size_t size;
+};
+typedef struct MemoryStruct MemoryStruct;
+
+
+static void *myrealloc(void *ptr, size_t size)
+{
+    /* There might be a realloc() out there that doesn't like reallocing
+	NULL pointers, so we take care of it here */
+    if(ptr)
+		return realloc(ptr, size);
+    else
+		return malloc(size);
+}
+
+static size_t
+WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
+{
+    size_t realsize = size * nmemb;
+    struct MemoryStruct *mem = (struct MemoryStruct *)data;
+	
+    mem->memory = (char *)myrealloc(mem->memory, mem->size + realsize + 1);
+    if (mem->memory) {
+		memcpy(&(mem->memory[mem->size]), ptr, realsize);
+		mem->size += realsize;
+		mem->memory[mem->size] = 0;
+    }
+    return realsize;
+}

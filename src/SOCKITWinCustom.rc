@@ -27,7 +27,10 @@ BEGIN
 		/* [9] */
 		"Socket not connected to anything.\0",
 		/* [10] */
-		"Processor function not compiled, or not available.\0",    
+		"Processor function not compiled, or not available.\0", 
+		/* [11] */
+		"Problem writing to file.\0",
+		   
 	// You can add error messages here.
 
 	0,								// NOTE: 0 required to terminate the resource.
@@ -84,6 +87,18 @@ BEGIN
 			NT_FP64,						/* socket number */
 			HSTRING_TYPE,					/* processor */
 			0,
+		
+		"SOCKITsendnrecv\0",							/* function name */
+		F_IO | F_EXTERNAL,					/* function category (string) */
+		NT_FP64,						/* return value type */			
+			NT_FP64,						/* socket number */
+			HSTRING_TYPE,					/* message */
+			NT_FP64,						/*timeout*/
+			HSTRING_TYPE,					/*filename*/
+		0,
+
+
+			
 
 0,
 END
