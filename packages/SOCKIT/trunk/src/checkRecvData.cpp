@@ -145,20 +145,21 @@ int checkRecvData(){
 	#endif
 	
 	SOCKET maxSockNum = openConnections.maxSockNumber;
+	SOCKET ii;
 	
 	char buf[BUFLEN+1];
 	
 	struct MemoryStruct chunk;
 	chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
     chunk.size = 0;    /* no data at this point */
-
+	
+	int rc = 0, res = 0;
 	int iters =0;
 	long charsread = 0;
 	char *ending = "\0";
 	
 	char report[MAX_MSG_LEN+1];
-	int rc = 0, res = 0;
-	SOCKET ii;
+
 	char* output = NULL;
 	fd_set tempset;
 	FD_ZERO(&tempset);

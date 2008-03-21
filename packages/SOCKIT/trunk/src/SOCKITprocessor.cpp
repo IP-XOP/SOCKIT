@@ -78,6 +78,21 @@ int SOCKITregisterProcessor(SOCKITprocessorStruct *p){
 	int err = 0;
 	char processor[MAX_OBJ_NAME+1];
 	
+	extern currentConnections openConnections;
+	SOCKET sockNum;
+	
+	fd_set tempset;
+	FD_ZERO(&tempset);
+	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
+	
+	sockNum = (SOCKET)p->sockNum;
+			
+	if(!FD_ISSET(sockNum,&tempset)){
+			err = NO_SOCKET_DESCRIPTOR;
+			p->retval = -1;
+			goto done;
+	}
+	
 	if(err = GetCStringFromHandle(p->processor,processor,MAX_OBJ_NAME))
 		goto done;
 		

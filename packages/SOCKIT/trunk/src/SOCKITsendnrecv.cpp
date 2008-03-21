@@ -53,11 +53,14 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 	if(!p->sockNum){
 		err = OH_EXPECTED_NUMBER;
 		goto done;
-	} else if (p->sockNum <= 0) {
+	}
+	
+	sockNum = (SOCKET) p->sockNum;
+	
+	if (sockNum <= 0) {
 		err = SOCKET_NOT_CONNECTED;
 		goto done;
 	} else {
-		sockNum = p->sockNum;
 		if(!FD_ISSET(sockNum,&tempset)){
 			snprintf(report,sizeof(report),"SOCKIT err: can't write to socket %d\r", sockNum);
 			XOPNotice(report);

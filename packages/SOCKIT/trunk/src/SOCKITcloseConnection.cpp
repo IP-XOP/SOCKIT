@@ -5,8 +5,8 @@
 void
 resetMaxSocketNumber(){
 	extern currentConnections openConnections;
-	int ii=0;
-	int maxSoFar=0;
+	SOCKET ii=0;
+	SOCKET maxSoFar=0;
 
 	for (ii=0; ii< openConnections.maxSockNumber+1 ; ii+=1){
 		if (FD_ISSET(ii, &(openConnections.readSet)))
@@ -67,12 +67,16 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 	
 	extern currentConnections openConnections;
 	SOCKET ii;
- 	
+	
 	if(!p->socketToClose){
 		err = OH_EXPECTED_NUMBER;
 		p->retval = -1;
 		goto done;
-	} else if (p->socketToClose = -1){
+	}
+	
+	socketToClose = (SOCKET)p->socketToClose;
+	
+	if (socketToClose = -1){
 		for (ii=0; ii< openConnections.maxSockNumber+1 ; ii+=1){
 			if (FD_ISSET(ii, &(openConnections.readSet))) { 
 				SOCKITcloseWorker(ii);
@@ -80,7 +84,6 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 		}
 		p->retval = 0;
 	} else {
-		socketToClose = p->socketToClose;
 		p->retval = SOCKITcloseWorker(socketToClose);
 	}
 	
