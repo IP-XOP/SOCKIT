@@ -28,7 +28,7 @@ static int XOPIdle(){
 	int err = 0;
 	unsigned long ticks = 0;							// Current tick count.
 	static unsigned long lastTicks = 0;				// Ticks last time XOP idled.
-/**		
+		
 	#ifdef _MACINTOSH_
 		ticks = TickCount();						// Find current ticks.
 		if (ticks < lastTicks+60)					// Update every second.
@@ -40,7 +40,7 @@ static int XOPIdle(){
 		if (ticks < lastTicks+1000)					// Update every second.
 			return err;
 	#endif
-**/	
+	
 	err = checkRecvData();
 	lastTicks = ticks;
 

@@ -8,7 +8,7 @@ using namespace std;
 
 /**
 •make/t poo
-•variable sock = csockitopenconnection("www.wavemetrics.com",80,poo,"","",1)
+•variable sock = sockitopenconnection("www.wavemetrics.com",80,poo,"","",1)
 •sockitsendmsg(sock,"GET / \r\n")
 **/
 
@@ -16,7 +16,7 @@ int GetHourMinuteSecond(long* h, long* m, long* s)
 {
 #ifdef _MACINTOSH_
 	DateTimeRec date;
-	
+
 	GetTime(&date);
 	*h = date.hour;
 	*m = date.minute;
@@ -33,7 +33,7 @@ int GetHourMinuteSecond(long* h, long* m, long* s)
 	return 0;
 }
 
-int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, Handle writebuffer, const char *tokenizer){
+int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, const char *writebuffer, const char *tokenizer){
 	int err = 0;
 	
 	extern currentConnections openConnections;
@@ -53,8 +53,6 @@ int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, Handle writebuffer, co
 	char pointsToDeleteStr[MAXCMDLEN+1];
 	long pointsToDelete = 0;
 
-	char *buf = NULL;
-
 	long hour,min,sec;
 	char timebuf[10];
 	
@@ -67,15 +65,7 @@ int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, Handle writebuffer, co
 		goto done;
 	}
 	
-	buf = (char*)malloc(sizeof(char)*GetHandleSize(writebuffer)+1);
-	if(buf == NULL){
-		err = NOMEM;
-		goto done;
-	}
-	if(err = GetCStringFromHandle(writebuffer,buf,sizeof(char)*GetHandleSize(writebuffer)))
-		goto done;
-
-	Tokenize(buf, tokens, tokenizer);
+	Tokenize(writebuffer, tokens, tokenizer);
 	
 	for(ii=0 ; ii< tokens.size(); ii++){
 		
@@ -143,8 +133,6 @@ int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, Handle writebuffer, co
 done:
 		if(textH!=NULL)
 			DisposeHandle(textH);
-		if(buf != NULL)
-			free(buf);
 	return err;
 }
 
@@ -159,14 +147,17 @@ int checkRecvData(){
 	SOCKET maxSockNum = openConnections.maxSockNumber;
 	
 	char buf[BUFLEN+1];
-	Handle writebuffer = NULL;
+	
+	struct MemoryStruct chunk;
+	chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
+    chunk.size = 0;    /* no data at this point */
 
 	int iters =0;
 	long charsread = 0;
 	char *ending = "\0";
 	
 	char report[MAX_MSG_LEN+1];
-	int rc = -1, res = 0;
+	int rc = 0, res = 0;
 	SOCKET ii;
 	char* output = NULL;
 	fd_set tempset;
@@ -178,13 +169,10 @@ int checkRecvData(){
 
 	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
 	res = select(maxSockNum+1,&tempset,0,0,&timeout);
+	if(res ==0)
+		goto done;
 
 	for (ii=0; ii<maxSockNum+1; ii++) { 
-		writebuffer = NewHandle(0);
-		if(writebuffer == NULL){
-			err = NOMEM;
-			goto done;
-		}
 		iters = 0;
 		charsread = 0;
 
@@ -207,8 +195,11 @@ int checkRecvData(){
 					SOCKITcloseWorker(ii);
 					break;
 				} else if(rc > 0){
-					if(err = PtrAndHand(buf,writebuffer,rc))
-						goto done;	
+					WriteMemoryCallback(buf, sizeof(char), rc, &chunk);
+					if(chunk.memory == NULL){
+					   err = NOMEM;
+					   goto done;
+				   }
 				} else if (rc == 0)
 					break;
 				timeout.tv_sec = 3;
@@ -217,27 +208,31 @@ int checkRecvData(){
 				res = select(maxSockNum+1,&tempset,0,0,&timeout);
 			}
 			if(charsread>0){
-				if(err = PtrAndHand(ending,writebuffer,rc))
-					goto done;
+				WriteMemoryCallback(ending, sizeof(char), strlen(ending), &chunk);
+					if(chunk.memory == NULL){
+					   err = NOMEM;
+					   goto done;
+				   }
 				if(openConnections.bufferWaves[ii].toPrint == true){
 					snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", ii);
 					XOPNotice(report);
-					output = NtoCR(writebuffer, "\n","\r");
+					output = NtoCR(chunk.memory, "\n","\r");
 					XOPNotice(output);
 					if(output){
 						free(output);
 						output = NULL;
 					}
 				}
-				if(err = outputBufferDataToWave(ii, openConnections.bufferWaves[ii].bufferWave, writebuffer, openConnections.bufferWaves[ii].tokenizer))
+				if(err = outputBufferDataToWave(ii, openConnections.bufferWaves[ii].bufferWave, chunk.memory, openConnections.bufferWaves[ii].tokenizer))
 					goto done;
 			}
 
 			timeout.tv_sec = 0.;
 		}
-		if(writebuffer){
-			DisposeHandle(writebuffer);
-			writebuffer = NULL;	
+		if(chunk.memory){
+			free(chunk.memory);
+			chunk.memory = NULL;
+			chunk.size = 0;	
 		}
 	}
 	
@@ -245,8 +240,8 @@ done:
 	FD_ZERO(&tempset);
 	if(output!= NULL)
 		free(output);
-	if(writebuffer != NULL)
-		DisposeHandle(writebuffer);
+	if(chunk.memory)
+		free(chunk.memory);
 	
 	return err;
 }

@@ -55,6 +55,11 @@ int checkProcessor(const char *processor, FunctionInfo *fip){
 		goto done;
 	}
 	
+	if(fip == NULL){
+		err = PROCESSOR_NOT_AVAILABLE;
+		goto done;
+	}
+	
 	if(err = GetFunctionInfo(processor,fip)){
 		XOPNotice("SOCKITprocessor requires two parameters, f(textwave,variable)\r");
 		err = PROCESSOR_NOT_AVAILABLE;
