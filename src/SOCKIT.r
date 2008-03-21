@@ -36,6 +36,8 @@ resource 'STR#' (1100) {					/* custom error messages */
 		"Processor function not compiled, or not available.",
 		/* [11] */
 		"Problem writing to file.",
+		/* [12] */
+		"No socket with that descriptor.",
 	}
 };
 

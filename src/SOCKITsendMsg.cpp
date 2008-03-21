@@ -42,11 +42,14 @@ SOCKITsendMsg(SOCKITsendMsgStruct *p){
 	if(!p->socketToWrite){
 		err = OH_EXPECTED_NUMBER;
 		goto done;
-	} else if (p->socketToWrite <= 0) {
+	}
+
+	socketToWrite = (SOCKET)p->socketToWrite;
+	
+	if (socketToWrite <= 0) {
 		err = SOCKET_NOT_CONNECTED;
 		goto done;
 	} else {
-		socketToWrite = p->socketToWrite;
 		if(!FD_ISSET(socketToWrite,&tempset)){
 			snprintf(report,sizeof(report),"SOCKIT err: can't write to socket %d\r", socketToWrite);
 			XOPNotice(report);

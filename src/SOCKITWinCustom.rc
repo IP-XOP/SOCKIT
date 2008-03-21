@@ -30,6 +30,10 @@ BEGIN
 		"Processor function not compiled, or not available.\0", 
 		/* [11] */
 		"Problem writing to file.\0",
+		/* [12] */
+		"No socket with that descriptor.\0",
+
+		
 		   
 	// You can add error messages here.
 
