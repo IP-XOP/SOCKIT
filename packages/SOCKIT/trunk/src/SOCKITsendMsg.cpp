@@ -30,7 +30,7 @@ SOCKITsendMsg(SOCKITsendMsgStruct *p){
     
 	memset(buf,0,BUFLEN+1);
 	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
-	
+
 	if(!p->message){
 		err = OH_EXPECTED_STRING;
 		goto done;
@@ -97,7 +97,6 @@ done:
 		p->retval = -1;
 		
 	FD_ZERO(&tempset);
-
 
 return err;
 }

@@ -16,8 +16,6 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 	chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
     chunk.size = 0;    /* no data at this point */
 	
-	Handle outputHandle = NULL;
-	
 	XOP_FILE_REF fileToWrite = NULL;
 	char fileName[MAX_PATH_LEN+1];
 	char fileNameToWrite[MAX_PATH_LEN+1];
@@ -79,7 +77,6 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 	if(strlen(fileName) > 0){
 		if(err = GetNativePath(fileName,fileNameToWrite))
 			goto done;
-		
 		if(err = XOPOpenFile(fileNameToWrite,1,&fileToWrite))
 			goto done;
 	}
@@ -153,20 +150,14 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 			   res = select(maxSockNum+1,&tempset,0,0,&timeout);
 		   }
 	   }
-	   
-	   if(err = PtrToHand(chunk.memory,&outputHandle,chunk.size))
+
+	   if(err = outputBufferDataToWave(sockNum, openConnections.bufferWaves[sockNum].bufferWave, chunk.memory, openConnections.bufferWaves[sockNum].tokenizer))
 		   goto done;
-	   
-	   if(err = outputBufferDataToWave(sockNum, openConnections.bufferWaves[sockNum].bufferWave, outputHandle, openConnections.bufferWaves[sockNum].tokenizer))
-		   goto done;
-	   
 	   
 	   
 done:
-		if(outputHandle)
-			DisposeHandle(outputHandle);
 	   if(fileToWrite){
-		   if(fclose(fileToWrite))
+		   if(XOPCloseFile(fileToWrite))
 			   err = PROBLEM_WRITING_TO_FILE;
 	   }
 	   if(chunk.memory)

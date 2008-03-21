@@ -96,7 +96,7 @@ typedef struct SOCKITcloseConnectionStruct {
 int SOCKITcloseConnection(SOCKITcloseConnectionStructPtr);
 
 /* in checkRecvData.c */
-int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, Handle writebuffer, const char *tokenizer);
+int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, const char *writebuffer, const char *tokenizer);
 int checkRecvData();
 
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
@@ -112,7 +112,7 @@ int SOCKITcloseWorker(SOCKET socketToClose);
 int checkIfWaveInUseAsBuf(waveHndl wav);
 
 /*in NtoCR.cpp */
-char* NtoCR(Handle,  char*, char*);
+char* NtoCR(const char*,  char*, char*);
 
 /*in SOCKITsendMsg.cpp*/
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.

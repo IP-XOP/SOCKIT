@@ -4,7 +4,7 @@
 #include <string>
 using namespace std;
  
-char* NtoCR(Handle source_str,char* search_str,char* replace_str)
+char* NtoCR(const char* source_str,char* search_str,char* replace_str)
 {
 char *ostr, *nstr = NULL, *pdest = "";
 int length, nlen;
@@ -15,15 +15,14 @@ if(!source_str || !search_str || !replace_str){
 printf("Not enough arguments\n");
 return NULL;
 }
-ostr_allocated = sizeof(char) * (GetHandleSize(source_str)+1);
-ostr = (char*) malloc( sizeof(char) * (GetHandleSize(source_str))+1);
+ostr_allocated = sizeof(char) * (strlen(source_str));
+ostr = (char*) malloc( sizeof(char) * (strlen(source_str)));
 if(!ostr){
 printf("Insufficient memory available\n");
 return NULL;
 }
 
-if(GetCStringFromHandle(source_str,ostr,GetHandleSize(source_str)))
-   return NULL;
+memcpy(ostr,source_str,sizeof(source_str));
 
 while(pdest)
 {
