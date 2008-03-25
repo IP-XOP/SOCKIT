@@ -31,13 +31,13 @@ static int XOPIdle(){
 		
 	#ifdef _MACINTOSH_
 		ticks = TickCount();						// Find current ticks.
-		if (ticks < lastTicks+60)					// Update every second.
+		if (ticks < lastTicks+30)					// Update every second.
 			return err ;
 	#endif
 	
 	#ifdef _WINDOWS_
 		ticks = GetTickCount();						// Find current ticks.
-		if (ticks < lastTicks+1000)					// Update every second.
+		if (ticks < lastTicks+500)					// Update every second.
 			return err;
 	#endif
 	

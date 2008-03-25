@@ -153,6 +153,11 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 			   res = select(maxSockNum+1,&tempset,0,0,&timeout);
 		   }
 	   }
+		WriteMemoryCallback((char*)"\0", sizeof(char), strlen((char*)"\0"), &chunk);
+		if(chunk.memory == NULL){
+			err = NOMEM;
+			goto done;
+		}
 
 	   if(err = outputBufferDataToWave(sockNum, openConnections.bufferWaves[sockNum].bufferWave, chunk.memory, openConnections.bufferWaves[sockNum].tokenizer))
 		   goto done;

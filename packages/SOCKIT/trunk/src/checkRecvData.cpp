@@ -161,6 +161,7 @@ int checkRecvData(){
 	char report[MAX_MSG_LEN+1];
 
 	char* output = NULL;
+	
 	fd_set tempset;
 	FD_ZERO(&tempset);
 	
@@ -176,11 +177,10 @@ int checkRecvData(){
 	for (ii=0; ii<maxSockNum+1; ii++) { 
 		iters = 0;
 		charsread = 0;
-
+		
 		if (FD_ISSET(ii, &tempset)) {
-			while(FD_ISSET(ii, &tempset)){
+			do{
 				iters += 1;
-
 #ifdef _MACINTOSH_
 				rc = recv(ii, buf, BUFLEN,0);
 #endif
@@ -189,8 +189,8 @@ int checkRecvData(){
 #endif
 				charsread += rc;
 				
-				if (rc < 0) { 
-					snprintf(report,sizeof(report),"SOCKIT err: problem reading socket descriptor %d, disconnection???\r", ii );
+				if (rc <= 0 && iters == 1) { 
+					snprintf(report,sizeof(report),"SOCKIT err: socket descriptor %d, disconnection???\r", ii );
 					XOPNotice(report);
 					// Closed connection or error 
 					SOCKITcloseWorker(ii);
@@ -201,31 +201,30 @@ int checkRecvData(){
 					   err = NOMEM;
 					   goto done;
 				   }
-				} else if (rc == 0)
-					break;
-				timeout.tv_sec = 3;
+				}
+				timeout.tv_sec = 0;
 
-				memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
-				res = select(maxSockNum+1,&tempset,0,0,&timeout);
-			}
+			}while (rc==BUFLEN);
+			
 			if(charsread>0){
 				WriteMemoryCallback(ending, sizeof(char), strlen(ending), &chunk);
 					if(chunk.memory == NULL){
 					   err = NOMEM;
 					   goto done;
 				   }
+				if(err = outputBufferDataToWave(ii, openConnections.bufferWaves[ii].bufferWave, chunk.memory, openConnections.bufferWaves[ii].tokenizer))
+					goto done;
 				if(openConnections.bufferWaves[ii].toPrint == true){
 					snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", ii);
 					XOPNotice(report);
 					output = NtoCR(chunk.memory, "\n","\r");
 					XOPNotice(output);
+					XOPNotice("\r");
 					if(output){
 						free(output);
 						output = NULL;
 					}
 				}
-				if(err = outputBufferDataToWave(ii, openConnections.bufferWaves[ii].bufferWave, chunk.memory, openConnections.bufferWaves[ii].tokenizer))
-					goto done;
 			}
 
 			timeout.tv_sec = 0.;
