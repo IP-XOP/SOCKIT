@@ -22,7 +22,7 @@ printf("Insufficient memory available\n");
 return NULL;
 }
 
-memcpy(ostr,source_str,sizeof(source_str));
+memcpy(ostr,source_str,strlen(source_str)+1);
 
 while(pdest)
 {
