@@ -160,6 +160,9 @@ done:
 	FD_ZERO(&tempset);
     p->retval = sockNum;
 
+    if(err)
+        p->retval = -1;
+
 
 return err;
 }

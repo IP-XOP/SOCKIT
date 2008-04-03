@@ -36,8 +36,8 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 	FD_ZERO(&tempset);
 	
 	struct timeval timeout;
-	timeout.tv_sec = p->timeout;
-	timeout.tv_usec = 0;
+	timeout.tv_sec = floor(p->timeout);
+	timeout.tv_usec =  (int)(p->timeout-(double)floor(p->timeout))*1000000;
     
 	memset(buf,0,BUFLEN+1);
 	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
@@ -91,12 +91,12 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 	   res = select(maxSockNum+1,0,&tempset,0,&timeout);
 	   if(res == -1){
 		   XOPNotice ("SOCKIT err: select returned timeout");
-		   goto done;
 		   p->retval = -1;
+           goto done;
 	   }
 	   if(FD_ISSET(sockNum,&tempset)){
 		   rc = send(sockNum,buf,strlen(buf),0);
-		   if(rc >= 0){
+		   if(rc >= 0 && openConnections.bufferWaves[sockNum].toPrint == true){
 			   snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", sockNum);
 			   XOPNotice(report);
 			   snprintf(report,sizeof(report),"%s\r",buf);
@@ -117,10 +117,15 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 	   
 	   //now get an immediate reply
 	   memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
-	   res = select(maxSockNum+1,&tempset,0,0,&timeout);
+	   timeout.tv_sec = floor(p->timeout);
+       timeout.tv_usec =  (p->timeout-(double)floor(p->timeout))*1000000;
+       res = select(maxSockNum+1,&tempset,0,0,&timeout);
+       
+       memset(buf,0,BUFLEN);
 	   
-	   if (FD_ISSET(sockNum, &tempset)) {
-		   while(FD_ISSET(sockNum, &tempset)){
+	   if (res && FD_ISSET(sockNum, &tempset)) {            
+            do{
+//		   while(FD_ISSET(sockNum, &tempset) && res){
 			   
 #ifdef _MACINTOSH_
 			   rc = recv(sockNum, buf, BUFLEN,0);
@@ -148,10 +153,12 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 				   }
 			   } else if (rc == 0)
 				   break;
-			   
-			   memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
-			   res = select(maxSockNum+1,&tempset,0,0,&timeout);
-		   }
+                   
+ //           memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
+ //           timeout.tv_sec = floor(p->timeout);
+ //           timeout.tv_usec =  (p->timeout-(double)floor(p->timeout))*1000000;
+//          res = select(maxSockNum+1,&tempset,0,0,&timeout);
+            }while(rc==BUFLEN);
 	   }
 		WriteMemoryCallback((char*)"\0", sizeof(char), strlen((char*)"\0"), &chunk);
 		if(chunk.memory == NULL){
@@ -161,7 +168,6 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 
 	   if(err = outputBufferDataToWave(sockNum, openConnections.bufferWaves[sockNum].bufferWave, chunk.memory, openConnections.bufferWaves[sockNum].tokenizer))
 		   goto done;
-	   
 	   
 done:
 	   if(fileToWrite){
