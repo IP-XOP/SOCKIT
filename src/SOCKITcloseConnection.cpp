@@ -67,10 +67,10 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 	
 	extern currentConnections openConnections;
 	SOCKET ii;
-	
+    p->retval = 0;
+    
 	if(!p->socketToClose){
 		err = OH_EXPECTED_NUMBER;
-		p->retval = -1;
 		goto done;
 	}
 	
@@ -82,14 +82,15 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 				SOCKITcloseWorker(ii);
 			} 
 		}
-		p->retval = 0;
 	} else {
 		p->retval = SOCKITcloseWorker(socketToClose);
 	}
 	
 	
 done:
-		
+		if(err)
+            p->retval = -1;
+            
 		return err;
 }
 

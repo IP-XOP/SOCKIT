@@ -4,27 +4,23 @@ int registerProcessor(SOCKET sockNum, const char *processor){
 	int err=0;
 	
 	extern currentConnections openConnections;
-	FunctionInfo fip;
-		
+	FunctionInfo fi;
+    
+	memset(openConnections.bufferWaves[sockNum].processor,0,MAX_OBJ_NAME);
 	strlcpy(openConnections.bufferWaves[sockNum].processor,processor,MAX_OBJ_NAME);
-	openConnections.bufferWaves[sockNum].processorfip = NULL;
 	
 	if(strlen(processor)==0){
-		openConnections.bufferWaves[sockNum].processorfip = NULL;	
 		goto done;
 	}
 	
-	if(err = GetFunctionInfo(processor,&fip)){
+	if(err = GetFunctionInfo(processor,&fi)){
 		XOPNotice("SOCKITprocessor requires two parameters, f(textwave,variable)\r");
 		err = PROCESSOR_NOT_AVAILABLE;
 	}
 	
-	if(err = checkProcessor(processor, &fip)){
-		openConnections.bufferWaves[sockNum].processorfip = NULL;
+	if(err = checkProcessor(processor, &fi)){
 		err = PROCESSOR_NOT_AVAILABLE;
-	} else {
-		openConnections.bufferWaves[sockNum].processorfip = &fip;
-	}
+    }
 	
 done:
 		
@@ -35,7 +31,7 @@ int deRegisterProcessor(SOCKET sockNum){
 	int err=0;
 	extern currentConnections openConnections;
 	
-	openConnections.bufferWaves[sockNum].processorfip = NULL;
+	memset(openConnections.bufferWaves[sockNum].processor,0,MAX_OBJ_NAME);
 	
 done:
 		return err;
@@ -55,11 +51,11 @@ int checkProcessor(const char *processor, FunctionInfo *fip){
 		goto done;
 	}
 	
-	if(fip == NULL){
+/**	if(fip == NULL){
 		err = PROCESSOR_NOT_AVAILABLE;
 		goto done;
 	}
-	
+	*/
 	if(err = GetFunctionInfo(processor,fip)){
 		XOPNotice("SOCKITprocessor requires two parameters, f(textwave,variable)\r");
 		err = PROCESSOR_NOT_AVAILABLE;
@@ -81,6 +77,8 @@ int SOCKITregisterProcessor(SOCKITprocessorStruct *p){
 	extern currentConnections openConnections;
 	SOCKET sockNum;
 	
+    p->retval = 0;
+    
 	fd_set tempset;
 	FD_ZERO(&tempset);
 	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
@@ -89,7 +87,6 @@ int SOCKITregisterProcessor(SOCKITprocessorStruct *p){
 			
 	if(!FD_ISSET(sockNum,&tempset)){
 			err = NO_SOCKET_DESCRIPTOR;
-			p->retval = -1;
 			goto done;
 	}
 	
@@ -102,6 +99,8 @@ int SOCKITregisterProcessor(SOCKITprocessorStruct *p){
 done:
 	if(p->processor)
 		DisposeHandle(p->processor);
-
+    if(err)
+        p->retval = -1;
+        
 return err;
 }

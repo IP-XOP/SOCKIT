@@ -13,9 +13,9 @@ SOCKITsendMsg(SOCKITsendMsgStruct *p){
     int rc = 0;
     SOCKET socketToWrite = -1;
 	int res = 0;
-	
+    p->retval = 0;
+    
 	char buf[BUFLEN+1];
-	
 	char report[MAX_MSG_LEN+1];
 	char *output = NULL;			//get rid of the carriage returns
 
@@ -47,7 +47,9 @@ SOCKITsendMsg(SOCKITsendMsgStruct *p){
 	socketToWrite = (SOCKET)p->socketToWrite;
 	
 	if (socketToWrite <= 0) {
-		err = SOCKET_NOT_CONNECTED;
+		snprintf(report,sizeof(report),"SOCKIT err: socket not connected %d\r", socketToWrite);
+		XOPNotice(report);
+		p->retval = -1;
 		goto done;
 	} else {
 		if(!FD_ISSET(socketToWrite,&tempset)){
@@ -64,18 +66,16 @@ SOCKITsendMsg(SOCKITsendMsgStruct *p){
 	res = select(maxSockNum+1,0,&tempset,0,&timeout);
 	if(res == -1){
 		XOPNotice ("SOCKIT err: select returned -1");
-		goto done;
 		p->retval = -1;
+        goto done;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
 		rc = send(socketToWrite,buf,strlen(buf),0);
-		if(rc >= 0){
-//			output = NtoCR((const char*)buf, "\n","\r");
+		if(rc >= 0 && openConnections.bufferWaves[socketToWrite].toPrint == true){
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", socketToWrite);
 			XOPNotice(report);
 			snprintf(report,sizeof(report),"%s\r",buf);
 			XOPNotice(buf);
-			p->retval = 0;
 			goto done;
 		} else if (rc < 0) {
 			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", socketToWrite );

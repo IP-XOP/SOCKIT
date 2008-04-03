@@ -57,6 +57,8 @@ int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, const char *writebuffe
 	char timebuf[10];
 	
 	SOCKITcallProcessorStruct callProcessor;
+    FunctionInfo fi;
+    
 	double result;
 	
 	textH = NewHandle(10); 
@@ -119,16 +121,16 @@ int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, const char *writebuffe
 			if(err = XOPCommand2(cmd,0,0))
 				goto done;
 		}
-		
+
 		//call a processor for each buffer entry to see if there's anything it has to do with it.
-		if(!checkProcessor(openConnections.bufferWaves[sockNum].processor,  openConnections.bufferWaves[sockNum].processorfip)){
-			callProcessor.entryRow = indices[0];
+		if(!checkProcessor(openConnections.bufferWaves[sockNum].processor,  &fi)){
+            callProcessor.entryRow = indices[0];
 			callProcessor.bufferWave = wavH;
-			if(err = CallFunction(openConnections.bufferWaves[sockNum].processorfip,&callProcessor,&result))
+			if(err = CallFunction(&fi,&callProcessor,&result))
 				goto done;
-		}
-		
-		//WaveHandleModified(wavH);
+		}	
+        WaveHandleModified(wavH);
+
 	}
 done:
 		if(textH!=NULL)

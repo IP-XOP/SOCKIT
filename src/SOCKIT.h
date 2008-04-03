@@ -57,7 +57,6 @@ using namespace std;
 typedef struct waveBufferInfoStruct {
 	waveHndl bufferWave;
 	bool	toPrint;
-	FunctionInfo *processorfip;
 	char processor[MAX_OBJ_NAME+1];
 	char tokenizer[35];
 }waveBufferInfoStruct, *waveBufferInfoStructPtr;
@@ -192,4 +191,26 @@ WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
 		mem->memory[mem->size] = 0;
     }
     return realsize;
+}
+
+/*
+	roundDouble returns a rounded value for val
+ */
+static double
+roundDouble(double val){
+	double retval;
+	if(val>0){
+		if(val-floor(val) < 0.5){
+			retval = floor(val);
+		} else {
+			retval = ceil(val);
+		}
+	} else {
+		if(val-floor(val) <= 0.5){
+			retval = floor(val);
+		} else {
+			retval = ceil(val);
+		}
+	}
+	return retval;
 }

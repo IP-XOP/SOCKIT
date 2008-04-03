@@ -57,11 +57,11 @@ RegisterFunction()
 		Most XOPs should return a result of NIL in response to the FUNCADDRS message.
 		See XOP manual "Restrictions on Direct XFUNCs" section.
 	*/
-
+    
 	funcIndex = GetXOPItem(0);		/* which function invoked ? */
 	switch (funcIndex) {
 		case 0:						/* str1 = xstrcat0(str2, str3) */
-			return((long)SOCKITsendMsg);	/* this uses the direct call method */
+            return((long)SOCKITsendMsg);	/* this uses the direct call method */
 			break;
 		case 1:
 			return((long)SOCKITopenConnection);
@@ -89,9 +89,10 @@ XOPEntry(void)
 {	
 	long result = 0;
 	extern currentConnections openConnections;
-	int ii=0;
+    
+    int ii=0;
 	waveHndl wav;
-	
+
 	switch (GetXOPMessage()) {
 		case NEW:
 			FD_ZERO(&(openConnections.readSet));
@@ -118,7 +119,7 @@ XOPEntry(void)
 				result = WAVE_IN_USE;
 			break;
 		case FUNCADDRS:
-			result = RegisterFunction();
+                result = RegisterFunction();
 			break;
 		case IDLE:
 			result = XOPIdle();
