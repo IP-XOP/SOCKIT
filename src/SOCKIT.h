@@ -150,11 +150,12 @@ typedef struct SOCKITsendnrecvStruct{
 	DOUBLE timeout;
 	Handle message;
 	DOUBLE sockNum;
-	DOUBLE retval;
+	Handle retval;
 } SOCKITsendnrecvStruct, *SOCKITsendnrecvStructPtr;
 #include "XOPStructureAlignmentReset.h"
 
 int SOCKITsendnrecv(SOCKITsendnrecvStruct *p);
+
 
 #ifdef _WINDOWS_
 size_t strlcpy(char *d, const char *s, size_t bufsize);

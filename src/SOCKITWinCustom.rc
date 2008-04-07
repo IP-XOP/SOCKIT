@@ -101,8 +101,5 @@ BEGIN
 			HSTRING_TYPE,					/*filename*/
 		0,
 
-
-			
-
 0,
 END

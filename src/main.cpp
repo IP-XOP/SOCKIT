@@ -31,7 +31,7 @@ static int XOPIdle(){
 		
 	#ifdef _MACINTOSH_
 		ticks = TickCount();						// Find current ticks.
-		if (ticks < lastTicks+30)					// Update every second.
+		if (ticks < lastTicks+60)					// Update every second.
 			return err ;
 	#endif
 	
@@ -71,6 +71,7 @@ RegisterFunction()
 			break;
 		case 3:
 			return((long)SOCKITregisterProcessor);
+            break;
 		case 4:
 			return((long)SOCKITsendnrecv);
 			break;
@@ -95,19 +96,30 @@ XOPEntry(void)
 
 	switch (GetXOPMessage()) {
 		case NEW:
-			FD_ZERO(&(openConnections.readSet));
-			openConnections.maxSockNumber = 0;
-			
-			break;
-		case CLEANUP:
-			for (ii=0; ii< openConnections.maxSockNumber+1 ; ii+=1){
+            for (ii=0; ii< openConnections.maxSockNumber+1 ; ii+=1){
 				if (FD_ISSET(ii, &(openConnections.readSet))) { 
+                    openConnections.bufferWaves[ii].bufferWave =NULL;
 					FD_CLR(ii, &(openConnections.readSet)); 
 					close(ii);
 				} 
 			}
 			FD_ZERO((&openConnections.readSet));
 			openConnections.maxSockNumber = 0;
+			openConnections.bufferWaves.clear();
+            
+			break;
+		case CLEANUP:
+			for (ii=0; ii< openConnections.maxSockNumber+1 ; ii+=1){
+				if (FD_ISSET(ii, &(openConnections.readSet))) { 
+                    openConnections.bufferWaves[ii].bufferWave =NULL;
+					FD_CLR(ii, &(openConnections.readSet)); 
+					close(ii);
+				} 
+			}
+			FD_ZERO((&openConnections.readSet));
+			openConnections.maxSockNumber = 0;
+			openConnections.bufferWaves.clear();
+
 #ifdef _WINDOWS_
 			WSACleanup( );
 #endif
@@ -147,18 +159,19 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 	SetXOPEntry(XOPEntry);							/* set entry point for future calls */
 	SetXOPType((long)(RESIDENT | IDLES));			// Specify XOP to stick around and to receive IDLE messages.
 
+	extern currentConnections openConnections;
+    openConnections.bufferWaves.clear();
+
 #ifdef _WINDOWS_
 	WORD wVersionRequested;
 	WSADATA wsaData;
 	extern WSADATA globalWsaData;
-#endif
 
-	#ifdef _WINDOWS_
 	if(WSAStartup(MAKEWORD(2, 2), &wsaData)){
 		WSACleanup( );				
 		SetXOPResult(NO_WINSOCK);   
 	}
-	#endif
+#endif
 
 	if (igorVersion < 200)
 		SetXOPResult(REQUIRES_IGOR_200);
