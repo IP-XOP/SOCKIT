@@ -97,13 +97,12 @@ resource 'XOPF' (1100) {
 		},
 		"SOCKITsendnrecv",							/* function name */
 		F_IO | F_EXTERNAL,					/* function category (string) */
-		NT_FP64,						/* return value type */			
+		HSTRING_TYPE,						/* return value type */			
 		{
 			NT_FP64,						/* socket number */
 			HSTRING_TYPE,					/* message */
 			NT_FP64,						/*timeout*/
 			HSTRING_TYPE,					/*filename*/
 		},
-
 	}
 };

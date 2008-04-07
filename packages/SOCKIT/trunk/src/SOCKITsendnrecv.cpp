@@ -29,7 +29,8 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 	
 	char buf[BUFLEN+1];
 	char report[MAX_MSG_LEN+1];
-	
+	char* errVar = "V_Flag";
+    
 	SOCKET maxSockNum = openConnections.maxSockNumber;
 	
 	fd_set tempset;
@@ -42,6 +43,13 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 	memset(buf,0,BUFLEN+1);
 	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
 	
+    Handle ret = NULL;
+    ret = NewHandle(0);
+    if(ret == NULL){
+        err = NOMEM;
+        goto done;
+    }
+    
 	if(!p->message){
 		err = OH_EXPECTED_STRING;
 		goto done;
@@ -64,7 +72,6 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 		if(!FD_ISSET(sockNum,&tempset)){
 			snprintf(report,sizeof(report),"SOCKIT err: can't write to socket %d\r", sockNum);
 			XOPNotice(report);
-			p->retval = -1;
 			goto done;
 		}
 	}
@@ -91,7 +98,7 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 	   res = select(maxSockNum+1,0,&tempset,0,&timeout);
 	   if(res == -1){
 		   XOPNotice ("SOCKIT err: select returned timeout");
-		   p->retval = -1;
+            SetIgorIntVar(errVar, 1, 1);
            goto done;
 	   }
 	   if(FD_ISSET(sockNum,&tempset)){
@@ -106,13 +113,14 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 			   XOPNotice(report);
 			   // Closed connection or error 
 			   SOCKITcloseWorker(sockNum);
-			   p->retval = -1;
+               SetIgorIntVar(errVar, 1, 1);
+               goto done;
 		   }
 	   } else {
 		   snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", sockNum);
 		   XOPNotice(report);
-		   p->retval = -1;
-		   goto done;
+		   SetIgorIntVar(errVar, 1, 1);
+           goto done;
 	   }
 	   
 	   //now get an immediate reply
@@ -124,9 +132,7 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
        memset(buf,0,BUFLEN);
 	   
 	   if (res && FD_ISSET(sockNum, &tempset)) {            
-            do{
-//		   while(FD_ISSET(sockNum, &tempset) && res){
-			   
+            do{			   
 #ifdef _MACINTOSH_
 			   rc = recv(sockNum, buf, BUFLEN,0);
 #endif
@@ -140,7 +146,7 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 				   XOPNotice(report);
 				   // Closed connection or error 
 				   SOCKITcloseWorker(sockNum);
-				   p->retval = -1;
+                   SetIgorIntVar(errVar, 1, 1);
 				   break;
 			   } else if(rc > 0){
 				   WriteMemoryCallback(buf, sizeof(char), rc, &chunk);
@@ -154,17 +160,24 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 			   } else if (rc == 0)
 				   break;
                    
- //           memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
- //           timeout.tv_sec = floor(p->timeout);
- //           timeout.tv_usec =  (p->timeout-(double)floor(p->timeout))*1000000;
-//          res = select(maxSockNum+1,&tempset,0,0,&timeout);
             }while(rc==BUFLEN);
-	   }
+	   } else if(res==-1) {
+            snprintf(report,sizeof(report),"SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
+            XOPNotice(report);
+            // Closed connection or error 
+            SOCKITcloseWorker(sockNum);
+            SetIgorIntVar(errVar, 1, 1);
+            goto done;
+       }
+       
 		WriteMemoryCallback((char*)"\0", sizeof(char), strlen((char*)"\0"), &chunk);
 		if(chunk.memory == NULL){
 			err = NOMEM;
 			goto done;
 		}
+        
+        if (err = PutCStringInHandle(chunk.memory,ret))
+           goto done;
 
 	   if(err = outputBufferDataToWave(sockNum, openConnections.bufferWaves[sockNum].bufferWave, chunk.memory, openConnections.bufferWaves[sockNum].tokenizer))
 		   goto done;
@@ -180,9 +193,13 @@ done:
 		   DisposeHandle(p->message);			/* we need to get rid of input parameters */
 	   if (p->fileName)
 		   DisposeHandle(p->fileName);
-	   if(err)
-		   p->retval = -1;
-	   
+        if(err){
+            SetIgorIntVar(errVar, 1, 1);
+        } else SetIgorIntVar(errVar,0,1);
+            
+        //populate the string
+        p->retval = ret;
+        	   
 	   FD_ZERO(&tempset);
 	   
 	   
