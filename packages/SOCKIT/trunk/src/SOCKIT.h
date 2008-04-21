@@ -119,6 +119,7 @@ char* NtoCR(const char*,  char*, char*);
 typedef struct SOCKITsendMsgStruct {
 	Handle message;
 	DOUBLE socketToWrite;
+	void* tp;     // Pointer to Igor private data, for threadsafety
 	DOUBLE retval;		
 }SOCKITsendMsgStruct, *SOCKITsendMsgStructPtr;
 #include "XOPStructureAlignmentReset.h"

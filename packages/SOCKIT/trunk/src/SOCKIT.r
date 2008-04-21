@@ -62,7 +62,7 @@ resource 'STR#' (1101) {					// Misc strings for XOP.
 resource 'XOPF' (1100) {
 	{
 		"SOCKITsendMsg",							/* function name */
-		F_IO | F_EXTERNAL,					/* function category (string) */
+		F_IO | F_EXTERNAL,// | F_THREADSAFE,					/* function category (string) */
 		NT_FP64,						/* return value type */			
 		{
 			NT_FP64,						/* socket number */
