@@ -94,7 +94,7 @@ BEGIN
 		
 		"SOCKITsendnrecv\0",							/* function name */
 		F_IO | F_EXTERNAL,					/* function category (string) */
-		NT_FP64,						/* return value type */			
+		HSTRING_TYPE,						/* return value type */			
 			NT_FP64,						/* socket number */
 			HSTRING_TYPE,					/* message */
 			NT_FP64,						/*timeout*/

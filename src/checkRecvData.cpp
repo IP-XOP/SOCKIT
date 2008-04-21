@@ -105,7 +105,7 @@ int outputBufferDataToWave(SOCKET sockNum, waveHndl wavH, const char *writebuffe
 			goto done;
 		
 		if(dimensionSizes[0] > BUFFER_WAVE_LEN){
-			pointsToDelete = dimensionSizes[0] - BUFFER_WAVE_LEN;
+			pointsToDelete = 10;//dimensionSizes[0] - BUFFER_WAVE_LEN;
 			indices[0] -= pointsToDelete;
 			
 			if(err = GetWavesDataFolder(wavH,&dfH))
