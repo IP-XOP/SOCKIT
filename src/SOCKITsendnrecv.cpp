@@ -160,7 +160,7 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 			   } else if (rc == 0)
 				   break;
                    
-            }while(rc==BUFLEN);
+            }while(rc>0);
 	   } else if(res==-1) {
             snprintf(report,sizeof(report),"SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
             XOPNotice(report);
