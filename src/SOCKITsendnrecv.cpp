@@ -90,118 +90,124 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 		if(err = XOPOpenFile(fileNameToWrite,1,&fileToWrite))
 			goto done;
 	}
-	   
-	   //flush messages first
-	   err = checkRecvData();
-	   
-	   //send the message second;
-	   res = select(maxSockNum+1,0,&tempset,0,&timeout);
-	   if(res == -1){
-		   XOPNotice ("SOCKIT err: select returned timeout");
-            SetIgorIntVar(errVar, 1, 1);
-           goto done;
-	   }
-	   if(FD_ISSET(sockNum,&tempset)){
-		   rc = send(sockNum,buf,strlen(buf),0);
-		   if(rc >= 0 && openConnections.bufferWaves[sockNum].toPrint == true){
-			   snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", sockNum);
-			   XOPNotice(report);
-			   snprintf(report,sizeof(report),"%s\r",buf);
-			   XOPNotice(buf);
-		   } else if (rc < 0) {
-			   snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", sockNum );
-			   XOPNotice(report);
-			   // Closed connection or error 
-			   SOCKITcloseWorker(sockNum);
-               SetIgorIntVar(errVar, 1, 1);
-               goto done;
-		   }
-	   } else {
-		   snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", sockNum);
-		   XOPNotice(report);
-		   SetIgorIntVar(errVar, 1, 1);
-           goto done;
-	   }
-	   
-	   //now get an immediate reply
-	   memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
-	   timeout.tv_sec = floor(p->timeout);
-       timeout.tv_usec =  (p->timeout-(double)floor(p->timeout))*1000000;
-       res = select(maxSockNum+1,&tempset,0,0,&timeout);
-       
-       memset(buf,0,BUFLEN);
-	   
-	   if (res && FD_ISSET(sockNum, &tempset)) {            
-            do{			   
-#ifdef _MACINTOSH_
-			   rc = recv(sockNum, buf, BUFLEN,0);
-#endif
-#ifdef _WINDOWS_
-			   rc = recv(sockNum, buf, BUFLEN,0);
-#endif
-			   charsread += rc;
-			   
-			   if (rc < 0) { 
-				   snprintf(report,sizeof(report),"SOCKIT err: problem reading socket descriptor %d, disconnection???\r", sockNum );
-				   XOPNotice(report);
-				   // Closed connection or error 
-				   SOCKITcloseWorker(sockNum);
-                   SetIgorIntVar(errVar, 1, 1);
-				   break;
-			   } else if(rc > 0){
-				   WriteMemoryCallback(buf, sizeof(char), rc, &chunk);
-				   if(chunk.memory == NULL){
-					   err = NOMEM;
-					   goto done;
-				   }
-				   if(fileToWrite){//write to file as well
-					   written = fwrite(buf, sizeof(char),rc, (FILE *)fileToWrite);
-				   }
-			   } else if (rc == 0)
-				   break;
-                   
-            }while(rc>0);
-	   } else if(res==-1) {
-            snprintf(report,sizeof(report),"SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
-            XOPNotice(report);
-            // Closed connection or error 
-            SOCKITcloseWorker(sockNum);
-            SetIgorIntVar(errVar, 1, 1);
-            goto done;
-       }
-       
-		WriteMemoryCallback((char*)"\0", sizeof(char), strlen((char*)"\0"), &chunk);
-		if(chunk.memory == NULL){
-			err = NOMEM;
+	
+	//flush messages first
+	err = checkRecvData();
+	
+	//send the message second;
+	res = select(maxSockNum+1,0,&tempset,0,&timeout);
+	if(res == -1){
+		XOPNotice ("SOCKIT err: select returned timeout");
+		SetIgorIntVar(errVar, 1, 1);
+		goto done;
+	}
+	if(FD_ISSET(sockNum,&tempset)){
+		rc = send(sockNum,buf,strlen(buf),0);
+		if(rc >= 0 && openConnections.bufferWaves[sockNum].toPrint == true){
+			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", sockNum);
+			XOPNotice(report);
+			snprintf(report,sizeof(report),"%s\r",buf);
+			XOPNotice(buf);
+		} else if (rc < 0) {
+			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", sockNum );
+			XOPNotice(report);
+			// Closed connection or error 
+			SOCKITcloseWorker(sockNum);
+			SetIgorIntVar(errVar, 1, 1);
 			goto done;
 		}
-        
-        if (err = PutCStringInHandle(chunk.memory,ret))
-           goto done;
-
-	   if(err = outputBufferDataToWave(sockNum, openConnections.bufferWaves[sockNum].bufferWave, chunk.memory, openConnections.bufferWaves[sockNum].tokenizer))
-		   goto done;
-	   
+	} else {
+		snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", sockNum);
+		XOPNotice(report);
+		SetIgorIntVar(errVar, 1, 1);
+		goto done;
+	}
+	
+	//now get an immediate reply
+	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
+	timeout.tv_sec = floor(p->timeout);
+	timeout.tv_usec =  (p->timeout-(double)floor(p->timeout))*1000000;
+	res = select(maxSockNum+1,&tempset,0,0,&timeout);
+	
+	memset(buf,0,BUFLEN);
+	
+	if (res && FD_ISSET(sockNum, &tempset)) {            
+		do{			   
+#ifdef _MACINTOSH_
+			rc = recv(sockNum, buf, BUFLEN,0);
+#endif
+#ifdef _WINDOWS_
+			rc = recv(sockNum, buf, BUFLEN,0);
+#endif
+			charsread += rc;
+			
+			if (rc < 0) { 
+				snprintf(report,sizeof(report),"SOCKIT err: problem reading socket descriptor %d, disconnection???\r", sockNum );
+				XOPNotice(report);
+				// Closed connection or error 
+				SOCKITcloseWorker(sockNum);
+				SetIgorIntVar(errVar, 1, 1);
+				break;
+			} else if(rc > 0){
+				WriteMemoryCallback(buf, sizeof(char), rc, &chunk);
+				if(chunk.memory == NULL){
+					err = NOMEM;
+					goto done;
+				}
+				if(fileToWrite){//write to file as well
+					written = fwrite(buf, sizeof(char),rc, (FILE *)fileToWrite);
+				}
+			} else if (rc == 0)
+				break;
+				
+			FD_ZERO(&tempset);
+			timeout.tv_sec = floor(p->timeout);
+			timeout.tv_usec =  (p->timeout-(double)floor(p->timeout))*1000000;
+			FD_SET(sockNum,&tempset);
+			res = select(sockNum+1,&tempset,0,0,&timeout);
+			
+		}while(res>0);
+	} else if(res==-1) {
+		snprintf(report,sizeof(report),"SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
+		XOPNotice(report);
+		// Closed connection or error 
+		SOCKITcloseWorker(sockNum);
+		SetIgorIntVar(errVar, 1, 1);
+		goto done;
+	}
+	
+	WriteMemoryCallback((char*)"\0", sizeof(char), strlen((char*)"\0"), &chunk);
+	if(chunk.memory == NULL){
+		err = NOMEM;
+		goto done;
+	}
+	
+	if (err = PutCStringInHandle(chunk.memory,ret))
+		goto done;
+	
+	if(err = outputBufferDataToWave(sockNum, openConnections.bufferWaves[sockNum].bufferWave, chunk.memory, openConnections.bufferWaves[sockNum].tokenizer))
+		goto done;
+	
 done:
-	   if(fileToWrite){
-		   if(XOPCloseFile(fileToWrite))
-			   err = PROBLEM_WRITING_TO_FILE;
-	   }
-	   if(chunk.memory)
-		   free(chunk.memory);
-	   if (p->message)
-		   DisposeHandle(p->message);			/* we need to get rid of input parameters */
-	   if (p->fileName)
-		   DisposeHandle(p->fileName);
-        if(err){
-            SetIgorIntVar(errVar, 1, 1);
-        } else SetIgorIntVar(errVar,0,1);
-            
-        //populate the string
-        p->retval = ret;
-        	   
-	   FD_ZERO(&tempset);
-	   
-	   
-	   return err;
+	if(fileToWrite){
+		if(XOPCloseFile(fileToWrite))
+			err = PROBLEM_WRITING_TO_FILE;
+	}
+	if(chunk.memory)
+		free(chunk.memory);
+	if (p->message)
+		DisposeHandle(p->message);			/* we need to get rid of input parameters */
+	if (p->fileName)
+		DisposeHandle(p->fileName);
+	if(err){
+		SetIgorIntVar(errVar, 1, 1);
+	} else SetIgorIntVar(errVar,0,1);
+	
+	//populate the string
+	p->retval = ret;
+	
+	FD_ZERO(&tempset);
+	
+	
+	return err;
 }
