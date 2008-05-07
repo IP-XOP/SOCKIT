@@ -29,6 +29,7 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 	
 	char buf[BUFLEN+1];
 	char report[MAX_MSG_LEN+1];
+	char *output = NULL;
 	char* errVar = "V_Flag";
     
 	SOCKET maxSockNum = openConnections.maxSockNumber;
@@ -106,8 +107,9 @@ SOCKITsendnrecv(SOCKITsendnrecvStruct *p){
 		if(rc >= 0 && openConnections.bufferWaves[sockNum].toPrint == true){
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", sockNum);
 			XOPNotice(report);
-			snprintf(report,sizeof(report),"%s\r",buf);
-			XOPNotice(buf);
+			output = NtoCR(buf, "\n","\r");
+			XOPNotice(output);
+			XOPNotice("\r");
 		} else if (rc < 0) {
 			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", sockNum );
 			XOPNotice(report);
@@ -195,6 +197,8 @@ done:
 	}
 	if(chunk.memory)
 		free(chunk.memory);
+	if(output)
+		free(output);
 	if (p->message)
 		DisposeHandle(p->message);			/* we need to get rid of input parameters */
 	if (p->fileName)

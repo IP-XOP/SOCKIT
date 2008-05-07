@@ -74,8 +74,9 @@ SOCKITsendMsg(SOCKITsendMsgStruct *p){
 		if(rc >= 0 && openConnections.bufferWaves[socketToWrite].toPrint == true){
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", socketToWrite);
 			XOPNotice(report);
-			snprintf(report,sizeof(report),"%s\r",buf);
-			XOPNotice(buf);
+			output = NtoCR(buf, "\n","\r");
+			XOPNotice(output);
+			XOPNotice("\r");
 			goto done;
 		} else if (rc < 0) {
 			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", socketToWrite );
