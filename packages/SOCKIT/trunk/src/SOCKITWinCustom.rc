@@ -79,22 +79,15 @@ BEGIN
 			NT_FP64,						/* socket number */
 			HSTRING_TYPE,					/* processor */
 			0,
-		
-		"SOCKITsendnrecv\0",							/* function name */
-		F_IO | F_EXTERNAL,					/* function category (string) */
-		HSTRING_TYPE,						/* return value type */			
-			NT_FP64,						/* socket number */
-			HSTRING_TYPE,					/* message */
-			NT_FP64,						/*timeout*/
-			HSTRING_TYPE,					/*filename*/
-		0,
-
 0,
 END
 
 1100 XOPC							// Describes operations that the XOP adds to IGOR.
 BEGIN
 	"SOCKITopenconnection\0",
+	utilOp | XOPOp | compilableOp,
+	"\0"							// NOTE: NULL required to terminate the resource.
+	"SOCKITsendnrecv\0",
 	utilOp | XOPOp | compilableOp,
 	"\0"							// NOTE: NULL required to terminate the resource.
 END

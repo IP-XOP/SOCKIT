@@ -56,7 +56,9 @@ RegisterOperations(void)		// Register any operations with Igor.
 	// Register XOP1 operation.
 	if (result = RegisterSOCKITopenconnection())
 		return result;
-
+	if (result = RegisterSOCKITsendnrecv())
+		return result;
+		
 	// There are no more operations added by this XOP.
 	
 	return 0;
@@ -83,9 +85,6 @@ RegisterFunction()
 		case 2:
 			return((long)SOCKITregisterProcessor);
             break;
-		case 3:
-			return((long)SOCKITsendnrecv);
-			break;
 	}
 	return(NIL);
 }
