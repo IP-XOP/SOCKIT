@@ -48,6 +48,20 @@ static int XOPIdle(){
 	return err;
 }
 
+static int
+RegisterOperations(void)		// Register any operations with Igor.
+{
+	int result;
+	
+	// Register XOP1 operation.
+	if (result = RegisterSOCKITopenconnection())
+		return result;
+
+	// There are no more operations added by this XOP.
+	
+	return 0;
+}
+
 static long
 RegisterFunction()
 {
@@ -64,15 +78,12 @@ RegisterFunction()
             return((long)SOCKITsendMsg);	/* this uses the direct call method */
 			break;
 		case 1:
-			return((long)SOCKITopenConnection);
-			break;
-		case 2:
 			return((long)SOCKITcloseConnection);
 			break;
-		case 3:
+		case 2:
 			return((long)SOCKITregisterProcessor);
             break;
-		case 4:
+		case 3:
 			return((long)SOCKITsendnrecv);
 			break;
 	}
@@ -140,6 +151,7 @@ XOPEntry(void)
 	SetXOPResult(result);
 }
 
+
 /*	main(ioRecHandle)
 
 	This is the initial entry point at which the host application calls XOP.
@@ -161,7 +173,8 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 
 	extern currentConnections openConnections;
     openConnections.bufferWaves.clear();
-
+	long result = 0;
+	
 #ifdef _WINDOWS_
 	WORD wVersionRequested;
 	WSADATA wsaData;
@@ -169,12 +182,25 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 
 	if(WSAStartup(MAKEWORD(2, 2), &wsaData)){
 		WSACleanup( );				
-		SetXOPResult(NO_WINSOCK);   
+		SetXOPResult(NO_WINSOCK);
+		goto done;
 	}
 #endif
 
-	if (igorVersion < 200)
-		SetXOPResult(REQUIRES_IGOR_200);
-	else
+	if (igorVersion < 500){
+		SetXOPResult(REQUIRES_IGOR_500);
+		goto done;
+	} else
 		SetXOPResult(0L);
+	
+	if (result = RegisterOperations())
+		SetXOPResult(result);
+
+done:
+
+#ifdef _MACINTOSH_
+		return 0;
+#else
+	return;
+#endif
 }
