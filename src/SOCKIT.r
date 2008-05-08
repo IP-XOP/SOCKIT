@@ -83,21 +83,14 @@ resource 'XOPF' (1100) {
 			NT_FP64,						/* socket number */
 			HSTRING_TYPE,					/* processor */
 		},
-		"SOCKITsendnrecv",							/* function name */
-		F_IO | F_EXTERNAL,					/* function category (string) */
-		HSTRING_TYPE,						/* return value type */			
-		{
-			NT_FP64,						/* socket number */
-			HSTRING_TYPE,					/* message */
-			NT_FP64,						/*timeout*/
-			HSTRING_TYPE,					/*filename*/
-		},
 	}
 };
 
 resource 'XOPC' (1100) {
 	{
 		"SOCKITopenconnection",								// Name of operation.
+		XOPOp+UtilOP+compilableOp,			// Operation's category.
+		"SOCKITsendnrecv",								// Name of operation.
 		XOPOp+UtilOP+compilableOp,			// Operation's category.
 	}
 };
