@@ -35,7 +35,7 @@
 
 using namespace std;
 
-#define REQUIRES_IGOR_200 1 + FIRST_XOP_ERR
+#define REQUIRES_IGOR_500 1 + FIRST_XOP_ERR
 #define NO_WINSOCK 2 + FIRST_XOP_ERR
 #define NO_INPUT_STRING 3 + FIRST_XOP_ERR
 #define BAD_HOST_RESOLV 4 + FIRST_XOP_ERR
@@ -71,21 +71,57 @@ typedef struct currentConnections {
 
 /* in SOCKITopenConnection.c */
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
-typedef struct SOCKITopenConnectionStruct {
-	DOUBLE toPrint;
-	Handle tokenizer;
-	Handle processor;
-	Handle bufferWave;
-	DOUBLE port;
-	Handle IPaddress;
-//	Handle initialMessage;
-	DOUBLE retval;		//what socket descriptor is opened.
-}SOCKITopenConnectionStruct, *SOCKITopenConnectionStructPtr;
-#include "XOPStructureAlignmentReset.h"
+struct SOCKITopenconnectionRuntimeParams {
+	// Flag parameters.
 
-int SOCKITopenConnection(SOCKITopenConnectionStructPtr );
+	// Parameters for /Q flag group.
+	int QFlagEncountered;
+	// There are no fields for this group because it has no parameters.
 
-/* in SOCKITopenConnection.c */
+	// Parameters for /TOK flag group.
+	int TOKFlagEncountered;
+	Handle TOKFlagStrH;
+	int TOKFlagParamsSet[1];
+
+	// Parameters for /PROC flag group.
+	int PROCFlagEncountered;
+	char PROCFlagName[MAX_OBJ_NAME+1];
+	int PROCFlagParamsSet[1];
+
+	// Main parameters.
+
+	// Parameters for ID keyword group.
+	int IDEncountered;
+	char IDVarName[MAX_OBJ_NAME+1];
+	int IDParamsSet[1];
+
+	// Parameters for IP keyword group.
+	int IPEncountered;
+	Handle IPStrH;
+	int IPParamsSet[1];
+
+	// Parameters for PORT keyword group.
+	int PORTEncountered;
+	double PORTNumber;
+	int PORTParamsSet[1];
+
+	// Parameters for BUF keyword group.
+	int BUFEncountered;
+	waveHndl BUFWaveH;
+	int BUFParamsSet[1];
+
+	// These are postamble fields that Igor sets.
+	int calledFromFunction;					// 1 if called from a user function, 0 otherwise.
+	int calledFromMacro;					// 1 if called from a macro, 0 otherwise.
+};
+typedef struct SOCKITopenconnectionRuntimeParams SOCKITopenconnectionRuntimeParams;
+typedef struct SOCKITopenconnectionRuntimeParams* SOCKITopenconnectionRuntimeParamsPtr;
+#include "XOPStructureAlignmentReset.h"		// Reset structure alignment to default.
+
+int RegisterSOCKITopenconnection(void);
+static int ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p);
+
+/* in SOCKITcloseConnection.c */
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITcloseConnectionStruct {
 	DOUBLE socketToClose;

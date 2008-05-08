@@ -9,7 +9,7 @@ easyHttp.c -- An XOP for curvefitting via Differential Evolution.
 1100 STR#							// Custom error messages.
 BEGIN
 /* [1] */
-		"iPeek requires Igor Pro 5.04 or later.\0",
+		"SOCKIT requires Igor Pro 5.04 or later.\0",
 		/* [2] */
 		"No winsock lib available.\0",
 		/* [3] */
@@ -67,23 +67,11 @@ BEGIN
 			HSTRING_TYPE,					/* message */
 			0,
 		
-		"SOCKITopenConnection\0",
-		F_IO | F_EXTERNAL,
-		NT_FP64,
-		HSTRING_TYPE,
-		NT_FP64,
-		WAVE_TYPE,
-		HSTRING_TYPE,
-		HSTRING_TYPE,
-		NT_FP64,
-		0,
-
 		"SOCKITcloseConnection\0",
 		F_IO | F_EXTERNAL,
 		NT_FP64,
 		NT_FP64,
 		0,
-//		HSTRING_TYPE,
 
 		"SOCKITregisterProcessor\0",							/* function name */
 		F_IO | F_EXTERNAL,					/* function category (string) */
@@ -102,4 +90,11 @@ BEGIN
 		0,
 
 0,
+END
+
+1100 XOPC							// Describes operations that the XOP adds to IGOR.
+BEGIN
+	"SOCKITopenconnection\0",
+	utilOp | XOPOp | compilableOp,
+	"\0"							// NOTE: NULL required to terminate the resource.
 END
