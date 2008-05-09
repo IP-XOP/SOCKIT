@@ -79,10 +79,8 @@ END
 BEGIN
 	"SOCKITopenconnection\0",
 	utilOp | XOPOp | compilableOp,
-	"\0"							// NOTE: NULL required to terminate the resource.
 	"SOCKITsendnrecv\0",
 	utilOp | XOPOp | compilableOp,
-	"\0"							// NOTE: NULL required to terminate the resource.
 	"SOCKITsendmsg\0",
 	utilOp | XOPOp | compilableOp,
 	"\0"							// NOTE: NULL required to terminate the resource.
