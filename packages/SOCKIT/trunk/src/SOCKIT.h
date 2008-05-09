@@ -152,15 +152,30 @@ char* NtoCR(const char*,  char*, char*);
 
 /*in SOCKITsendMsg.cpp*/
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
-typedef struct SOCKITsendMsgStruct {
-	Handle message;
-	DOUBLE socketToWrite;
-	void* tp;     // Pointer to Igor private data, for threadsafety
-	DOUBLE retval;		
-}SOCKITsendMsgStruct, *SOCKITsendMsgStructPtr;
-#include "XOPStructureAlignmentReset.h"
+struct SOCKITsendmsgRuntimeParams {
 
-int SOCKITsendMsg(SOCKITsendMsgStruct *p);
+	// Main parameters.
+	// Parameters for simple main group #0.
+	int IDEncountered;
+	double ID;
+	int IDParamsSet[1];
+
+	// Parameters for simple main group #1.
+	int MSGEncountered;
+	Handle MSG;
+	int MSGParamsSet[1];
+
+	// These are postamble fields that Igor sets.
+	int calledFromFunction;					// 1 if called from a user function, 0 otherwise.
+	int calledFromMacro;					// 1 if called from a macro, 0 otherwise.
+};
+typedef struct SOCKITsendmsgRuntimeParams SOCKITsendmsgRuntimeParams;
+typedef struct SOCKITsendmsgRuntimeParams* SOCKITsendmsgRuntimeParamsPtr;
+#include "XOPStructureAlignmentReset.h"		// Reset structure alignment to default.
+
+int RegisterSOCKITsendmsg(void);
+int ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParamsPtr p);
+
 
 /* in StringTokenizer.cpp */
 void Tokenize(const char *str, vector<string>& tokens,  const char* delimiters);

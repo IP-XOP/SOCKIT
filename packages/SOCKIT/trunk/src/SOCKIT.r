@@ -61,14 +61,6 @@ resource 'STR#' (1101) {					// Misc strings for XOP.
 
 resource 'XOPF' (1100) {
 	{
-		"SOCKITsendMsg",							/* function name */
-		F_IO | F_EXTERNAL,// | F_THREADSAFE,					/* function category (string) */
-		NT_FP64,						/* return value type */			
-		{
-			NT_FP64,						/* socket number */
-			HSTRING_TYPE,					/* message */
-		},
-
 		"SOCKITcloseConnection",
 		F_IO | F_EXTERNAL,
 		NT_FP64,
@@ -91,6 +83,8 @@ resource 'XOPC' (1100) {
 		"SOCKITopenconnection",								// Name of operation.
 		XOPOp+UtilOP+compilableOp,			// Operation's category.
 		"SOCKITsendnrecv",								// Name of operation.
+		XOPOp+UtilOP+compilableOp,			// Operation's category.
+		"SOCKITsendmsg",								// Name of operation.
 		XOPOp+UtilOP+compilableOp,			// Operation's category.
 	}
 };

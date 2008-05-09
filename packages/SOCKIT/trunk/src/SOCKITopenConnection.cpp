@@ -59,6 +59,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	// Flag parameters.
 	if (p->QFlagEncountered) {
 		bufferInfoStruct.toPrint = false;
+	} else {
+		bufferInfoStruct.toPrint = true;
 	}
 	
 	if (p->TOKFlagEncountered) {

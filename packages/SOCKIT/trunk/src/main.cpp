@@ -58,6 +58,8 @@ RegisterOperations(void)		// Register any operations with Igor.
 		return result;
 	if (result = RegisterSOCKITsendnrecv())
 		return result;
+	if (result = RegisterSOCKITsendmsg())
+		return result;
 		
 	// There are no more operations added by this XOP.
 	
@@ -76,13 +78,10 @@ RegisterFunction()
     
 	funcIndex = GetXOPItem(0);		/* which function invoked ? */
 	switch (funcIndex) {
-		case 0:						/* str1 = xstrcat0(str2, str3) */
-            return((long)SOCKITsendMsg);	/* this uses the direct call method */
-			break;
-		case 1:
+		case 0:
 			return((long)SOCKITcloseConnection);
 			break;
-		case 2:
+		case 1:
 			return((long)SOCKITregisterProcessor);
             break;
 	}

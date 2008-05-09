@@ -60,13 +60,6 @@ END
 
 1100 XOPF							// Describes functions added by XOP to IGOR.
 BEGIN			
-		"SOCKITsendMsg\0",							/* function name */
-		F_IO | F_EXTERNAL,					/* function category (string) */
-		NT_FP64,						/* return value type */			
-			NT_FP64,						/* socket number */
-			HSTRING_TYPE,					/* message */
-			0,
-		
 		"SOCKITcloseConnection\0",
 		F_IO | F_EXTERNAL,
 		NT_FP64,
@@ -88,6 +81,9 @@ BEGIN
 	utilOp | XOPOp | compilableOp,
 	"\0"							// NOTE: NULL required to terminate the resource.
 	"SOCKITsendnrecv\0",
+	utilOp | XOPOp | compilableOp,
+	"\0"							// NOTE: NULL required to terminate the resource.
+	"SOCKITsendmsg\0",
 	utilOp | XOPOp | compilableOp,
 	"\0"							// NOTE: NULL required to terminate the resource.
 END
