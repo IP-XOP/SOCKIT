@@ -6,7 +6,7 @@ RegisterSOCKITsendnrecv(void)
 	char* cmdTemplate;
 	char* runtimeNumVarList;
 	char* runtimeStrVarList;
-
+	
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
 	cmdTemplate = "SOCKITsendnrecv/FILE=string/TIME=number/SMAL number:ID,string:MSG";
 	runtimeNumVarList = "V_Flag";
@@ -17,7 +17,7 @@ RegisterSOCKITsendnrecv(void)
 int 
 ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	int err = 0, err2=0;
-
+	
 	extern currentConnections openConnections;
 	
 #ifdef _WINDOWS_
@@ -187,13 +187,17 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				}
 			} else if (rc == 0)
 				break;
-				
-			FD_ZERO(&tempset);
-			timeout.tv_sec = floor(timeoutVal);
-			timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
-			FD_SET(sockNum,&tempset);
-			res = select(sockNum+1,&tempset,0,0,&timeout);
-		}while(res>0 && !p->SMALFlagEncountered);
+			
+			if(p->SMALFlagEncountered){
+				res=0;
+			} else {
+				FD_ZERO(&tempset);
+				timeout.tv_sec = floor(timeoutVal);
+				timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
+				FD_SET(sockNum,&tempset);
+				res = select(sockNum+1,&tempset,0,0,&timeout);
+			}
+		}while(res>0);
 	} else if(res==-1) {
 		snprintf(report,sizeof(report),"SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
 		XOPNotice(report);
@@ -234,6 +238,6 @@ done:
 		free(output);
 	
 	FD_ZERO(&tempset);
-		
+	
 	return err;
 }
