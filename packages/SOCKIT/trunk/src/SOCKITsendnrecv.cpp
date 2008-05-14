@@ -8,7 +8,7 @@ RegisterSOCKITsendnrecv(void)
 	char* runtimeStrVarList;
 
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
-	cmdTemplate = "SOCKITsendnrecv/FILE=string/TIME=number number:ID,string:MSG";
+	cmdTemplate = "SOCKITsendnrecv/FILE=string/TIME=number/SMALL number:ID,string:MSG";
 	runtimeNumVarList = "V_Flag";
 	runtimeStrVarList = "S_tcp";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITsendnrecvRuntimeParams), (void*)ExecuteSOCKITsendnrecv, 0);
@@ -193,8 +193,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
 			FD_SET(sockNum,&tempset);
 			res = select(sockNum+1,&tempset,0,0,&timeout);
-			
-		}while(res>0);
+		}while(res>0 && !p->SMALLFlagEncountered);
 	} else if(res==-1) {
 		snprintf(report,sizeof(report),"SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
 		XOPNotice(report);

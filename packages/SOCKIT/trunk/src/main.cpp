@@ -23,16 +23,17 @@ HOST_IMPORT void main(IORecHandle ioRecHandle);
 static int XOPIdle(){
 //this function should go through all the sockets and see if there are any messages.
 //close off any that don't reply
-//XOPNotice("Idling\r");
+
 //check if any have closed, check if there are messages to receive.
 	int err = 0;
 	unsigned long ticks = 0;							// Current tick count.
 	static unsigned long lastTicks = 0;				// Ticks last time XOP idled.
 		
-	#ifdef _MACINTOSH_
+/*	#ifdef _MACINTOSH_
 		ticks = TickCount();						// Find current ticks.
 		if (ticks < lastTicks+60)					// Update every second.
 			return err ;
+			XOPNotice("Idling\r");
 	#endif
 	
 	#ifdef _WINDOWS_
@@ -40,7 +41,7 @@ static int XOPIdle(){
 		if (ticks < lastTicks+500)					// Update every second.
 			return err;
 	#endif
-	
+*/	
 	err = checkRecvData();
 	lastTicks = ticks;
 
