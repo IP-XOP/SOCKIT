@@ -210,7 +210,7 @@ struct SOCKITsendnrecvRuntimeParams {
 	int TIMEFlagParamsSet[1];
 
 	// Parameters for /SMALL flag group.
-	int SMALLFlagEncountered;
+	int SMALFlagEncountered;
 
 	// Main parameters.
 
