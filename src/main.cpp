@@ -5,11 +5,7 @@
 //get list of connected sockets
 //get info on specific socket
 //close socket. (close all sockets
-
 #include "SOCKIT.h"
-
-//global variable to hold all the open connections
-currentConnections openConnections;
 
 #ifdef _MACINTOSH_
 HOST_IMPORT int main(IORecHandle ioRecHandle);
@@ -18,7 +14,6 @@ HOST_IMPORT int main(IORecHandle ioRecHandle);
 WSADATA globalWsaData;
 HOST_IMPORT void main(IORecHandle ioRecHandle);
 #endif
-
 
 static int XOPIdle(){
 //this function should go through all the sockets and see if there are any messages.
@@ -42,7 +37,8 @@ static int XOPIdle(){
 			return err;
 	#endif
 */	
-	err = checkRecvData();
+	extern CurrentConnections* pinstance;
+	err = pinstance->checkRecvData();
 	lastTicks = ticks;
 
 
@@ -99,36 +95,18 @@ static void
 XOPEntry(void)
 {	
 	long result = 0;
-	extern currentConnections openConnections;
-    
-    int ii=0;
+	
+	extern CurrentConnections* pinstance;
+	
 	waveHndl wav;
 
 	switch (GetXOPMessage()) {
 		case NEW:
-            for (ii=0; ii< openConnections.maxSockNumber+1 ; ii+=1){
-				if (FD_ISSET(ii, &(openConnections.readSet))) { 
-                    openConnections.bufferWaves[ii].bufferWave =NULL;
-					FD_CLR(ii, &(openConnections.readSet)); 
-					close(ii);
-				} 
-			}
-			FD_ZERO((&openConnections.readSet));
-			openConnections.maxSockNumber = 0;
-			openConnections.bufferWaves.clear();
-            
+			pinstance->resetCurrentConnections();            
 			break;
 		case CLEANUP:
-			for (ii=0; ii< openConnections.maxSockNumber+1 ; ii+=1){
-				if (FD_ISSET(ii, &(openConnections.readSet))) { 
-                    openConnections.bufferWaves[ii].bufferWave =NULL;
-					FD_CLR(ii, &(openConnections.readSet)); 
-					close(ii);
-				} 
-			}
-			FD_ZERO((&openConnections.readSet));
-			openConnections.maxSockNumber = 0;
-			openConnections.bufferWaves.clear();
+			pinstance->resetCurrentConnections();
+			delete pinstance;
 
 #ifdef _WINDOWS_
 			WSACleanup( );
@@ -137,7 +115,7 @@ XOPEntry(void)
 		case OBJINUSE:
 			//if we're going to tell it to write to buffer, then you can't get rid of the buffer.
 			wav = (waveHndl) GetXOPItem(0);
-			if(checkIfWaveInUseAsBuf(wav))
+			if(pinstance->checkIfWaveInUseAsBuf(wav))
 				result = WAVE_IN_USE;
 			break;
 		case FUNCADDRS:
@@ -170,14 +148,17 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 	SetXOPEntry(XOPEntry);							/* set entry point for future calls */
 	SetXOPType((long)(RESIDENT | IDLES));			// Specify XOP to stick around and to receive IDLE messages.
 
-	extern currentConnections openConnections;
-    openConnections.bufferWaves.clear();
+	extern CurrentConnections *pinstance;
+	CurrentConnections::Instance();
+	
+	pinstance->resetCurrentConnections();
+	
 	long result = 0;
 	
 #ifdef _WINDOWS_
 	WORD wVersionRequested;
 	WSADATA wsaData;
-	extern WSADATA globalWsaData;
+	//extern WSADATA globalWsaData;
 
 	if(WSAStartup(MAKEWORD(2, 2), &wsaData)){
 		WSACleanup( );				

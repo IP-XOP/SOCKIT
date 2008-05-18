@@ -1,5 +1,7 @@
 #include "SOCKIT.h"
 
+
+
 int
 RegisterSOCKITopenconnection(void)
 {
@@ -19,7 +21,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 {
 	int err = 0;
 	
-	extern currentConnections openConnections;
+	extern CurrentConnections* pinstance;
 #ifdef _WINDOWS_
 	extern WSADATA globalWsaData;
 #endif
@@ -32,10 +34,11 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	char host[MAX_URL_LEN+1];
 	char report[MAX_MSG_LEN+1];
-	SOCKET maxSockNum = openConnections.maxSockNumber;
+	SOCKET maxSockNum = pinstance->getMaxSockNumber();
 	
 	fd_set tempset;
 	FD_ZERO(&tempset);
+	memcpy(&tempset, pinstance->getReadSet(), sizeof(pinstance->getReadSet())); 
 	
 	struct timeval timeout;
 	timeout.tv_sec = 10;
@@ -43,10 +46,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	struct sockaddr_in  sa;
     struct hostent*     hen;
-    struct waveBufferInfoStruct bufferInfoStruct;
-	
-	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
-	
+	waveBufferInfo bufferInfo;
+
 	if(p->IDEncountered){
 		if(err = VarNameToDataType(p->IDVarName, &dataType)) 
 			goto done;
@@ -58,9 +59,9 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	// Flag parameters.
 	if (p->QFlagEncountered) {
-		bufferInfoStruct.toPrint = false;
+		bufferInfo.toPrint = false;
 	} else {
-		bufferInfoStruct.toPrint = true;
+		bufferInfo.toPrint = true;
 	}
 	
 	if (p->TOKFlagEncountered) {
@@ -69,10 +70,10 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			err = OH_EXPECTED_STRING;
 			goto done;
 		}
-		if(err = GetCStringFromHandle(p->TOKFlagStrH,bufferInfoStruct.tokenizer,10))
+		if(err = GetCStringFromHandle(p->TOKFlagStrH,bufferInfo.tokenizer,10))
 			goto done;
 	} else {
-		memset(bufferInfoStruct.tokenizer,0,sizeof(bufferInfoStruct.tokenizer));
+		memset(bufferInfo.tokenizer,0,sizeof(bufferInfo.tokenizer));
 	}
 	
 	if (p->PORTEncountered) {
@@ -86,7 +87,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			err = EXPECTED_TEXT_WAVE;
 			goto done;
 		}
-		bufferInfoStruct.bufferWave = p->BUFWaveH;
+		bufferInfo.bufferWave = p->BUFWaveH;
 	}
 	
 	if(p->IPEncountered){
@@ -98,7 +99,6 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		if(err = GetCStringFromHandle(p->IPStrH, host, MAX_URL_LEN))
 			goto done;
 	}
-	
 	
 	/* Address resolution */
 	hen = gethostbyname(host);
@@ -123,7 +123,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	}
 	
 	FD_SET(sockNum,&tempset);
-	if(sockNum > openConnections.maxSockNumber){
+	if(sockNum > pinstance->getMaxSockNumber()){
 		maxSockNum = sockNum;
 	}
 	
@@ -134,16 +134,12 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	if(FD_ISSET(sockNum, &tempset)){
 		if(rc==0){
-			FD_SET(sockNum,&openConnections.readSet);
-			if(sockNum > openConnections.maxSockNumber){
-				openConnections.maxSockNumber = sockNum;
-			}
 			snprintf(report,sizeof(report),"SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
 			XOPNotice(report);
 		} else {
 			perror("Error failed because:");
 			XOPNotice("SOCKIT err: failed to connect\r");
-			SOCKITcloseWorker(sockNum);
+			close(sockNum);
 			sockNum = -1;
 			goto done;
 		}
@@ -151,25 +147,25 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		if( rc !=0){
 			perror("Error failed because:");
 			XOPNotice("SOCKIT err: timeout while waiting for new connection\r");
-			SOCKITcloseWorker(sockNum);
+			close(sockNum);
 			sockNum = -1;
 			goto done;
 		}
 	}
-	
-	
+		
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum>0){
-		openConnections.bufferWaves[sockNum] = bufferInfoStruct;
-		
+		pinstance->addWorker(sockNum,bufferInfo);
+				
 		if (p->PROCFlagEncountered) {
 			// Parameter: p->PROCFlagName
-			if(err = registerProcessor(sockNum, p->PROCFlagName)){
+			if(err = pinstance->registerProcessor(sockNum,p->PROCFlagName)){
 				err = PROCESSOR_NOT_AVAILABLE;
+				XOPNotice("SOCKIT err: processor must be f(textWave,variable)\r");
 				goto done;
 			}
 		} else {
-			registerProcessor(sockNum, "");
+			pinstance->registerProcessor(sockNum,"");
 		}
 	}
 	

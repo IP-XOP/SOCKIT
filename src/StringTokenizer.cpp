@@ -1,8 +1,5 @@
-#include <string>
-#include <algorithm>
-#include <vector>
+#include "StringTokenizer.h"
 
-using namespace std;
 
 void Tokenize(const char* STR, vector<string> &tokens, const char *DELIMITERS)
 {
