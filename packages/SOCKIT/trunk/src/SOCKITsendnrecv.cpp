@@ -18,15 +18,13 @@ int
 ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	int err = 0, err2=0;
 	
-	extern currentConnections openConnections;
+	extern CurrentConnections *pinstance;
 	
 #ifdef _WINDOWS_
 	extern WSADATA globalWsaData;
 #endif
 	
-	struct MemoryStruct chunk;
-	chunk.memory=NULL; /* we expect realloc(NULL, size) to work */
-    chunk.size = 0;    /* no data at this point */
+	MemoryStruct chunk;
 	
 	XOP_FILE_REF fileToWrite = NULL;
 	char fileName[MAX_PATH_LEN+1];
@@ -43,7 +41,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	char report[MAX_MSG_LEN+1];
 	char *output = NULL;
     
-	SOCKET maxSockNum = openConnections.maxSockNumber;
+	SOCKET maxSockNum = pinstance->getMaxSockNumber();
 	
 	fd_set tempset;
 	FD_ZERO(&tempset);
@@ -61,7 +59,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	timeout.tv_usec =  (int)(timeoutVal-(double)floor(timeoutVal))*1000000;
     
 	memset(buf,0,BUFLEN+1);
-	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
+	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
 	
     Handle ret = NULL;
     ret = NewHandle(0);
@@ -119,7 +117,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	}
 	
 	//flush messages first
-	err = checkRecvData();
+	err = pinstance->checkRecvData();
 	
 	//send the message second;
 	res = select(maxSockNum+1,0,&tempset,0,&timeout);
@@ -130,7 +128,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	}
 	if(FD_ISSET(sockNum,&tempset)){
 		rc = send(sockNum,buf,strlen(buf),0);
-		if(rc >= 0 && openConnections.bufferWaves[sockNum].toPrint == true){
+		if(rc >= 0 && pinstance->getWaveBufferInfo(sockNum)->toPrint == true){
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", sockNum);
 			XOPNotice(report);
 			output = NtoCR(buf, "\n","\r");
@@ -140,7 +138,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", sockNum );
 			XOPNotice(report);
 			// Closed connection or error 
-			SOCKITcloseWorker(sockNum);
+			pinstance->closeWorker(sockNum);
 			err2=1;
 			goto done;
 		}
@@ -152,7 +150,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	}
 	
 	//now get an immediate reply
-	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
+	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
 	timeout.tv_sec = floor(timeoutVal);
 	timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
 	res = select(maxSockNum+1,&tempset,0,0,&timeout);
@@ -173,12 +171,12 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				snprintf(report,sizeof(report),"SOCKIT err: problem reading socket descriptor %d, disconnection???\r", sockNum );
 				XOPNotice(report);
 				// Closed connection or error 
-				SOCKITcloseWorker(sockNum);
+				pinstance->closeWorker(sockNum);
 				err2=1;
 				break;
 			} else if(rc > 0){
-				WriteMemoryCallback(buf, sizeof(char), rc, &chunk);
-				if(chunk.memory == NULL){
+				chunk.WriteMemoryCallback(buf, sizeof(char), rc);
+				if(chunk.getData() == NULL){
 					err = NOMEM;
 					goto done;
 				}
@@ -202,21 +200,15 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		snprintf(report,sizeof(report),"SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
 		XOPNotice(report);
 		// Closed connection or error 
-		SOCKITcloseWorker(sockNum);
+		pinstance->closeWorker(sockNum);
 		err2=1;
 		goto done;
 	}
 	
-	WriteMemoryCallback((char*)"\0", sizeof(char), strlen((char*)"\0"), &chunk);
-	if(chunk.memory == NULL){
-		err = NOMEM;
-		goto done;
-	}
-	
-	if (err = PutCStringInHandle(chunk.memory,ret))
+	if (err = PutCStringInHandle(chunk.getData(),ret))
 		goto done;
 	
-	if(err = outputBufferDataToWave(sockNum, openConnections.bufferWaves[sockNum].bufferWave, chunk.memory, openConnections.bufferWaves[sockNum].tokenizer))
+	if(err = pinstance->outputBufferDataToWave(sockNum, chunk.getData()))
 		goto done;
 	
 done:
@@ -229,11 +221,9 @@ done:
 		SetOperationStrVar("S_tcp", "");		
 	} else {
 		SetOperationNumVar("V_flag", 0);
-		SetOperationStrVar("S_tcp", chunk.memory);
+		SetOperationStrVar("S_tcp", chunk.getData());
 	}
 	
-	if(chunk.memory)
-		free(chunk.memory);
 	if(output)
 		free(output);
 	

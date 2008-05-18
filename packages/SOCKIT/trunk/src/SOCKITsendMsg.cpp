@@ -1,6 +1,5 @@
 #include "SOCKIT.h"
-
-
+ 
 int
 RegisterSOCKITsendmsg(void)
 {
@@ -19,7 +18,7 @@ int
 ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	int err = 0, err2 = 0;
 	
-	extern currentConnections openConnections;
+	extern CurrentConnections *pinstance;
 	
 	#ifdef _WINDOWS_
 	extern WSADATA globalWsaData;
@@ -33,7 +32,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	char report[MAX_MSG_LEN+1];
 	char *output = NULL;			//get rid of the carriage returns
 
-	SOCKET maxSockNum = openConnections.maxSockNumber;
+	SOCKET maxSockNum = pinstance->getMaxSockNumber();
 	
 	fd_set tempset;
 	FD_ZERO(&tempset);
@@ -43,7 +42,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	timeout.tv_usec = 0;
     
 	memset(buf,0,BUFLEN+1);
-	memcpy(&tempset, &openConnections.readSet, sizeof(openConnections.readSet)); 
+	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
 
 	if(!p->MSGEncountered){
 		err = OH_EXPECTED_STRING;
@@ -75,7 +74,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	}
 	
 	//flush messages first
-	err = checkRecvData();
+	err = pinstance->checkRecvData();
 	
 	res = select(maxSockNum+1,0,&tempset,0,&timeout);
 	if(res == -1){
@@ -85,7 +84,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
 		rc = send(socketToWrite,buf,strlen(buf),0);
-		if(rc >= 0 && openConnections.bufferWaves[socketToWrite].toPrint == true){
+		if(rc >= 0 && pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true){
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", socketToWrite);
 			XOPNotice(report);
 			output = NtoCR(buf, "\n","\r");
@@ -96,7 +95,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", socketToWrite );
 			XOPNotice(report);
 			// Closed connection or error 
-			SOCKITcloseWorker(socketToWrite);
+			pinstance->closeWorker(socketToWrite);
 			err2 = 1;
 		}
 	} else {

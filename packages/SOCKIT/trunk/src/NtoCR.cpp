@@ -1,6 +1,3 @@
-#include "SOCKIT.h"
-
-
 #include <string>
 using namespace std;
 
