@@ -144,10 +144,6 @@ int RegisterSOCKITsendmsg(void);
 int ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParamsPtr p);
 
 
-#ifdef _WINDOWS_
-size_t strlcpy(char *d, const char *s, size_t bufsize);
-size_t strlcat(char *d, const char *s, size_t bufsize);
-#endif
 
 /*
 	roundDouble returns a rounded value for val
