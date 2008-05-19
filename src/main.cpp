@@ -6,6 +6,11 @@
 //get info on specific socket
 //close socket. (close all sockets
 #include "SOCKIT.h"
+#include "SOCKITsendmsg.h"
+#include "SOCKITopenConnection.h"
+#include "SOCKITprocessor.h"
+#include "SOCKITcloseConnection.h"
+#include "SOCKITsendnrecv.h"
 
 #ifdef _MACINTOSH_
 HOST_IMPORT int main(IORecHandle ioRecHandle);

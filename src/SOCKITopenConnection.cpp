@@ -1,6 +1,5 @@
 #include "SOCKIT.h"
-
-
+#include "SOCKITopenconnection.h"
 
 int
 RegisterSOCKITopenconnection(void)

@@ -1,4 +1,5 @@
 #include <string.h>
+
 size_t strlcpy(char *d, const char *s, size_t bufsize)
 {
 	size_t len;

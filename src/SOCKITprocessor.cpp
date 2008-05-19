@@ -1,4 +1,5 @@
 #include "SOCKIT.h"
+#include "SOCKITprocessor.h"
 
 int SOCKITregisterProcessor(SOCKITprocessorStruct *p){
 	int err = 0;

@@ -47,10 +47,10 @@ void *MemoryStruct::myrealloc(void *src_ptr, size_t size)
 //data has to be a point of a MemoryStruct object
 
 size_t
-MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
+MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *Data)
 {
     size_t realsize = size * nmemb;
-    MemoryStruct *mem = (MemoryStruct *)data;
+    MemoryStruct *mem = (MemoryStruct *)Data;
 	
     mem->memory = (char *)myrealloc(mem->memory, mem->memsize + realsize + 1);
     if (mem->memory) {

@@ -1,5 +1,5 @@
 /*
- *  error.h
+ *  defines.h
  *  iPeek
  *
  *  Created by andrew on 17/05/08.
@@ -58,7 +58,4 @@
 #define BUFFER_WAVE_LEN 1500
 
 
-#ifdef _WINDOWS_
-size_t strlcpy(char *d, const char *s, size_t bufsize);
-size_t strlcat(char *d, const char *s, size_t bufsize);
-#endif
+
