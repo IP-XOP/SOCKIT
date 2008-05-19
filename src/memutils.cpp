@@ -44,7 +44,7 @@ void *MemoryStruct::myrealloc(void *src_ptr, size_t size)
 
 //to use the static version you may have to define a function pointer
 //size_t (*f)(void*,size_t,size_t,void*)=(MemoryStruct::WriteMemoryCallback);
-//data has to be an object of MemoryStruct
+//data has to be a point of a MemoryStruct object
 
 size_t
 MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
