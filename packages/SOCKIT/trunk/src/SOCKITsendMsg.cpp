@@ -1,5 +1,6 @@
 #include "SOCKIT.h"
- 
+#include "SOCKITsendmsg.h"
+
 int
 RegisterSOCKITsendmsg(void)
 {

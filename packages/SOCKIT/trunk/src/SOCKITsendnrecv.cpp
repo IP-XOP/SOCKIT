@@ -1,4 +1,5 @@
 #include "SOCKIT.h"
+#include "SOCKITsendnrecv.h"
 
 int
 RegisterSOCKITsendnrecv(void)

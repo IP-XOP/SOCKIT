@@ -1,4 +1,5 @@
 #include "SOCKIT.h"
+#include "SOCKITcloseConnection.h"
 
 int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 	int err = 0;
