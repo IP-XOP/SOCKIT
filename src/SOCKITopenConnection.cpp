@@ -10,7 +10,7 @@ RegisterSOCKITopenconnection(void)
 
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
 	cmdTemplate = "SOCKITopenconnection/Q/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
-	runtimeNumVarList = "";
+	runtimeNumVarList = "V_flag";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITopenconnectionRuntimeParams), (void*)ExecuteSOCKITopenconnection, 0);
 }

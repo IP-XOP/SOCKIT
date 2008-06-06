@@ -172,7 +172,7 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 	}
 #endif
 
-	if (igorVersion < 500){
+	if (igorVersion < 504){
 		SetXOPResult(REQUIRES_IGOR_500);
 		goto done;
 	} else

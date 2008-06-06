@@ -37,7 +37,6 @@ int GetHourMinuteSecond(long* h, long* m, long* s)
 }
 
 
-
 CurrentConnections* pinstance=0;
 
 void CurrentConnections::Instance(){
