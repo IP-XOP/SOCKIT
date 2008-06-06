@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /**
 *MemoryStruct - A dynamic memory re-writer.
@@ -9,40 +10,30 @@
 class MemoryStruct{
 public:
 	/**
-	*Writes data to a MemoryStruct object with a static method.
+	*Writes data to a MemoryStruct object with a static method. Example:
+	*MemoryStruct a; double *doublearray; long numdoubles; WriteMemoryCallback(doublearray, sizeof(double), numdoubles, &a);
 	*@param ptr A pointer to the data that you wish to store in the MemoryStruct object
 	*@param size The size of the type of data you wish to store
 	*@param nmemb The number of data you are trying to store
 	*@param Data A MemoryStruct object to which the data will be appended.
 	*@return The amount of memory allocated for the data you are trying to write
-	*Example:
-	*MemoryStruct a;
-	*double *doublearray;
-	*long numdoubles;
-	*WriteMemoryCallback(doublearray, sizeof(double), numdoubles, &a);
 	*/
 	static size_t WriteMemoryCallback(void *ptr, size_t size, size_t nmemb,void* Data);
 
 	/**
-	*Writes data to a MemoryStruct object.
-	*@param ptr A pointer to the data that you wish to store in the MemoryStruct object
-	*@param size The size of the type of data you wish to store
-	*@param nmemb The number of data you are trying to store
-	*@return The amount of memory allocated for the data you are trying to write
-	*Example:
-	*MemoryStruct a;
-	*double *doublearray;
-	*long numdoubles;
-	*a.WriteMemoryCallback(doublearray, sizeof(double), numdoubles);
+	*Writes data to a MemoryStruct object. 	
+	Example:
+	*MemoryStruct a; double *doublearray; long numdoubles; a.WriteMemoryCallback(doublearray, sizeof(double), numdoubles);
+	*@param ptr A pointer to the data that you wish to store in the MemoryStruct object.
+	*@param size The size of the type of data you wish to store.
+	*@param nmemb The number of data you are trying to store.
+	*@return The amount of memory allocated for the data you are trying to write.
 	*/
 	size_t WriteMemoryCallback(void *ptr, size_t size, size_t nmemb);
 	/**
-	*Obtain the number of bytes held in a MemoryStruct object.
+	*Obtain the number of bytes held in a MemoryStruct object.	Example:
+	*MemoryStruct a; long bytesAllocated; bytesAllocated = a.getMemSize();
 	*@return The total amount of memory allocated in the MemoryStruct object
-	*Example:
-	*MemoryStruct a;
-	*long bytesAllocated;
-	*bytesAllocated = a.getMemSize();
 	*/
 	size_t getMemSize();
 	/**
