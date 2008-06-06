@@ -18,16 +18,16 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 	
 	socketToClose = (SOCKET)p->socketToClose;
 
-	if (socketToClose = -1){
+	if(socketToClose == -1){
 		for (ii=0; ii< pinstance->getMaxSockNumber()+1 ; ii+=1){
 			if (FD_ISSET(ii, pinstance->getReadSet())) { 
-				pinstance->closeWorker(socketToClose);
+				pinstance->closeWorker(ii);
 				snprintf(report,sizeof(report),"SOCKITmsg:  Closed connection to socket descriptor %d\r", ii);
 				XOPNotice(report);
 			} 
 		}
 	} else {
-		if (FD_ISSET(ii, pinstance->getReadSet())) { 
+		if (FD_ISSET(socketToClose, pinstance->getReadSet())) { 
 			p->retval = pinstance->closeWorker(socketToClose);
 			snprintf(report,sizeof(report),"SOCKITmsg:  Closed connection to socket descriptor %d\r", socketToClose);
 			XOPNotice(report);
