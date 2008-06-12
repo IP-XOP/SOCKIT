@@ -3,7 +3,6 @@ easyHttp.c -- An XOP for curvefitting via Differential Evolution.
 @copyright: Andrew Nelson and the Australian Nuclear Science and Technology Organisation 2007.
 */
 
-
 #include "XOPResources.h"			// Defines XOP-specific symbols.
 
 1100 STR#							// Custom error messages.
