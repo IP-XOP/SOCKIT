@@ -225,7 +225,7 @@ int CurrentConnections::checkRecvData(){
 
 	memcpy(&tempset, &readSet, sizeof(readSet)); 
 	res = select(maxSockNum+1,&tempset,0,0,&timeout);
-	if(res ==0)
+	if(res == 0)
 		goto done;
 
 
