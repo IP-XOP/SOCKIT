@@ -227,8 +227,11 @@ int CurrentConnections::checkRecvData(){
 	res = select(maxSockNum+1,&tempset,0,0,&timeout);
 	if(res == 0)
 		goto done;
-
-
+	
+	if(res == -1){
+		XOPNotice("SOCKIT err: problem with select()");
+		goto done;
+	}
 
 	for (ii=0; ii<maxSockNum+1; ii++) { 
 		iters = 0;
