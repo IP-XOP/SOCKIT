@@ -158,7 +158,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	memset(buf,0,BUFLEN);
 	
-	if (res && FD_ISSET(sockNum, &tempset)) {            
+	if ((res>0) && FD_ISSET(sockNum, &tempset)) {            
 		do{			   
 #ifdef _MACINTOSH_
 			rc = recv(sockNum, buf, BUFLEN,0);
