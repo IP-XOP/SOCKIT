@@ -46,7 +46,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	struct sockaddr_in  sa;
     struct hostent*     hen;
 	waveBufferInfo bufferInfo;
-
+	
 	if(p->IDEncountered){
 		if(err = VarNameToDataType(p->IDVarName, &dataType)) 
 			goto done;

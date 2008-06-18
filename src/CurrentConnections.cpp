@@ -228,7 +228,7 @@ int CurrentConnections::checkRecvData(){
 	if(res == 0)
 		goto done;
 	
-	if(res == -1){
+	if(res == -1 && maxSockNum > 0){
 		XOPNotice("SOCKIT err: problem with select()");
 		goto done;
 	}
@@ -384,7 +384,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 			XOPNotice("SOCKIT error: processor must be f(textWave,variable)\r");
 		} else {
 			if(strlen(getWaveBufferInfo(sockNum)->processor)==0)
-				break;
+				continue;
 			callProcessor.entryRow = indices[0];
 			callProcessor.bufferWave = wav;
 			if(err = CallFunction(&fi,&callProcessor,&result))
