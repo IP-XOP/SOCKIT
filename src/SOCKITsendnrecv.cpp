@@ -26,6 +26,8 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 #endif
 	
 	MemoryStruct chunk;
+	MemoryStruct test;
+	
 	
 	XOP_FILE_REF fileToWrite = NULL;
 	char fileName[MAX_PATH_LEN+1];
@@ -49,7 +51,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	double timeoutVal=1.;
 	struct timeval timeout;
-	
+		
 	if(p->TIMEFlagEncountered){
 		timeoutVal = p->TIMEFlagNumber;
 	} else {
@@ -62,13 +64,6 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	memset(buf,0,BUFLEN+1);
 	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
 	
-    Handle ret = NULL;
-    ret = NewHandle(0);
-    if(ret == NULL){
-        err = NOMEM;
-        goto done;
-    }
-    
 	if (p->MSGEncountered) {
 		// Parameter: p->MSG (test for NULL handle before using)
 		if(!p->MSG){
@@ -206,8 +201,10 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	}
 	
-	if (err = PutCStringInHandle(chunk.getData(),ret))
+	if(!chunk.getData()){
+		chunk.WriteMemoryCallback('\0', sizeof(char), 1);
 		goto done;
+	} 
 	
 	if(err = pinstance->outputBufferDataToWave(sockNum, chunk.getData()))
 		goto done;
