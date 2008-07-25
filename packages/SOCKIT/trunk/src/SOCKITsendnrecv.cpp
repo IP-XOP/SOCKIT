@@ -116,7 +116,11 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	err = pinstance->checkRecvData();
 	
 	//send the message second;
-	res = select(maxSockNum+1,0,&tempset,0,&timeout);
+	
+	FD_ZERO(&tempset);
+	FD_SET(sockNum,&tempset);
+	res = select(sockNum+1,0,&tempset,0,&timeout);				
+//	res = select(maxSockNum+1,0,&tempset,0,&timeout);
 	if(res == -1){
 		XOPNotice ("SOCKIT err: select returned timeout");
 		err2=1;
@@ -146,10 +150,16 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	}
 	
 	//now get an immediate reply
-	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
+	
+	FD_ZERO(&tempset);
 	timeout.tv_sec = floor(timeoutVal);
 	timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
-	res = select(maxSockNum+1,&tempset,0,0,&timeout);
+	FD_SET(sockNum,&tempset);
+	res = select(sockNum+1,&tempset,0,0,&timeout);
+//	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
+//	timeout.tv_sec = floor(timeoutVal);
+//	timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
+//	res = select(maxSockNum+1,&tempset,0,0,&timeout);
 	
 	memset(buf,0,BUFLEN);
 	
