@@ -44,7 +44,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	char report[MAX_MSG_LEN+1];
 	char *output = NULL;
     
-	SOCKET maxSockNum = pinstance->getMaxSockNumber();
+//	SOCKET maxSockNum = pinstance->getMaxSockNumber();
 	
 	fd_set tempset;
 	FD_ZERO(&tempset);

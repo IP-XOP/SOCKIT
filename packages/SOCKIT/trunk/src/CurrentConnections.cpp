@@ -316,6 +316,9 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
     FunctionInfo fi;
     waveHndl wav = bufferWaves[sockNum].bufferWave;
 	
+	//do you want to debug?
+	bool DBUG = bufferWaves[sockNum].DBUG;
+	
 	double result;
 	
 	textH = NewHandle(10); 
@@ -340,7 +343,10 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 			goto done; 
 		
 		dimensionSizes[0] +=1;
-		dimensionSizes[1] = 2;    // 2 columns 
+		if(!DBUG)
+			dimensionSizes[1] = 2;    // 2 columns 
+		else
+			dimensionSizes[1] = 3;
 		dimensionSizes[2] = 0;    // 0 layers 
 		
 		if(err = MDChangeWave(wav,-1,dimensionSizes))
@@ -360,6 +366,16 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 		
 		if(err = MDSetTextWavePointValue(wav,indices,textH))
 			goto done;
+		
+		//to Debug put the socket number in the 3rd column
+		if(DBUG){
+			snprintf(timebuf,sizeof(timebuf),"%d",sockNum);
+			if(err = PutCStringInHandle(timebuf,textH))
+				goto done;
+			indices[1] = 2;
+			if(err = MDSetTextWavePointValue(wav,indices,textH))
+				goto done;
+		}
 		
 		if(dimensionSizes[0] > BUFFER_WAVE_LEN){
 			pointsToDelete = 10;//dimensionSizes[0] - BUFFER_WAVE_LEN;
