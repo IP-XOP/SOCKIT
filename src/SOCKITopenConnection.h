@@ -12,6 +12,10 @@
 struct SOCKITopenconnectionRuntimeParams {
 	// Flag parameters.
 
+	// Parameters for /DBUG flag group.
+	int DBUGFlagEncountered;
+	// There are no fields for this group because it has no parameters.
+	
 	// Parameters for /Q flag group.
 	int QFlagEncountered;
 	// There are no fields for this group because it has no parameters.

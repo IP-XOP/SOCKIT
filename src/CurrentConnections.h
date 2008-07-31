@@ -23,12 +23,14 @@ class waveBufferInfo {
 	bool toPrint;						/**<if set to true then incoming messages from the socket are printed in the history area.*/
 	char processor[MAX_OBJ_NAME+1];		/**<the name of an IGOR function that is notified when messages are received*/
 	char tokenizer[35];					/**<the output from the socket is tokenized using the characters in this array*/
+	bool DBUG;
 	
 	waveBufferInfo(){
 		bufferWave = NULL;
 		toPrint = true;
 		memset(processor, 0 , MAX_OBJ_NAME+1);
 		memset(tokenizer, 0 , 35);
+		DBUG = false;
 	};
 
 };

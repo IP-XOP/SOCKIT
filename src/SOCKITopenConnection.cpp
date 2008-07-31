@@ -9,7 +9,7 @@ RegisterSOCKITopenconnection(void)
 	char* runtimeStrVarList;
 
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
-	cmdTemplate = "SOCKITopenconnection/Q/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
+	cmdTemplate = "SOCKITopenconnection/DBUG/Q/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
 	runtimeNumVarList = "V_flag";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITopenconnectionRuntimeParams), (void*)ExecuteSOCKITopenconnection, 0);
@@ -56,7 +56,14 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		}
 	}
 	
+	
 	// Flag parameters.
+	if (p->DBUGFlagEncountered) {
+		bufferInfo.DBUG = true;
+	} else {
+		bufferInfo.DBUG = false;
+	}
+	
 	if (p->QFlagEncountered) {
 		bufferInfo.toPrint = false;
 	} else {
