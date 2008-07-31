@@ -212,7 +212,6 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	}
 	
 	if(!chunk.getData()){
-		chunk.WriteMemoryCallback('\0', sizeof(char), 1);
 		goto done;
 	} 
 	
@@ -229,7 +228,10 @@ done:
 		SetOperationStrVar("S_tcp", "");		
 	} else {
 		SetOperationNumVar("V_flag", 0);
-		SetOperationStrVar("S_tcp", chunk.getData());
+		if(chunk.getData())
+			SetOperationStrVar("S_tcp", chunk.getData());
+		else
+			SetOperationStrVar("S_tcp", "");
 	}
 	
 	if(output)
