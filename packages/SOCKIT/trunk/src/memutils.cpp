@@ -20,6 +20,14 @@ MemoryStruct::~MemoryStruct(){
 	memsize=0;
 }
 
+//resets the memory
+void MemoryStruct::reset(){
+	if(memory)
+		free(memory);
+	memsize = 0;
+	memory = NULL;
+}
+
 //return the size of the memory used
 size_t MemoryStruct::getMemSize(){
 	return memsize;
