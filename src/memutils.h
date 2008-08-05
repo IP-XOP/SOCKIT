@@ -54,7 +54,12 @@ public:
 	*Destructor frees the memory stored in the MemoryStruct object.
 	*/
 	~MemoryStruct();
-	
+
+	/**
+	*reset allows the MemoryStruct object to be reused
+	*/
+	void reset();
+		
 	private:
 	/**
 	*A platform independent reallocator of memory.  Uses malloc and realloc to assign more memory.

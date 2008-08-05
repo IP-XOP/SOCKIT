@@ -238,6 +238,8 @@ int CurrentConnections::checkRecvData(){
 		charsread = 0;
 		
 		if (FD_ISSET(ii, &tempset)) {
+			chunk.reset();	//clear the memory buffers so it can be reused
+			
 			do{
 				iters += 1;
 				//read the characters from the socket
@@ -378,7 +380,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 		}
 		
 		if(dimensionSizes[0] > BUFFER_WAVE_LEN){
-			pointsToDelete = 10;//dimensionSizes[0] - BUFFER_WAVE_LEN;
+			pointsToDelete = 300;//dimensionSizes[0] - BUFFER_WAVE_LEN;
 			indices[0] -= pointsToDelete;
 			
 			if(err = GetWavesDataFolder(wav,&dfH))

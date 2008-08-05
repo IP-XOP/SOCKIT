@@ -55,7 +55,7 @@
 #define BUFLEN 4096
 #define MAX_URL_LEN 256
 #define MAX_MSG_LEN 256
-#define BUFFER_WAVE_LEN 1500
+#define BUFFER_WAVE_LEN 3000
 
 
 
