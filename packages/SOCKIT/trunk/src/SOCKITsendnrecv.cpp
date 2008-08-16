@@ -25,9 +25,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	extern WSADATA globalWsaData;
 #endif
 	
-	MemoryStruct chunk;
-	MemoryStruct test;
-	
+	MemoryStruct chunk;	
 	
 	XOP_FILE_REF fileToWrite = NULL;
 	char fileName[MAX_PATH_LEN+1];
@@ -43,9 +41,13 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	char buf[BUFLEN+1];
 	char report[MAX_MSG_LEN+1];
 	char *output = NULL;
-    
-//	SOCKET maxSockNum = pinstance->getMaxSockNumber();
 	
+	xmlNode *added_node = NULL;
+	xmlNode *root_element = NULL;
+	xmlChar *encContent = NULL;
+	long year,month,day,hour,minute,second;
+	char timebuf[100];
+    	
 	fd_set tempset;
 	FD_ZERO(&tempset);
 	
@@ -61,7 +63,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	timeout.tv_sec = floor(timeoutVal);
 	timeout.tv_usec =  (int)(timeoutVal-(double)floor(timeoutVal))*1000000;
     
-	memset(buf,0,BUFLEN+1);
+	memset(buf,0,sizeof(buf));
 	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
 	
 	if (p->MSGEncountered) {
@@ -120,7 +122,6 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	FD_ZERO(&tempset);
 	FD_SET(sockNum,&tempset);
 	res = select(sockNum+1,0,&tempset,0,&timeout);				
-//	res = select(maxSockNum+1,0,&tempset,0,&timeout);
 	if(res == -1){
 		XOPNotice ("SOCKIT err: select returned timeout");
 		err2=1;
@@ -133,6 +134,26 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			XOPNotice(report);
 			output = NtoCR(buf, "\n","\r");
 			XOPNotice(output);
+			
+			//if there is a logfile then append and save
+			if(pinstance->getWaveBufferInfo(sockNum)->logDoc != NULL){
+				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(sockNum)->logDoc);
+				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(sockNum)->logDoc, BAD_CAST output);
+				added_node = xmlNewChild(root_element, NULL, BAD_CAST "SEND" ,encContent);
+				if(encContent != NULL){
+					xmlFree(encContent);
+					encContent = NULL;
+				}
+
+				GetTheTime(&year,&month,&day,&hour,&minute,&second);
+				snprintf(timebuf, 99, "%02ld/%02ld/%02ld %02ld:%02ld:%02ld",year,month,day,hour,minute,second);
+
+				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(sockNum)->logDoc, BAD_CAST timebuf);
+				xmlSetProp(added_node, BAD_CAST "time", encContent);
+				
+				xmlSaveFormatFileEnc(pinstance->getWaveBufferInfo(sockNum)->logFileNameStr , pinstance->getWaveBufferInfo(sockNum)->logDoc , NULL , 1);
+			}
+			
 			XOPNotice("\r");
 		} else if (rc < 0) {
 			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", sockNum );
@@ -156,21 +177,13 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
 	FD_SET(sockNum,&tempset);
 	res = select(sockNum+1,&tempset,0,0,&timeout);
-//	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
-//	timeout.tv_sec = floor(timeoutVal);
-//	timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
-//	res = select(maxSockNum+1,&tempset,0,0,&timeout);
 	
-	memset(buf,0,BUFLEN);
+	memset(buf,0,sizeof(buf));
 	
 	if ((res>0) && FD_ISSET(sockNum, &tempset)) {            
 		do{			   
-#ifdef _MACINTOSH_
 			rc = recv(sockNum, buf, BUFLEN,0);
-#endif
-#ifdef _WINDOWS_
-			rc = recv(sockNum, buf, BUFLEN,0);
-#endif
+
 			charsread += rc;
 			
 			if (rc < 0) { 
@@ -236,6 +249,9 @@ done:
 	
 	if(output)
 		free(output);
+	
+	if(encContent != NULL)
+		xmlFree(encContent);
 	
 	FD_ZERO(&tempset);
 	

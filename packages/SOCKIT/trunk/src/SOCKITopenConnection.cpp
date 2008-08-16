@@ -7,9 +7,9 @@ RegisterSOCKITopenconnection(void)
 	char* cmdTemplate;
 	char* runtimeNumVarList;
 	char* runtimeStrVarList;
-
+	
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
-	cmdTemplate = "SOCKITopenconnection/DBUG/Q/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
+	cmdTemplate = "SOCKITopenconnection/LOG=name/DBUG/Q/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
 	runtimeNumVarList = "V_flag";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITopenconnectionRuntimeParams), (void*)ExecuteSOCKITopenconnection, 0);
@@ -47,6 +47,15 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
     struct hostent*     hen;
 	waveBufferInfo bufferInfo;
 	
+	xmlNode *root_element = NULL;
+	xmlChar *entityEncoded = NULL;
+	char fnamepath[MAX_PATH_LEN+1];
+	char posixpath[MAX_PATH_LEN+1];
+	memset(fnamepath,0,sizeof(fnamepath));
+	char fname[MAX_FILENAME_LEN+1];
+	char a[10];
+	long year,month,day,hour,minute,second;
+
 	if(p->IDEncountered){
 		if(err = VarNameToDataType(p->IDVarName, &dataType)) 
 			goto done;
@@ -56,6 +65,29 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		}
 	}
 	
+	if(p->LOGFlagEncountered){
+		memset(fnamepath,0, sizeof(fnamepath));
+		memset(a,0,sizeof(a));
+		snprintf(a,9,"a.xml");
+
+		if(err = GetFullPathFromSymbolicPathAndFilePath(p->LOGFlagName,a,fnamepath))
+			goto done;
+		if(err = GetDirectoryAndFileNameFromFullPath(fnamepath, fnamepath, a))
+			goto done;
+			
+		if(FullPathPointsToFolder(fnamepath)){
+			GetTheTime(&year,&month,&day,&hour,&minute,&second);
+			snprintf(fname, MAX_FILENAME_LEN, "log%02ld%02ld%02ld%d%d%d.xml",year,month,day,hour,minute,second);
+			if(err = ConcatenatePaths(fnamepath,fname,fnamepath))
+				goto done;
+	#ifdef _MACINTOSH_
+			if(err = HFSToPosixPath(fnamepath,posixpath,0))
+				goto done;
+			memcpy(fnamepath,posixpath,sizeof(fnamepath));
+	#endif
+			memcpy(bufferInfo.logFileNameStr,fnamepath,sizeof(bufferInfo.logFileNameStr));
+		}
+	}
 	
 	// Flag parameters.
 	if (p->DBUGFlagEncountered) {
@@ -158,11 +190,36 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			goto done;
 		}
 	}
-		
+	
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum>0){
+		if(strlen(fnamepath)>0){
+			bufferInfo.logDoc = xmlNewDoc(BAD_CAST "1.0");
+			if(bufferInfo.logDoc == NULL){
+				XOPNotice("SOCKIT err: couldn't create logfile)\r");
+				goto done;
+			}
+			//create the root element
+			root_element=xmlNewNode(NULL , BAD_CAST "SOCKIT");
+			if(root_element == NULL){
+				XOPNotice("SOCKIT err: couldn't create logfile)\r");
+				goto done;
+			}
+			entityEncoded = xmlEncodeEntitiesReentrant(bufferInfo.logDoc, BAD_CAST host);
+			
+			xmlSetProp(root_element, BAD_CAST "IP", entityEncoded);
+			snprintf(report, sizeof(report), "%d",port);
+			if(entityEncoded != NULL){
+				xmlFree(entityEncoded);
+				entityEncoded = NULL;
+			}
+			entityEncoded = xmlEncodeEntitiesReentrant(bufferInfo.logDoc, BAD_CAST report);
+			xmlSetProp(root_element, BAD_CAST "port", BAD_CAST xmlEncodeEntitiesReentrant(bufferInfo.logDoc, BAD_CAST entityEncoded));		
+
+			root_element = xmlDocSetRootElement(bufferInfo.logDoc,root_element);
+		}
 		pinstance->addWorker(sockNum,bufferInfo);
-				
+		
 		if (p->PROCFlagEncountered) {
 			// Parameter: p->PROCFlagName
 			if(err = pinstance->registerProcessor(sockNum,p->PROCFlagName)){
@@ -173,6 +230,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		} else {
 			pinstance->registerProcessor(sockNum,"");
 		}
+		
 	}
 	
 done:
@@ -184,6 +242,9 @@ done:
 		err = SetOperationNumVar("V_flag",1);
 		err = StoreNumericDataUsingVarName(p->IDVarName,-1,0);
 	}
+	
+	if(entityEncoded!= NULL)
+		xmlFree(entityEncoded);
 	
 	return err;
 }

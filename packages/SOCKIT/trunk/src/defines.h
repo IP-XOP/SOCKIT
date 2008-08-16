@@ -39,6 +39,15 @@
 
 #include "XOPStandardHeaders.h"
 
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <libxml/xPath.h>
+#include <libxml/xmlstring.h>
+#include <libxml/xpathInternals.h>
+
+#define LIBXML_STATIC
+
+
 #define REQUIRES_IGOR_500 1 + FIRST_XOP_ERR
 #define NO_WINSOCK 2 + FIRST_XOP_ERR
 #define NO_INPUT_STRING 3 + FIRST_XOP_ERR
