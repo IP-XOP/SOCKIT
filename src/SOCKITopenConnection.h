@@ -11,6 +11,11 @@
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
 struct SOCKITopenconnectionRuntimeParams {
 	// Flag parameters.
+	
+	// Parameters for /LOG flag group.
+	int LOGFlagEncountered;
+	char LOGFlagName[MAX_OBJ_NAME+1];
+	int LOGFlagParamsSet[1];
 
 	// Parameters for /DBUG flag group.
 	int DBUGFlagEncountered;

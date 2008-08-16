@@ -13,27 +13,24 @@
 #include <algorithm>
 #include <vector>
 #include <string.h>
+#include <ctime>
+
 using namespace std;
 
-int GetHourMinuteSecond(long* h, long* m, long* s)
-{
-#ifdef _MACINTOSH_
-	DateTimeRec date;
-
-	GetTime(&date);
-	*h = date.hour;
-	*m = date.minute;
-	*s = date.second;
-#endif
-#ifdef _WINDOWS_
-	SYSTEMTIME st;
+int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, long *second){
+	time_t rawtime;
+	tm *theTime ;
 	
-	GetLocalTime(&st);
-	*h = st.wHour;
-	*m = st.wMinute;
-	*s = st.wSecond;
-#endif
-	return 0;
+			time(&rawtime);
+			theTime = localtime(&rawtime);
+			*year = -100+theTime->tm_year;
+			*month = 1+theTime->tm_mon;
+			*day = theTime->tm_mday;
+			*hour = theTime->tm_hour;
+			*minute = theTime->tm_min;
+			*second = theTime->tm_sec; 
+			return 0;
+			
 }
 
 
@@ -98,12 +95,18 @@ const waveBufferInfo* CurrentConnections::getWaveBufferInfo(SOCKET sockNum){
 
 int CurrentConnections::closeWorker(SOCKET sockNum){
 	int err = 0;
-
 	/* Disconnect from server */
 	if (FD_ISSET(sockNum, &(readSet))) { 
 		FD_CLR(sockNum, &(readSet)); 
 		close(sockNum);
 		resetMaxSocketNumber();
+		
+		if(getWaveBufferInfo(sockNum)->logDoc != NULL){
+			if(xmlSaveFormatFileEnc(getWaveBufferInfo(sockNum)->logFileNameStr , getWaveBufferInfo(sockNum)->logDoc , NULL , 1)){
+			}
+			xmlFreeDoc(getWaveBufferInfo(sockNum)->logDoc);
+		}
+		
 		//shut down the buffering
 		bufferWaves.erase(sockNum);
 		err = 0;
@@ -148,8 +151,8 @@ int CurrentConnections::registerProcessor(SOCKET sockNum, const char *processor)
 	
 	FunctionInfo fi;
     
-	memset(bufferWaves[sockNum].processor,0,MAX_OBJ_NAME);
-	strlcpy(bufferWaves[sockNum].processor,processor,MAX_OBJ_NAME);
+	memset(bufferWaves[sockNum].processor,0,sizeof(bufferWaves[sockNum].processor));
+	strlcpy(bufferWaves[sockNum].processor,processor,sizeof(bufferWaves[sockNum].processor));
 	
 	if(strlen(processor)==0){
 		goto done;
@@ -261,8 +264,6 @@ int CurrentConnections::checkRecvData(){
 					   goto done;
 				   }
 				}
-				timeout.tv_sec = 0;
-
 			}while (rc==BUFLEN);
 			
 			if(charsread>0){
@@ -311,8 +312,8 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 	char pointsToDeleteStr[MAXCMDLEN+1];
 	long pointsToDelete = 0;
 
-	long hour,min,sec;
-	char timebuf[10];
+	long year,month,day,hour,minute,second;
+	char timebuf[100];
 	
 	SOCKITcallProcessorStruct callProcessor;
     FunctionInfo fi;
@@ -321,6 +322,11 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 	//do you want to debug?
 	bool DBUG = bufferWaves[sockNum].DBUG;
 	
+	//if you want a logfile
+	xmlNode *added_node = NULL;
+	xmlNode *root_element = NULL;
+	xmlChar *encContent = NULL;
+
 	double result;
 	
 	textH = NewHandle(10); 
@@ -329,6 +335,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 		goto done;
 	}
 	
+
 	Tokenize(writebuffer, tokens, bufferWaves[sockNum].tokenizer);
 	
 	for(ii=0 ; ii< tokens.size(); ii++){
@@ -360,8 +367,9 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 		if(err = MDSetTextWavePointValue(wav,indices,textH))
 			goto done;
 		
-		GetHourMinuteSecond(&hour,&min,&sec);
-		snprintf(timebuf,sizeof(timebuf),"%02ld:%02ld:%02ld",hour,min,sec);
+		GetTheTime(&year,&month,&day,&hour,&minute,&second);
+		snprintf(timebuf, 99, "%02ld/%02ld/%02ld %02ld:%02ld:%02ld",year,month,day,hour,minute,second);
+
 		if(err = PutCStringInHandle(timebuf,textH))
 			goto done;
 		indices[1] = 1;
@@ -397,6 +405,21 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 				goto done;
 		}
 
+
+		//if there is a logfile then append and save
+		if(pinstance->getWaveBufferInfo(sockNum)->logDoc != NULL){
+				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(sockNum)->logDoc);
+				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(sockNum)->logDoc, BAD_CAST tokens.at(ii).c_str());
+				added_node = xmlNewChild(root_element, NULL, BAD_CAST "RECV" ,encContent);
+				if(encContent != NULL){
+					xmlFree(encContent);
+					encContent = NULL;
+				}
+				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(sockNum)->logDoc, BAD_CAST timebuf);
+				xmlSetProp(added_node, BAD_CAST "time", encContent);
+				xmlSaveFormatFileEnc(pinstance->getWaveBufferInfo(sockNum)->logFileNameStr , pinstance->getWaveBufferInfo(sockNum)->logDoc , NULL , 1);
+		}
+			
 		//call a processor for each buffer entry to see if there's anything it has to do with it.
 		if(checkProcessor(sockNum,  &fi)){
 			XOPNotice("SOCKIT error: processor must be f(textWave,variable)\r");
@@ -409,10 +432,14 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 				goto done;
 		}
 		
-        WaveHandleModified(wav);
+
+		WaveHandleModified(wav);
 	}
 done:
 		if(textH!=NULL)
 			DisposeHandle(textH);
+		if(encContent != NULL)
+			xmlFree(encContent);
+			
 	return err;
 }

@@ -33,6 +33,13 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	char report[MAX_MSG_LEN+1];
 	char *output = NULL;			//get rid of the carriage returns
 
+	xmlNode *added_node = NULL;
+	xmlNode *root_element = NULL;
+	xmlChar *encContent = NULL;
+	long year,month,day,hour,minute,second;
+	char timebuf[100];
+
+	
 	SOCKET maxSockNum = pinstance->getMaxSockNumber();
 	
 	fd_set tempset;
@@ -42,7 +49,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	timeout.tv_sec = 5;
 	timeout.tv_usec = 0;
     
-	memset(buf,0,BUFLEN+1);
+	memset(buf,0,sizeof(buf));
 	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
 
 	if(!p->MSGEncountered){
@@ -91,6 +98,25 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 			output = NtoCR(buf, "\n","\r");
 			XOPNotice(output);
 			XOPNotice("\r");
+
+			//if there is a logfile then append and save
+			if(pinstance->getWaveBufferInfo(socketToWrite)->logDoc != NULL){
+				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(socketToWrite)->logDoc);
+				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(socketToWrite)->logDoc, BAD_CAST output);
+				added_node = xmlNewChild(root_element, NULL, BAD_CAST "SEND" ,encContent);
+				if(encContent != NULL){
+					xmlFree(encContent);
+					encContent = NULL;
+				}
+
+				GetTheTime(&year,&month,&day,&hour,&minute,&second);
+				snprintf(timebuf, 99, "%02ld/%02ld/%02ld %02ld:%02ld:%02ld",year,month,day,hour,minute,second);
+
+				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(socketToWrite)->logDoc, BAD_CAST timebuf);
+				xmlSetProp(added_node, BAD_CAST "time", encContent);
+				
+				xmlSaveFormatFileEnc(pinstance->getWaveBufferInfo(socketToWrite)->logFileNameStr , pinstance->getWaveBufferInfo(socketToWrite)->logDoc , NULL , 1);
+			}
 			goto done;
 		} else if (rc < 0) {
 			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", socketToWrite );
@@ -110,6 +136,9 @@ done:
 	if(output!= NULL)
 		free(output);
 	
+	if(encContent != NULL)
+		xmlFree(encContent);
+		
 	if(err || err2){
 		SetOperationNumVar("V_flag", 1);
 	} else {

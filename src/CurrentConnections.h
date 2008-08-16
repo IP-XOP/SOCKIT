@@ -24,16 +24,22 @@ class waveBufferInfo {
 	char processor[MAX_OBJ_NAME+1];		/**<the name of an IGOR function that is notified when messages are received*/
 	char tokenizer[35];					/**<the output from the socket is tokenized using the characters in this array*/
 	bool DBUG;
+	xmlDoc *logDoc;
+	char logFileNameStr[MAX_PATH_LEN+1];
 	
 	waveBufferInfo(){
 		bufferWave = NULL;
 		toPrint = true;
-		memset(processor, 0 , MAX_OBJ_NAME+1);
-		memset(tokenizer, 0 , 35);
+		memset(processor, 0 , sizeof(processor));
+		memset(tokenizer, 0 , sizeof(tokenizer));
 		DBUG = false;
+		logDoc = NULL;
+		memset(logFileNameStr,0,sizeof(logFileNameStr));
 	};
 
 };
+
+int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, long *second);
 
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
 /**
