@@ -25,7 +25,7 @@ class waveBufferInfo {
 	char tokenizer[35];					/**<the output from the socket is tokenized using the characters in this array*/
 	bool DBUG;
 	xmlDoc *logDoc;
-	char logFileNameStr[MAX_PATH_LEN+1];
+	XOP_FILE_REF logFile;
 	
 	waveBufferInfo(){
 		bufferWave = NULL;
@@ -34,7 +34,7 @@ class waveBufferInfo {
 		memset(tokenizer, 0 , sizeof(tokenizer));
 		DBUG = false;
 		logDoc = NULL;
-		memset(logFileNameStr,0,sizeof(logFileNameStr));
+		logFile = NULL;
 	};
 
 };
