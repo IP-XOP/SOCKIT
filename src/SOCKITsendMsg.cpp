@@ -7,7 +7,7 @@ RegisterSOCKITsendmsg(void)
 	char* cmdTemplate;
 	char* runtimeNumVarList;
 	char* runtimeStrVarList;
-
+	
 	// NOTE: If you change this template, you must change the SOCKITsendmsgRuntimeParams structure as well.
 	cmdTemplate = "SOCKITsendmsg number:ID,string:MSG";
 	runtimeNumVarList = "V_Flag";
@@ -21,10 +21,10 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	
 	extern CurrentConnections *pinstance;
 	
-	#ifdef _WINDOWS_
+#ifdef _WINDOWS_
 	extern WSADATA globalWsaData;
-	#endif
-
+#endif
+	
     int rc = 0;
     SOCKET socketToWrite = -1;
 	int res = 0;
@@ -32,13 +32,13 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	char buf[BUFLEN+1];
 	char report[MAX_MSG_LEN+1];
 	char *output = NULL;			//get rid of the carriage returns
-
+	
 	xmlNode *added_node = NULL;
 	xmlNode *root_element = NULL;
 	xmlChar *encContent = NULL;
 	long year,month,day,hour,minute,second;
 	char timebuf[100];
-
+	
 	
 	SOCKET maxSockNum = pinstance->getMaxSockNumber();
 	
@@ -51,7 +51,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
     
 	memset(buf,0,sizeof(buf));
 	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
-
+	
 	if(!p->MSGEncountered){
 		err = OH_EXPECTED_STRING;
 		goto done;
@@ -64,7 +64,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 		err = OH_EXPECTED_NUMBER;
 		goto done;
 	}
-
+	
 	socketToWrite = (SOCKET)p->ID;
 	
 	if (socketToWrite <= 0) {
@@ -98,7 +98,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 			output = NtoCR(buf, "\n","\r");
 			XOPNotice(output);
 			XOPNotice("\r");
-
+			
 			//if there is a logfile then append and save
 			if(pinstance->getWaveBufferInfo(socketToWrite)->logDoc != NULL){
 				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(socketToWrite)->logDoc);
@@ -108,14 +108,17 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 					xmlFree(encContent);
 					encContent = NULL;
 				}
-
+				
 				GetTheTime(&year,&month,&day,&hour,&minute,&second);
 				snprintf(timebuf, 99, "%02ld/%02ld/%02ld %02ld:%02ld:%02ld",year,month,day,hour,minute,second);
-
+				
 				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(socketToWrite)->logDoc, BAD_CAST timebuf);
 				xmlSetProp(added_node, BAD_CAST "time", encContent);
 				
-				xmlSaveFormatFileEnc(pinstance->getWaveBufferInfo(socketToWrite)->logFileNameStr , pinstance->getWaveBufferInfo(socketToWrite)->logDoc , NULL , 1);
+				rewind((pinstance->getWaveBufferInfo(socketToWrite)->logFile));
+				if(xmlDocFormatDump((pinstance->getWaveBufferInfo(socketToWrite)->logFile),pinstance->getWaveBufferInfo(socketToWrite)->logDoc,0)==-1){
+					XOPCloseFile((pinstance->getWaveBufferInfo(socketToWrite)->logFile));
+				}
 			}
 			goto done;
 		} else if (rc < 0) {
@@ -131,21 +134,21 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 		err2 = 1;
 		goto done;
 	}
-		
+	
 done:
 	if(output!= NULL)
 		free(output);
 	
 	if(encContent != NULL)
 		xmlFree(encContent);
-		
+	
 	if(err || err2){
 		SetOperationNumVar("V_flag", 1);
 	} else {
 		SetOperationNumVar("V_flag", 0);
 	}
-		
+	
 	FD_ZERO(&tempset);
-
-return err;
+	
+	return err;
 }

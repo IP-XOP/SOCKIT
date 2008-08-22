@@ -151,7 +151,10 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(sockNum)->logDoc, BAD_CAST timebuf);
 				xmlSetProp(added_node, BAD_CAST "time", encContent);
 				
-				xmlSaveFormatFileEnc(pinstance->getWaveBufferInfo(sockNum)->logFileNameStr , pinstance->getWaveBufferInfo(sockNum)->logDoc , NULL , 1);
+				rewind((pinstance->getWaveBufferInfo(sockNum)->logFile));
+				if(xmlDocFormatDump((pinstance->getWaveBufferInfo(sockNum)->logFile),pinstance->getWaveBufferInfo(sockNum)->logDoc,0)==-1){
+					XOPCloseFile((pinstance->getWaveBufferInfo(sockNum)->logFile));
+				}
 			}
 			
 			XOPNotice("\r");

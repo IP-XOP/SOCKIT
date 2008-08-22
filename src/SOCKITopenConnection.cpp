@@ -50,7 +50,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	xmlNode *root_element = NULL;
 	xmlChar *entityEncoded = NULL;
 	char fnamepath[MAX_PATH_LEN+1];
-	char posixpath[MAX_PATH_LEN+1];
+	char nativepath[MAX_PATH_LEN+1];
 	memset(fnamepath,0,sizeof(fnamepath));
 	char fname[MAX_FILENAME_LEN+1];
 	char a[10];
@@ -80,12 +80,10 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			snprintf(fname, MAX_FILENAME_LEN, "log%02ld%02ld%02ld%d%d%d.xml",year,month,day,hour,minute,second);
 			if(err = ConcatenatePaths(fnamepath,fname,fnamepath))
 				goto done;
-	#ifdef _MACINTOSH_
-			if(err = HFSToPosixPath(fnamepath,posixpath,0))
+			if(err = GetNativePath(fnamepath,nativepath))
 				goto done;
-			memcpy(fnamepath,posixpath,sizeof(fnamepath));
-	#endif
-			memcpy(bufferInfo.logFileNameStr,fnamepath,sizeof(bufferInfo.logFileNameStr));
+			if(err = XOPOpenFile(nativepath,1,&bufferInfo.logFile))
+				goto done;
 		}
 	}
 	
@@ -215,7 +213,6 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			}
 			entityEncoded = xmlEncodeEntitiesReentrant(bufferInfo.logDoc, BAD_CAST report);
 			xmlSetProp(root_element, BAD_CAST "port", BAD_CAST xmlEncodeEntitiesReentrant(bufferInfo.logDoc, BAD_CAST entityEncoded));		
-
 			root_element = xmlDocSetRootElement(bufferInfo.logDoc,root_element);
 		}
 		pinstance->addWorker(sockNum,bufferInfo);
