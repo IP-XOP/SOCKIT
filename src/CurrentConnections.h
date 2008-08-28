@@ -17,6 +17,9 @@
 /**
 *Stores relevant information about what to do with the messages received from the socket.
 */
+double roundDouble(double val);
+long doubleToLong(double val);
+
 class waveBufferInfo {
 	public:
 	waveHndl bufferWave;				/**<stores output from the socket. */ 
@@ -78,6 +81,14 @@ class CurrentConnections{
 	*Updates the number of the highest socket descriptor open.
 	*/
 	void resetMaxSocketNumber();
+	
+	/**
+	*finds out whether a given socket is open
+	*@param query The sockit being queried
+	*@param sockNum a pointer to an integer containing the valid sockit number.
+	*@return 1 if open, 0 if closed
+	*/
+	int isSockitOpen(double query, SOCKET *sockNum);
 	
 	/**
 	*Closes an open socket.

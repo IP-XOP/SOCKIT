@@ -62,9 +62,13 @@ BEGIN
 		"SOCKITcloseConnection\0",
 		F_IO | F_EXTERNAL,
 		NT_FP64,
+	       	NT_FP64,
+    	   	0,
+		"SOCKITisItOpen\0",
+		F_IO | F_EXTERNAL,
 		NT_FP64,
-		0,
-
+    		  NT_FP64,
+		      0,
 		"SOCKITregisterProcessor\0",							/* function name */
 		F_IO | F_EXTERNAL,					/* function category (string) */
 		NT_FP64,						/* return value type */			

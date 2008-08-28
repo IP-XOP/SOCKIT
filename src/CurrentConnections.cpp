@@ -8,7 +8,6 @@
  */
 #include "CurrentConnections.h"
 
-
 #include <map>
 #include <algorithm>
 #include <vector>
@@ -16,6 +15,35 @@
 #include <ctime>
 
 using namespace std;
+
+/*
+	roundDouble returns a rounded value for val
+ */
+double
+roundDouble(double val){
+	double retval;
+	if(val>0){
+		if(val-floor(val) < 0.5){
+			retval = floor(val);
+		} else {
+			retval = ceil(val);
+		}
+	} else {
+		if(val-floor(val) <= 0.5){
+			retval = floor(val);
+		} else {
+			retval = ceil(val);
+		}
+	}
+	return retval;
+}
+
+long doubleToLong(double val){
+	long retval;
+	DoubleToLong(&val, &retval,1);
+	
+	return retval;
+}
 
 int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, long *second){
 	time_t rawtime;
@@ -174,6 +202,33 @@ done:
 	return err;
 }
 
+int CurrentConnections::isSockitOpen(double query,SOCKET *sockNum){
+	int retval=0;
+	*sockNum = (SOCKET)-1;
+	double roundedVal;
+	long intVal;
+	
+	if(IsNaN64(&query))
+		return 0;
+	if(IsINF64(&query))
+		return 0;
+	if(query<=0)
+		return 0;
+	
+	roundedVal = roundDouble(query);
+	intVal = doubleToLong(roundedVal);
+	if(intVal<0)
+		return 0;
+	
+	if(FD_ISSET(intVal,pinstance->getReadSet())){
+		*sockNum = (SOCKET)intVal;
+		retval = 1;
+	 } else
+		retval = 0;
+	
+	return retval;
+}
+
 int CurrentConnections::checkProcessor(SOCKET sockNum, FunctionInfo *fip){
 	int err=0;
 	
@@ -253,9 +308,11 @@ int CurrentConnections::checkRecvData(){
 				rc = recv(ii, buf, BUFLEN,0);
 				charsread += rc;
 				
-				if (rc <= 0 && iters == 1) { 
-					snprintf(report,sizeof(report),"SOCKIT err: socket descriptor %d, disconnection???\r", ii );
-					XOPNotice(report);
+				if (rc <= 0 && iters == 1) {
+					if(bufferWaves[ii].toPrint){
+						snprintf(report,sizeof(report),"SOCKIT err: socket descriptor %d, disconnection???\r", ii );
+						XOPNotice(report);
+					}
 					// Closed connection or error 
 					if(pinstance->closeWorker(ii))
 						XOPNotice("SOCKIT error: SOCKIT tried to remove socket that wasn't open\r");
@@ -450,3 +507,5 @@ done:
 	
 	return err;
 }
+
+

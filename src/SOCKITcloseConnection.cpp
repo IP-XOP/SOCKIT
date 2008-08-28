@@ -16,7 +16,8 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 		goto done;
 	}
 	
-	socketToClose = (SOCKET)p->socketToClose;
+	
+	socketToClose = (SOCKET)doubleToLong(roundDouble(p->socketToClose));
 
 	if(socketToClose == -1){
 		for (ii=0; ii< pinstance->getMaxSockNumber()+1 ; ii+=1){
@@ -27,17 +28,17 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 			} 
 		}
 	} else {
-		if (FD_ISSET(socketToClose, pinstance->getReadSet())) { 
+		if(pinstance->isSockitOpen(p->socketToClose,&socketToClose)){
+			if(pinstance->getWaveBufferInfo(socketToClose)->toPrint){
+				snprintf(report,sizeof(report),"SOCKITmsg:  Closed connection to socket descriptor %d\r", socketToClose);
+				XOPNotice(report);
+			}
 			p->retval = pinstance->closeWorker(socketToClose);
-			snprintf(report,sizeof(report),"SOCKITmsg:  Closed connection to socket descriptor %d\r", socketToClose);
-			XOPNotice(report);
 		} else {
-			snprintf(report,sizeof(report),"SOCKIT err: there is no open socket with descriptor number %d\r", socketToClose);
-			XOPNotice(report);
+			XOPNotice("SOCKIT err: there is no open socket with that descriptor number\r");
 			err = -1;
 		}
 	}
-	
 	
 done:
 		if(err)

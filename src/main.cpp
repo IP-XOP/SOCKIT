@@ -11,6 +11,7 @@
 #include "SOCKITprocessor.h"
 #include "SOCKITcloseConnection.h"
 #include "SOCKITsendnrecv.h"
+#include "SOCKITisItOpen.h"
 
 #ifdef _MACINTOSH_
 HOST_IMPORT int main(IORecHandle ioRecHandle);
@@ -84,6 +85,9 @@ RegisterFunction()
 			return((long)SOCKITcloseConnection);
 			break;
 		case 1:
+			return((long)SOCKITisItOpen);
+			break;
+		case 2:
 			return((long)SOCKITregisterProcessor);
             break;
 	}
