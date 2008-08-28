@@ -154,7 +154,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	/* allocate a socket */
 	sockNum = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockNum < 0) {
-		XOPNotice("SOCKITmsg: Failed to create new socket\r");
+		if(!p->QFlagEncountered)
+			XOPNotice("SOCKITmsg: Failed to create new socket\r");
 		goto done;
 	}
 	
@@ -170,11 +171,14 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	if(FD_ISSET(sockNum, &tempset)){
 		if(rc==0){
-			snprintf(report,sizeof(report),"SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
-			XOPNotice(report);
+			if(!p->QFlagEncountered){
+				snprintf(report,sizeof(report),"SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
+				XOPNotice(report);
+			}
 		} else {
 			perror("Error failed because:");
-			XOPNotice("SOCKIT err: failed to connect\r");
+			if(!p->QFlagEncountered)
+				XOPNotice("SOCKIT err: failed to connect\r");
 			close(sockNum);
 			sockNum = -1;
 			goto done;
@@ -182,7 +186,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	} else {
 		if( rc !=0){
 			perror("Error failed because:");
-			XOPNotice("SOCKIT err: timeout while waiting for new connection\r");
+			if(!p->QFlagEncountered)
+				XOPNotice("SOCKIT err: timeout while waiting for new connection\r");
 			close(sockNum);
 			sockNum = -1;
 			goto done;
@@ -194,13 +199,15 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		if(strlen(fnamepath)>0){
 			bufferInfo.logDoc = xmlNewDoc(BAD_CAST "1.0");
 			if(bufferInfo.logDoc == NULL){
-				XOPNotice("SOCKIT err: couldn't create logfile)\r");
+				if(!p->QFlagEncountered)
+					XOPNotice("SOCKIT err: couldn't create logfile)\r");
 				goto done;
 			}
 			//create the root element
 			root_element=xmlNewNode(NULL , BAD_CAST "SOCKIT");
 			if(root_element == NULL){
-				XOPNotice("SOCKIT err: couldn't create logfile)\r");
+				if(!p->QFlagEncountered)
+					XOPNotice("SOCKIT err: couldn't create logfile)\r");
 				goto done;
 			}
 			entityEncoded = xmlEncodeEntitiesReentrant(bufferInfo.logDoc, BAD_CAST host);
@@ -221,7 +228,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			// Parameter: p->PROCFlagName
 			if(err = pinstance->registerProcessor(sockNum,p->PROCFlagName)){
 				err = PROCESSOR_NOT_AVAILABLE;
-				XOPNotice("SOCKIT err: processor must be f(textWave,variable)\r");
+				if(!p->QFlagEncountered)
+					XOPNotice("SOCKIT err: processor must be f(textWave,variable)\r");
 				goto done;
 			}
 		} else {

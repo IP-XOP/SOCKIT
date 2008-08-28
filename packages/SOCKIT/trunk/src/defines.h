@@ -15,7 +15,7 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <sys/time.h>
-#define SOCKET int
+#define SOCKET long
 #endif
 
 #ifdef _WINDOWS_

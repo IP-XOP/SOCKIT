@@ -65,9 +65,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 		goto done;
 	}
 	
-	socketToWrite = (SOCKET)p->ID;
-	
-	if (socketToWrite <= 0) {
+	if(!pinstance->isSockitOpen(p->ID,&socketToWrite)){
 		snprintf(report,sizeof(report),"SOCKIT err: socket not connected %d\r", socketToWrite);
 		XOPNotice(report);
 		err2 = 1;
@@ -86,19 +84,21 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	
 	res = select(maxSockNum+1,0,&tempset,0,&timeout);
 	if(res == -1){
-		XOPNotice ("SOCKIT err: select returned -1");
+		if(pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true)
+			XOPNotice ("SOCKIT err: select returned -1");
 		err2 = 1;
         goto done;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
 		rc = send(socketToWrite,buf,strlen(buf),0);
-		if(rc >= 0 && pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true){
+		if(rc >= 0){
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", socketToWrite);
-			XOPNotice(report);
 			output = NtoCR(buf, "\n","\r");
-			XOPNotice(output);
-			XOPNotice("\r");
-			
+			if( pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true){
+				XOPNotice(report);
+				XOPNotice(output);
+				XOPNotice("\r");
+			}			
 			//if there is a logfile then append and save
 			if(pinstance->getWaveBufferInfo(socketToWrite)->logDoc != NULL){
 				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(socketToWrite)->logDoc);
@@ -121,16 +121,17 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 				}
 			}
 			goto done;
-		} else if (rc < 0) {
+		} else if (rc < 0) {// Closed connection or error
 			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", socketToWrite );
-			XOPNotice(report);
-			// Closed connection or error 
+			if(pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true)
+				XOPNotice(report);
 			pinstance->closeWorker(socketToWrite);
 			err2 = 1;
 		}
 	} else {
-		snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", socketToWrite);
-		XOPNotice(report);
+			snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", socketToWrite);
+			if(pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true)
+				XOPNotice(report);
 		err2 = 1;
 		goto done;
 	}

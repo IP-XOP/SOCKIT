@@ -66,7 +66,12 @@ resource 'XOPF' (1100) {
 		NT_FP64,
 		{
 		NT_FP64,
-
+		},
+		"SOCKITisItOpen",
+		F_IO | F_EXTERNAL,
+		NT_FP64,
+		{
+		NT_FP64,
 		},
 		"SOCKITregisterProcessor",							/* function name */
 		F_IO | F_EXTERNAL,					/* function category (string) */

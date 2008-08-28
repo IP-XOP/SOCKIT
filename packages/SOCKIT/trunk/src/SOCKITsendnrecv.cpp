@@ -79,15 +79,12 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	}
 	
-	if (p->IDEncountered) {
-		// Parameter: p->ID
-		sockNum = (SOCKET) p->ID;
-	} else {
+	if (!p->IDEncountered){
 		err = OH_EXPECTED_NUMBER;
 		goto done;
 	}
 	
-	if (sockNum <= 0) {
+	if(!pinstance->isSockitOpen(p->ID,&sockNum)){
 		err = SOCKET_NOT_CONNECTED;
 		goto done;
 	} else {
@@ -129,12 +126,14 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	}
 	if(FD_ISSET(sockNum,&tempset)){
 		rc = send(sockNum,buf,strlen(buf),0);
-		if(rc >= 0 && pinstance->getWaveBufferInfo(sockNum)->toPrint == true){
+		if(rc >= 0){
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", sockNum);
-			XOPNotice(report);
 			output = NtoCR(buf, "\n","\r");
-			XOPNotice(output);
-			
+			if( pinstance->getWaveBufferInfo(sockNum)->toPrint == true){
+				XOPNotice(report);
+				XOPNotice(output);
+				XOPNotice("\r");
+			}
 			//if there is a logfile then append and save
 			if(pinstance->getWaveBufferInfo(sockNum)->logDoc != NULL){
 				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(sockNum)->logDoc);
@@ -156,11 +155,11 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 					XOPCloseFile((pinstance->getWaveBufferInfo(sockNum)->logFile));
 				}
 			}
-			
-			XOPNotice("\r");
 		} else if (rc < 0) {
-			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", sockNum );
-			XOPNotice(report);
+			if(pinstance->getWaveBufferInfo(sockNum)->toPrint == true){
+				snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", sockNum );
+				XOPNotice(report);
+			}
 			// Closed connection or error 
 			pinstance->closeWorker(sockNum);
 			err2=1;
@@ -168,7 +167,8 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		}
 	} else {
 		snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", sockNum);
-		XOPNotice(report);
+		if(pinstance->getWaveBufferInfo(sockNum)->toPrint == true)
+			XOPNotice(report);
 		err2=1;
 		goto done;
 	}
@@ -189,9 +189,10 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 
 			charsread += rc;
 			
-			if (rc < 0) { 
+			if (rc < 0) {
 				snprintf(report,sizeof(report),"SOCKIT err: problem reading socket descriptor %d, disconnection???\r", sockNum );
-				XOPNotice(report);
+				if(pinstance->getWaveBufferInfo(sockNum)->toPrint == true)
+					XOPNotice(report);
 				// Closed connection or error 
 				pinstance->closeWorker(sockNum);
 				err2=1;
@@ -220,7 +221,8 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		}while(res>0);
 	} else if(res==-1) {
 		snprintf(report,sizeof(report),"SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
-		XOPNotice(report);
+		if(pinstance->getWaveBufferInfo(sockNum)->toPrint == true)
+			XOPNotice(report);
 		// Closed connection or error 
 		pinstance->closeWorker(sockNum);
 		err2=1;
