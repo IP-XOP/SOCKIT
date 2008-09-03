@@ -85,7 +85,8 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	}
 	
 	if(!pinstance->isSockitOpen(p->ID,&sockNum)){
-		err = SOCKET_NOT_CONNECTED;
+		err2 = SOCKET_NOT_CONNECTED;
+		XOPNotice("SOCKIT err: socket not connected");
 		goto done;
 	} else {
 		if(!FD_ISSET(sockNum,&tempset)){
