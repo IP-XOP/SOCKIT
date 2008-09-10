@@ -9,7 +9,7 @@ RegisterSOCKITsendnrecv(void)
 	char* runtimeStrVarList;
 	
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
-	cmdTemplate = "SOCKITsendnrecv/FILE=string/TIME=number/SMAL number:ID,string:MSG";
+	cmdTemplate = "SOCKITsendnrecv/FILE=string/TIME=number/SMAL number:ID,string:MSG [,varname:ret]";
 	runtimeNumVarList = "V_Flag";
 	runtimeStrVarList = "S_tcp";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITsendnrecvRuntimeParams), (void*)ExecuteSOCKITsendnrecv, 0);
@@ -86,9 +86,22 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	}
 	
-	if (!p->IDEncountered){
+	if (!p->IDEncountered) {
 		err = OH_EXPECTED_NUMBER;
 		goto done;
+	}
+	
+	if (p->retEncountered) {
+		if (p->retParamsSet[0]) {
+			// Optional parameter: p->ret
+			int dataTypePtr;
+			if(err = VarNameToDataType(p->ret, &dataTypePtr))
+				goto done;
+			if(dataTypePtr){
+				err = OH_EXPECTED_VARNAME;
+				goto done;
+			}
+		}
 	}
 	
 	if(!pinstance->isSockitOpen(p->ID,&sockNum)){
@@ -254,18 +267,20 @@ done:
 		if(XOPCloseFile(fileToWrite))
 			err = PROBLEM_WRITING_TO_FILE;
 	}
+	if(p->retEncountered && err==0 && err2 == 0 && chunk.getData())
+		err = StoreStringDataUsingVarName(p->ret,chunk.getData(),chunk.getMemSize());
+	else if(err==0 && err2 == 0  && chunk.getData()){
+		char nul[1];
+		nul[0] = 0x00;
+		chunk.WriteMemoryCallback(&nul, sizeof(char), 1);
+		SetOperationStrVar("S_tcp", chunk.getData());
+	}
+	
 	if(err || err2){
-		SetOperationNumVar("V_flag", 1);
-		SetOperationStrVar("S_tcp", "");		
-	} else {
 		SetOperationNumVar("V_flag", 0);
-		if(chunk.getData()){
-			//make sure the string is NULL terminated
-			char nul[1];
-			nul[0] = 0x00;
-			chunk.WriteMemoryCallback(&nul, sizeof(char), 1);
-			SetOperationStrVar("S_tcp", chunk.getData());
-		} else
+		if(p->retEncountered)
+			StoreStringDataUsingVarName(p->ret,"",0);
+		else
 			SetOperationStrVar("S_tcp", "");
 	}
 	
