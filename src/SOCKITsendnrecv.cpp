@@ -267,23 +267,24 @@ done:
 		if(XOPCloseFile(fileToWrite))
 			err = PROBLEM_WRITING_TO_FILE;
 	}
-	if(p->retEncountered && err==0 && err2 == 0 && chunk.getData())
-		err = StoreStringDataUsingVarName(p->ret,chunk.getData(),chunk.getMemSize());
-	else if(err==0 && err2 == 0  && chunk.getData()){
+	if(err==0 && err2 == 0 && chunk.getData()){
+		if(p->retEncountered)
+			err = StoreStringDataUsingVarName(p->ret,chunk.getData(),chunk.getMemSize());
 		char nul[1];
 		nul[0] = 0x00;
 		chunk.WriteMemoryCallback(&nul, sizeof(char), 1);
 		SetOperationStrVar("S_tcp", chunk.getData());
-	}
-	
-	if(err || err2){
-		SetOperationNumVar("V_flag", 0);
+	} else {
 		if(p->retEncountered)
-			StoreStringDataUsingVarName(p->ret,"",0);
-		else
-			SetOperationStrVar("S_tcp", "");
+			err = StoreStringDataUsingVarName(p->ret,"",0);
+		SetOperationStrVar("S_tcp", "");
 	}
 	
+	if(err || err2)
+		SetOperationNumVar("V_flag", 1);
+	else 
+		SetOperationNumVar("V_flag", 0);
+
 	if(encContent != NULL)
 		xmlFree(encContent);
 	
