@@ -129,7 +129,7 @@ int CurrentConnections::closeWorker(SOCKET sockNum){
 		close(sockNum);
 		resetMaxSocketNumber();
 		
-		if(getWaveBufferInfo(sockNum)->logDoc != NULL ){
+/*		if(getWaveBufferInfo(sockNum)->logDoc != NULL ){
 			rewind((pinstance->getWaveBufferInfo(sockNum)->logFile));
 			if(xmlDocFormatDump((pinstance->getWaveBufferInfo(sockNum)->logFile),pinstance->getWaveBufferInfo(sockNum)->logDoc,0)==-1){
 				XOPCloseFile((pinstance->getWaveBufferInfo(sockNum)->logFile));
@@ -138,8 +138,10 @@ int CurrentConnections::closeWorker(SOCKET sockNum){
 			xmlFreeDoc(getWaveBufferInfo(sockNum)->logDoc);
 			XOPCloseFile((pinstance->getWaveBufferInfo(sockNum)->logFile));
 		}
-		
+*/		
 		//shut down the buffering
+		//remove the memory
+		bufferWaves[sockNum].~waveBufferInfo();
 		bufferWaves.erase(sockNum);
 		err = 0;
 	} else {
@@ -276,7 +278,6 @@ int CurrentConnections::checkRecvData(){
 	MemoryStruct chunk;
 	
 	char report[MAX_MSG_LEN+1];
-	char* output = NULL;
 	
 	fd_set tempset;
 	FD_ZERO(&tempset);
@@ -291,7 +292,7 @@ int CurrentConnections::checkRecvData(){
 		goto done;
 	
 	if(res == -1 && maxSockNum > 0){
-		XOPNotice("SOCKIT err: problem with select()");
+		XOPNotice("SOCKIT err: problem with select()\r");
 		goto done;
 	}
 	
@@ -328,18 +329,17 @@ int CurrentConnections::checkRecvData(){
 			}while (rc==BUFLEN);
 			
 			if(charsread>0){
-				if(err = outputBufferDataToWave(ii, chunk.getData()))
+				if(err = outputBufferDataToWave(ii, chunk.getData(), chunk.getMemSize()))
 					goto done;
 				if(bufferWaves[ii].toPrint == true){
 					snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", ii);
 					XOPNotice(report);
-					output = NtoCR(chunk.getData(), "\n","\r");
-					XOPNotice(output);
+					
+					string output;
+					output = string(chunk.getData(),chunk.getMemSize());
+					find_and_replace(output,"\n","\r");
+					XOPNotice(output.c_str());
 					XOPNotice("\r");
-					if(output){
-						free(output);
-						output = NULL;
-					}
 				}
 			}
 			
@@ -349,13 +349,11 @@ int CurrentConnections::checkRecvData(){
 	
 done:
 	FD_ZERO(&tempset);
-	if(output!= NULL)
-		free(output);
 	
 	return err;
 }
 
-int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *writebuffer){
+int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *writebuffer, size_t szwritebuffer){
 	int err = 0;
 	
 	long numDimensions = 2; 
@@ -396,12 +394,11 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 		goto done;
 	}
 	
-	
-	Tokenize(writebuffer, tokens, bufferWaves[sockNum].tokenizer);
+	Tokenize(writebuffer, szwritebuffer, tokens, bufferWaves[sockNum].tokenizer,bufferWaves[sockNum].sztokenizer);
 	
 	for(ii=0 ; ii< tokens.size(); ii++){
 		
-		if(err = PutCStringInHandle(tokens.at(ii).c_str(),textH))
+		if(err = PtrToHand((Ptr)tokens.at(ii).data(), &textH,tokens.at(ii).length()))
 			goto done;
 		
 		// Clear all dimensions sizes to avoid undefined values. 
@@ -495,7 +492,6 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *write
 			if(err = CallFunction(&fi,&callProcessor,&result))
 				goto done;
 		}
-		
 		
 		WaveHandleModified(wav);
 	}

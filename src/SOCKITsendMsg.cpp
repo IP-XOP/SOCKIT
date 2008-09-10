@@ -31,13 +31,14 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
     
 	char buf[BUFLEN+1];
 	char report[MAX_MSG_LEN+1];
-	char *output = NULL;			//get rid of the carriage returns
+	string output;			//get rid of the carriage returns
 	
 	xmlNode *added_node = NULL;
 	xmlNode *root_element = NULL;
 	xmlChar *encContent = NULL;
 	long year,month,day,hour,minute,second;
 	char timebuf[100];
+	long size = 0;
 	
 	
 	SOCKET maxSockNum = pinstance->getMaxSockNumber();
@@ -56,6 +57,12 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 		err = OH_EXPECTED_STRING;
 		goto done;
 	} else {
+		size = GetHandleSize(p->MSG);
+		if(size>BUFLEN){
+			err2 = 1;
+			XOPNotice("SOCKIT err: message is longer than buffer\r");
+			goto done;
+		}
 		if(err = GetCStringFromHandle(p->MSG, buf, sizeof(buf)))
 			goto done;
 	}
@@ -82,7 +89,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	//flush messages first
 	err = pinstance->checkRecvData();
 	
-	res = select(maxSockNum+1,0,&tempset,0,&timeout);
+	res = select(maxSockNum+1, 0, &tempset, 0, &timeout);
 	if(res == -1){
 		if(pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true)
 			XOPNotice ("SOCKIT err: select returned -1");
@@ -90,19 +97,21 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
         goto done;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
-		rc = send(socketToWrite,buf,strlen(buf),0);
+		rc = send(socketToWrite, buf, GetHandleSize(p->MSG), 0);
 		if(rc >= 0){
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", socketToWrite);
-			output = NtoCR(buf, "\n","\r");
+			output = string(buf,GetHandleSize(p->MSG));
+			find_and_replace(output, "\n","\r");
+			
 			if( pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true){
 				XOPNotice(report);
-				XOPNotice(output);
+				XOPNotice(output.c_str());
 				XOPNotice("\r");
 			}			
 			//if there is a logfile then append and save
 			if(pinstance->getWaveBufferInfo(socketToWrite)->logDoc != NULL){
 				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(socketToWrite)->logDoc);
-				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(socketToWrite)->logDoc, BAD_CAST output);
+				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(socketToWrite)->logDoc, BAD_CAST output.c_str());
 				added_node = xmlNewChild(root_element, NULL, BAD_CAST "SEND" ,encContent);
 				if(encContent != NULL){
 					xmlFree(encContent);
@@ -137,9 +146,6 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	}
 	
 done:
-	if(output!= NULL)
-		free(output);
-	
 	if(encContent != NULL)
 		xmlFree(encContent);
 	

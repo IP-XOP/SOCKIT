@@ -45,7 +45,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	struct sockaddr_in  sa;
     struct hostent*     hen;
-	waveBufferInfo bufferInfo;
+	waveBufferInfo *bufferInfo = new waveBufferInfo();
 	
 	xmlNode *root_element = NULL;
 	xmlChar *entityEncoded = NULL;
@@ -82,22 +82,22 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 				goto done;
 			if(err = GetNativePath(fnamepath,nativepath))
 				goto done;
-			if(err = XOPOpenFile(nativepath,1,&bufferInfo.logFile))
+			if(err = XOPOpenFile(nativepath,1,&bufferInfo->logFile))
 				goto done;
 		}
 	}
 	
 	// Flag parameters.
 	if (p->DBUGFlagEncountered) {
-		bufferInfo.DBUG = true;
+		bufferInfo->DBUG = true;
 	} else {
-		bufferInfo.DBUG = false;
+		bufferInfo->DBUG = false;
 	}
 	
 	if (p->QFlagEncountered) {
-		bufferInfo.toPrint = false;
+		bufferInfo->toPrint = false;
 	} else {
-		bufferInfo.toPrint = true;
+		bufferInfo->toPrint = true;
 	}
 	
 	if (p->TOKFlagEncountered) {
@@ -106,10 +106,10 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			err = OH_EXPECTED_STRING;
 			goto done;
 		}
-		if(err = GetCStringFromHandle(p->TOKFlagStrH,bufferInfo.tokenizer,10))
-			goto done;
-	} else {
-		memset(bufferInfo.tokenizer,0,sizeof(bufferInfo.tokenizer));
+		GetCStringFromHandle(p->TOKFlagStrH,bufferInfo->tokenizer,30);
+		//we don't use strlen because we're interested in 0x00
+		//that would normally terminate a string.
+		bufferInfo->sztokenizer = GetHandleSize(p->TOKFlagStrH);		
 	}
 	
 	if (p->PORTEncountered) {
@@ -123,7 +123,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			err = EXPECTED_TEXT_WAVE;
 			goto done;
 		}
-		bufferInfo.bufferWave = p->BUFWaveH;
+		bufferInfo->bufferWave = p->BUFWaveH;
 	}
 	
 	if(p->IPEncountered){
@@ -197,8 +197,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum>0){
 		if(strlen(fnamepath)>0){
-			bufferInfo.logDoc = xmlNewDoc(BAD_CAST "1.0");
-			if(bufferInfo.logDoc == NULL){
+			bufferInfo->logDoc = xmlNewDoc(BAD_CAST "1.0");
+			if(bufferInfo->logDoc == NULL){
 				if(!p->QFlagEncountered)
 					XOPNotice("SOCKIT err: couldn't create logfile)\r");
 				goto done;
@@ -210,7 +210,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 					XOPNotice("SOCKIT err: couldn't create logfile)\r");
 				goto done;
 			}
-			entityEncoded = xmlEncodeEntitiesReentrant(bufferInfo.logDoc, BAD_CAST host);
+			entityEncoded = xmlEncodeEntitiesReentrant(bufferInfo->logDoc, BAD_CAST host);
 			
 			xmlSetProp(root_element, BAD_CAST "IP", entityEncoded);
 			snprintf(report, sizeof(report), "%d",port);
@@ -218,11 +218,11 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 				xmlFree(entityEncoded);
 				entityEncoded = NULL;
 			}
-			entityEncoded = xmlEncodeEntitiesReentrant(bufferInfo.logDoc, BAD_CAST report);
-			xmlSetProp(root_element, BAD_CAST "port", BAD_CAST xmlEncodeEntitiesReentrant(bufferInfo.logDoc, BAD_CAST entityEncoded));		
-			root_element = xmlDocSetRootElement(bufferInfo.logDoc,root_element);
+			entityEncoded = xmlEncodeEntitiesReentrant(bufferInfo->logDoc, BAD_CAST report);
+			xmlSetProp(root_element, BAD_CAST "port", BAD_CAST xmlEncodeEntitiesReentrant(bufferInfo->logDoc, BAD_CAST entityEncoded));		
+			root_element = xmlDocSetRootElement(bufferInfo->logDoc,root_element);
 		}
-		pinstance->addWorker(sockNum,bufferInfo);
+		pinstance->addWorker(sockNum,*bufferInfo);
 		
 		if (p->PROCFlagEncountered) {
 			// Parameter: p->PROCFlagName
@@ -244,6 +244,7 @@ done:
 		err = SetOperationNumVar("V_flag",0);
 		err = StoreNumericDataUsingVarName(p->IDVarName,sockNum,0);
 	} else {
+		delete bufferInfo;
 		err = SetOperationNumVar("V_flag",1);
 		err = StoreNumericDataUsingVarName(p->IDVarName,-1,0);
 	}

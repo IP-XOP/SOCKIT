@@ -1,25 +1,26 @@
+#include "XOPStandardHeaders.h"
 #include "StringTokenizer.h"
 
 
-void Tokenize(const char* STR, vector<string> &tokens, const char *DELIMITERS)
+void Tokenize(const char* STR, size_t szStr, vector<string> &tokens, const char* DELIMITERS, int szDELIMITERS)
 {
     // Skip delimiters at beginning.
-	string str(STR);
-	string delimiters(DELIMITERS);
-	
-    string::size_type lastPos = str.find_first_not_of(delimiters, 0);
-    // Find first "non-delimiter".
-    string::size_type pos     = str.find_first_of(delimiters, lastPos);
-
-    while (string::npos != pos || string::npos != lastPos)
-    {
-        // Found a token, add it to the vector.
-        tokens.push_back(str.substr(lastPos, pos - lastPos));
-        // Skip delimiters.  Note the "not_of"
-        lastPos = str.find_first_not_of(delimiters, pos);
-        // Find next "non-delimiter"
-        pos = str.find_first_of(delimiters, lastPos);
-    }
+	string str(STR, szStr);
+	string delimiters(DELIMITERS,szDELIMITERS);		//WARNING, DELIMITERS ISNT NULL TERMINATED
+		
+		string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+		// Find first "non-delimiter".
+		string::size_type pos     = str.find_first_of(delimiters, lastPos);
+		
+		while (string::npos != pos || string::npos != lastPos)
+		{
+			// Found a token, add it to the vector.
+			tokens.push_back(str.substr(lastPos, pos - lastPos));
+			// Skip delimiters.  Note the "not_of"
+			lastPos = str.find_first_not_of(delimiters, pos);
+			// Find next "non-delimiter"
+			pos = str.find_first_of(delimiters, lastPos);
+		}
 }
 
 typedef struct keyValuePairs {

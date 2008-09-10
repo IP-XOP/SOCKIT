@@ -25,7 +25,9 @@ class waveBufferInfo {
 	waveHndl bufferWave;				/**<stores output from the socket. */ 
 	bool toPrint;						/**<if set to true then incoming messages from the socket are printed in the history area.*/
 	char processor[MAX_OBJ_NAME+1];		/**<the name of an IGOR function that is notified when messages are received*/
-	char tokenizer[35];					/**<the output from the socket is tokenized using the characters in this array*/
+	char tokenizer[31];					/**<the output from the socket is tokenized using the characters in this array*/
+	int sztokenizer;
+	
 	bool DBUG;
 	xmlDoc *logDoc;
 	XOP_FILE_REF logFile;
@@ -34,11 +36,26 @@ class waveBufferInfo {
 		bufferWave = NULL;
 		toPrint = true;
 		memset(processor, 0 , sizeof(processor));
-		memset(tokenizer, 0 , sizeof(tokenizer));
+		memset(tokenizer,0,sizeof(tokenizer));
+		sztokenizer = 0;
 		DBUG = false;
 		logDoc = NULL;
 		logFile = NULL;
 	};
+	
+	~waveBufferInfo(){
+		if(logDoc!=NULL && logFile!=NULL){
+			rewind(logFile);
+			xmlDocFormatDump(logFile,logDoc,0);
+		}
+		if(logDoc)
+			xmlFreeDoc(logDoc);
+		if(logFile){
+			XOPCloseFile(logFile);
+		}
+		logDoc = NULL;
+		logFile = NULL;
+	}
 
 };
 
@@ -161,7 +178,7 @@ class CurrentConnections{
 	*@see registerProcessor()
 	*@see checkProcessor()
 	*/
-	int outputBufferDataToWave(SOCKET sockNum, const char *bufferData);
+	int outputBufferDataToWave(SOCKET sockNum, const char *bufferData, size_t szbufferdata);
 	
 	private:
 	/**

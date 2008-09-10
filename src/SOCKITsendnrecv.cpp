@@ -40,14 +40,15 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	char buf[BUFLEN+1];
 	char report[MAX_MSG_LEN+1];
-	char *output = NULL;
+	string output;
+	long size = 0;
 	
 	xmlNode *added_node = NULL;
 	xmlNode *root_element = NULL;
 	xmlChar *encContent = NULL;
 	long year,month,day,hour,minute,second;
 	char timebuf[100];
-    	
+		
 	fd_set tempset;
 	FD_ZERO(&tempset);
 	
@@ -72,6 +73,12 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			err = OH_EXPECTED_STRING;
 			goto done;
 		}
+		size = GetHandleSize(p->MSG);
+		if(size>BUFLEN){
+			err2 = 1;
+			XOPNotice("SOCKIT err: message is longer than buffer\r");
+			goto done;
+		}
 		if(err = GetCStringFromHandle(p->MSG, buf, sizeof(buf)))
 			goto done;
 	} else {
@@ -86,7 +93,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	if(!pinstance->isSockitOpen(p->ID,&sockNum)){
 		err2 = SOCKET_NOT_CONNECTED;
-		XOPNotice("SOCKIT err: socket not connected");
+		XOPNotice("SOCKIT err: socket not connected\r");
 		goto done;
 	} else {
 		if(!FD_ISSET(sockNum,&tempset)){
@@ -121,24 +128,27 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	FD_SET(sockNum,&tempset);
 	res = select(sockNum+1,0,&tempset,0,&timeout);				
 	if(res == -1){
-		XOPNotice ("SOCKIT err: select returned timeout");
+		XOPNotice ("SOCKIT err: select returned timeout\r");
 		err2=1;
 		goto done;
 	}
 	if(FD_ISSET(sockNum,&tempset)){
-		rc = send(sockNum,buf,strlen(buf),0);
+		rc = send(sockNum,buf,GetHandleSize(p->MSG),0);
 		if(rc >= 0){
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", sockNum);
-			output = NtoCR(buf, "\n","\r");
+			output = string(buf,GetHandleSize(p->MSG));
+			
+			find_and_replace(output, "\n","\r");
+			
 			if( pinstance->getWaveBufferInfo(sockNum)->toPrint == true){
 				XOPNotice(report);
-				XOPNotice(output);
+				XOPNotice(output.c_str());
 				XOPNotice("\r");
 			}
 			//if there is a logfile then append and save
 			if(pinstance->getWaveBufferInfo(sockNum)->logDoc != NULL){
 				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(sockNum)->logDoc);
-				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(sockNum)->logDoc, BAD_CAST output);
+				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(sockNum)->logDoc, BAD_CAST output.c_str());
 				added_node = xmlNewChild(root_element, NULL, BAD_CAST "SEND" ,encContent);
 				if(encContent != NULL){
 					xmlFree(encContent);
@@ -184,7 +194,8 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	memset(buf,0,sizeof(buf));
 	
-	if ((res>0) && FD_ISSET(sockNum, &tempset)) {            
+	if ((res>0) && FD_ISSET(sockNum, &tempset)) { 
+	           
 		do{			   
 			rc = recv(sockNum, buf, BUFLEN,0);
 
@@ -220,6 +231,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				res = select(sockNum+1,&tempset,0,0,&timeout);
 			}
 		}while(res>0);
+		
 	} else if(res==-1) {
 		snprintf(report,sizeof(report),"SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
 		if(pinstance->getWaveBufferInfo(sockNum)->toPrint == true)
@@ -234,7 +246,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	} 
 	
-	if(err = pinstance->outputBufferDataToWave(sockNum, chunk.getData()))
+	if(err = pinstance->outputBufferDataToWave(sockNum, chunk.getData(), chunk.getMemSize()))
 		goto done;
 	
 done:
@@ -247,14 +259,15 @@ done:
 		SetOperationStrVar("S_tcp", "");		
 	} else {
 		SetOperationNumVar("V_flag", 0);
-		if(chunk.getData())
+		if(chunk.getData()){
+			//make sure the string is NULL terminated
+			char nul[1];
+			nul[0] = 0x00;
+			chunk.WriteMemoryCallback(&nul, sizeof(char), 1);
 			SetOperationStrVar("S_tcp", chunk.getData());
-		else
+		} else
 			SetOperationStrVar("S_tcp", "");
 	}
-	
-	if(output)
-		free(output);
 	
 	if(encContent != NULL)
 		xmlFree(encContent);

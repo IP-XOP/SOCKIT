@@ -13,6 +13,13 @@
 #include "SOCKITsendnrecv.h"
 #include "SOCKITisItOpen.h"
 
+/*
+variable sock
+make/t buf
+sockitopenconnection/TOK="\r\n" sock,"www.wavemetrics.com",80,buf
+sockitsendnrecv sock, "GET / \r\n"
+*/
+
 #ifdef _MACINTOSH_
 HOST_IMPORT int main(IORecHandle ioRecHandle);
 #endif	
