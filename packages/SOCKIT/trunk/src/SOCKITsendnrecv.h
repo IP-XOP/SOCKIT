@@ -34,6 +34,11 @@ struct SOCKITsendnrecvRuntimeParams {
 	int MSGEncountered;
 	Handle MSG;
 	int MSGParamsSet[1];
+	
+	// Parameters for simple main group #2.
+	int retEncountered;
+	char ret[MAX_OBJ_NAME+1];				// Optional parameter.
+	int retParamsSet[1];
 
 	// These are postamble fields that Igor sets.
 	int calledFromFunction;					// 1 if called from a user function, 0 otherwise.
