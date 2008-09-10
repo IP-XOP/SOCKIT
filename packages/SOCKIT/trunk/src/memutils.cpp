@@ -60,11 +60,11 @@ MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *Da
     size_t realsize = size * nmemb;
     MemoryStruct *mem = (MemoryStruct *)Data;
 	
-    mem->memory = (char *)myrealloc(mem->memory, mem->memsize + realsize + 1);
+    mem->memory = (char *)myrealloc(mem->memory, mem->memsize + realsize);
     if (mem->memory) {
 		memcpy(&(mem->memory[mem->memsize]), ptr, realsize);
 		mem->memsize += realsize;
-		mem->memory[mem->memsize] = 0;
+//		mem->memory[mem->memsize] = 0;
     }
     return realsize;
 }
@@ -74,11 +74,10 @@ MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb)
 {
     size_t realsize = size * nmemb;
 	
-    memory = (char *)myrealloc(memory, memsize + realsize + 1);
+    memory = (char *)myrealloc(memory, memsize + realsize);
     if (memory) {
 		memcpy(&(memory[memsize]), ptr, realsize);
 		memsize += realsize;
-		memory[memsize] = 0;
     }
     return realsize;
 }
