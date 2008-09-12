@@ -86,5 +86,9 @@ BEGIN
 	utilOp | XOPOp | compilableOp,
 	"SOCKITsendmsg\0",
 	utilOp | XOPOp | compilableOp,
+	"SOCKITstringtoWave\0",
+	utilOp | XOPOp | compilableOp,
+	"SOCKITwaveToString\0",
+	utilOp | XOPOp | compilableOp,
 	"\0"							// NOTE: NULL required to terminate the resource.
 END

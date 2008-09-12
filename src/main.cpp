@@ -12,6 +12,8 @@
 #include "SOCKITcloseConnection.h"
 #include "SOCKITsendnrecv.h"
 #include "SOCKITisItOpen.h"
+#include "SOCKITstringtoWave.h"
+#include "SOCKITwaveToString.h"
 
 /*
 variable sock
@@ -70,7 +72,10 @@ RegisterOperations(void)		// Register any operations with Igor.
 		return result;
 	if (result = RegisterSOCKITsendmsg())
 		return result;
-		
+	if (result = RegisterSOCKITstringtoWave())
+		return result;
+	if (result = RegisterSOCKITwaveToString())
+		return result;	
 	// There are no more operations added by this XOP.
 	
 	return 0;
