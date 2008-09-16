@@ -12,6 +12,10 @@
 struct SOCKITopenconnectionRuntimeParams {
 	// Flag parameters.
 	
+	int TIMEFlagEncountered;
+	double TIMEFlagNumber;
+	int TIMEFlagParamsSet[1];
+	
 	// Parameters for /LOG flag group.
 	int LOGFlagEncountered;
 	char LOGFlagName[MAX_OBJ_NAME+1];

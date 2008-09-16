@@ -65,7 +65,6 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	timeout.tv_usec =  (int)(timeoutVal-(double)floor(timeoutVal))*1000000;
     
 	memset(buf,0,sizeof(buf));
-	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
 	
 	if (p->MSGEncountered) {
 		// Parameter: p->MSG (test for NULL handle before using)
@@ -108,13 +107,6 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		err2 = SOCKET_NOT_CONNECTED;
 		XOPNotice("SOCKIT err: socket not connected\r");
 		goto done;
-	} else {
-		if(!FD_ISSET(sockNum,&tempset)){
-			snprintf(report,sizeof(report),"SOCKIT err: can't write to socket %d\r", sockNum);
-			XOPNotice(report);
-			err2=1;
-			goto done;
-		}
 	}
 	
 	// Parameter: p->FILEFlagStrH (test for NULL handle before using)
@@ -135,11 +127,9 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	//flush messages first
 	err = pinstance->checkRecvData();
 	
-	//send the message second;
-	
-	FD_ZERO(&tempset);
+	//send the message second;	
 	FD_SET(sockNum,&tempset);
-	res = select(sockNum+1,0,&tempset,0,&timeout);				
+	res = select(sockNum+1, 0, &tempset, 0, &timeout);				
 	if(res == -1){
 		XOPNotice ("SOCKIT err: select returned timeout\r");
 		err2=1;
