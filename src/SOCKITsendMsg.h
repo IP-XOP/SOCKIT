@@ -11,6 +11,11 @@
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
 struct SOCKITsendmsgRuntimeParams {
 
+	// Parameters for /TIME flag group.
+	int TIMEFlagEncountered;
+	double TIMEFlagNumber;
+	int TIMEFlagParamsSet[1];
+	
 	// Main parameters.
 	// Parameters for simple main group #0.
 	int IDEncountered;

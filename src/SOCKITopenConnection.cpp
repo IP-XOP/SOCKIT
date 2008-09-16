@@ -9,7 +9,7 @@ RegisterSOCKITopenconnection(void)
 	char* runtimeStrVarList;
 	
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
-	cmdTemplate = "SOCKITopenconnection/LOG=name/DBUG/Q/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
+	cmdTemplate = "SOCKITopenconnection/TIME=number/LOG=name/DBUG/Q/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
 	runtimeNumVarList = "V_flag";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITopenconnectionRuntimeParams), (void*)ExecuteSOCKITopenconnection, 0);
@@ -33,15 +33,9 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	char host[MAX_URL_LEN+1];
 	char report[MAX_MSG_LEN+1];
-	SOCKET maxSockNum = pinstance->getMaxSockNumber();
-	
-	fd_set tempset;
-	FD_ZERO(&tempset);
-	memcpy(&tempset, pinstance->getReadSet(), sizeof(pinstance->getReadSet())); 
-	
+
+	fd_set tempset;	
 	struct timeval timeout;
-	timeout.tv_sec = 10;
-	timeout.tv_usec = 0;
 	
 	struct sockaddr_in  sa;
     struct hostent*     hen;
@@ -51,11 +45,19 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	xmlChar *entityEncoded = NULL;
 	char fnamepath[MAX_PATH_LEN+1];
 	char nativepath[MAX_PATH_LEN+1];
-	memset(fnamepath,0,sizeof(fnamepath));
 	char fname[MAX_FILENAME_LEN+1];
 	char a[10];
 	long year,month,day,hour,minute,second;
 
+	memset(fnamepath,0,sizeof(fnamepath));
+	if(p->TIMEFlagEncountered){
+		timeout.tv_sec = floor(p->TIMEFlagNumber);
+		timeout.tv_usec =  (int)(p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000;
+	} else {
+		timeout.tv_sec = 10;
+		timeout.tv_usec = 0;
+	}
+	
 	if(p->IDEncountered){
 		if(err = VarNameToDataType(p->IDVarName, &dataType)) 
 			goto done;
@@ -159,15 +161,14 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		goto done;
 	}
 	
+	FD_ZERO(&tempset);
 	FD_SET(sockNum,&tempset);
-	if(sockNum > pinstance->getMaxSockNumber()){
-		maxSockNum = sockNum;
-	}
 	
 	/* Connect to server */
+//	int num = fcntl(sockNum, F_SETFL, O_NONBLOCK);
 	
 	rc = connect(sockNum, (struct sockaddr *)&sa, sizeof(sa));
-	res = select(maxSockNum+1,0,&tempset,0,&timeout);
+	res = select(sockNum+1,0,&tempset,0,&timeout);
 	
 	if(FD_ISSET(sockNum, &tempset)){
 		if(rc==0){
@@ -196,7 +197,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum>0){
-		if(strlen(fnamepath)>0){
+		if(strlen(fnamepath) > 0){
 			bufferInfo->logDoc = xmlNewDoc(BAD_CAST "1.0");
 			if(bufferInfo->logDoc == NULL){
 				if(!p->QFlagEncountered)

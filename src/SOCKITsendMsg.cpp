@@ -9,7 +9,7 @@ RegisterSOCKITsendmsg(void)
 	char* runtimeStrVarList;
 	
 	// NOTE: If you change this template, you must change the SOCKITsendmsgRuntimeParams structure as well.
-	cmdTemplate = "SOCKITsendmsg number:ID,string:MSG";
+	cmdTemplate = "SOCKITsendmsg/TIME=number number:ID,string:MSG";
 	runtimeNumVarList = "V_Flag";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITsendmsgRuntimeParams), (void*)ExecuteSOCKITsendmsg, 0);
@@ -39,19 +39,18 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	long year,month,day,hour,minute,second;
 	char timebuf[100];
 	long size = 0;
-	
-	
-	SOCKET maxSockNum = pinstance->getMaxSockNumber();
-	
 	fd_set tempset;
-	FD_ZERO(&tempset);
-	
 	struct timeval timeout;
-	timeout.tv_sec = 5;
-	timeout.tv_usec = 0;
-    
+	
 	memset(buf,0,sizeof(buf));
-	memcpy(&tempset, pinstance->getReadSet(), sizeof(*(pinstance->getReadSet()))); 
+	
+	if(p->TIMEFlagEncountered){
+		timeout.tv_sec = floor(p->TIMEFlagNumber);
+		timeout.tv_usec =  (int)(p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000;
+	} else {
+		timeout.tv_sec = 5;
+		timeout.tv_usec = 0;
+    }
 	
 	if(!p->MSGEncountered){
 		err = OH_EXPECTED_STRING;
@@ -77,19 +76,15 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 		XOPNotice(report);
 		err2 = 1;
 		goto done;
-	} else {
-		if(!FD_ISSET(socketToWrite,&tempset)){
-			snprintf(report,sizeof(report),"SOCKIT err: can't write to socket %d\r", socketToWrite);
-			XOPNotice(report);
-			err2 = 1;
-			goto done;
-		}
 	}
-	
+		
 	//flush messages first
 	err = pinstance->checkRecvData();
 	
-	res = select(maxSockNum+1, 0, &tempset, 0, &timeout);
+	FD_ZERO(&tempset);
+	FD_SET(socketToWrite, &tempset);
+	
+	res = select(socketToWrite+1, 0, &tempset, 0, &timeout);
 	if(res == -1){
 		if(pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true)
 			XOPNotice ("SOCKIT err: select returned -1");
@@ -99,9 +94,9 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	if(FD_ISSET(socketToWrite,&tempset)){
 		rc = send(socketToWrite, buf, GetHandleSize(p->MSG), 0);
 		if(rc >= 0){
-			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", socketToWrite);
-			output = string(buf,GetHandleSize(p->MSG));
-			find_and_replace(output, "\n","\r");
+			snprintf(report,sizeof(report), "SOCKITmsg: wrote to socket %d\r", socketToWrite);
+			output = string(buf, GetHandleSize(p->MSG));
+			find_and_replace(output, "\n", "\r");
 			
 			if( pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true){
 				XOPNotice(report);
