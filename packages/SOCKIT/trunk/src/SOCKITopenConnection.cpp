@@ -18,7 +18,7 @@ RegisterSOCKITopenconnection(void)
 static int
 ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 {
-	int err = 0;
+	int err = 0, err2 = 0;
 	
 	extern CurrentConnections* pinstance;
 #ifdef _WINDOWS_
@@ -39,6 +39,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	struct sockaddr_in  sa;
     struct hostent*     hen;
+	unsigned long fdflags;
 	waveBufferInfo *bufferInfo = new waveBufferInfo();
 	
 	xmlNode *root_element = NULL;
@@ -48,7 +49,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	char fname[MAX_FILENAME_LEN+1];
 	char a[10];
 	long year,month,day,hour,minute,second;
-
+	
 	memset(fnamepath,0,sizeof(fnamepath));
 	if(p->TIMEFlagEncountered){
 		timeout.tv_sec = floor(p->TIMEFlagNumber);
@@ -165,36 +166,56 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	FD_SET(sockNum,&tempset);
 	
 	/* Connect to server */
-//	int num = fcntl(sockNum, F_SETFL, O_NONBLOCK);
-	
+#ifdef _MACINTOSH_
+	fdflags = fcntl(sockNum, F_GETFL);
+	if(fcntl(sockNum, F_SETFL, fdflags | O_NONBLOCK) < 0){
+		err2 = 1;
+		XOPNotice("SOCKITerr: fcntl failed\r");
+		goto done;
+	}
+#endif
+#ifdef _WINDOWS_
+	fdflags = 1;
+	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+		XOPNotice("SOCKITerr: IOCTL failed \r");
+		goto done;
+	}
+#endif
+
 	rc = connect(sockNum, (struct sockaddr *)&sa, sizeof(sa));
 	res = select(sockNum+1,0,&tempset,0,&timeout);
 	
 	if(FD_ISSET(sockNum, &tempset)){
-		if(rc==0){
-			if(!p->QFlagEncountered){
+		if(!p->QFlagEncountered){
 				snprintf(report,sizeof(report),"SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
 				XOPNotice(report);
-			}
-		} else {
-			perror("Error failed because:");
-			if(!p->QFlagEncountered)
-				XOPNotice("SOCKIT err: failed to connect\r");
-			close(sockNum);
-			sockNum = -1;
-			goto done;
 		}
 	} else {
-		if( rc !=0){
-			perror("Error failed because:");
-			if(!p->QFlagEncountered)
-				XOPNotice("SOCKIT err: timeout while waiting for new connection\r");
-			close(sockNum);
-			sockNum = -1;
-			goto done;
-		}
+		if(!p->QFlagEncountered)
+			XOPNotice("SOCKIT err: couldn't make new connection\r");
+		close(sockNum);
+		sockNum = -1;
+		err2 = 1;
+		goto done;
 	}
-	
+
+//reset to blocking
+#ifdef _MACINTOSH_
+	fdflags = fcntl(sockNum, F_GETFL);
+	if(fcntl(sockNum, F_SETFL, fdflags | (~O_NONBLOCK)) < 0){
+		err2 = 1;
+		XOPNotice("SOCKITerr:fcntl failed\r");
+		goto done;
+	}
+#endif
+#ifdef _WINDOWS_
+	fdflags = 0;
+	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+		XOPNotice("SOCKITerr: IOCTL failed \r");
+		goto done;
+	}
+#endif
+
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum>0){
 		if(strlen(fnamepath) > 0){
@@ -241,7 +262,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 done:
 	FD_ZERO(&tempset);
-	if(!err && sockNum>0){
+	if(!err && sockNum>0 && !err2){
 		err = SetOperationNumVar("V_flag",0);
 		err = StoreNumericDataUsingVarName(p->IDVarName,sockNum,0);
 	} else {
