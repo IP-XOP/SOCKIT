@@ -40,7 +40,7 @@ public:
 	*Access the data held in a MemoryStruct object.
 	*@return A constant character pointer to the start of the memory that you have stored.
 	*/
-	const char* getData();
+	const unsigned char* getData();
 	
 	/**
 	*Default constructor.
@@ -66,7 +66,7 @@ public:
 	*/
 	static void *myrealloc(void *ptr, size_t size);
 	
-	char *memory; /**< A pointer to the data stored. */ 
+	unsigned char *memory; /**< A pointer to the data stored. */ 
 	size_t memsize; /**< The number of bytes stored. */ 
 };
 

@@ -2,10 +2,10 @@
 #include "StringTokenizer.h"
 
 
-void Tokenize(const char* STR, size_t szStr, vector<string> &tokens, const char* DELIMITERS, int szDELIMITERS)
+void Tokenize(const unsigned char* STR, size_t szStr, vector<string> &tokens, const char* DELIMITERS, int szDELIMITERS)
 {
     // Skip delimiters at beginning.
-	string str(STR, szStr);
+	string str((const char*)STR, szStr);
 	string delimiters(DELIMITERS,szDELIMITERS);		//WARNING, DELIMITERS ISNT NULL TERMINATED
 		
 		string::size_type lastPos = str.find_first_not_of(delimiters, 0);
