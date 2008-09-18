@@ -178,7 +178,7 @@ class CurrentConnections{
 	*@see registerProcessor()
 	*@see checkProcessor()
 	*/
-	int outputBufferDataToWave(SOCKET sockNum, const char *bufferData, size_t szbufferdata);
+	int outputBufferDataToWave(SOCKET sockNum, const unsigned char *bufferData, size_t szbufferdata);
 	
 	private:
 	/**

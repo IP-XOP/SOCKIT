@@ -336,7 +336,7 @@ int CurrentConnections::checkRecvData(){
 					XOPNotice(report);
 					
 					string output;
-					output = string(chunk.getData(),chunk.getMemSize());
+					output = string((const char*)chunk.getData(),chunk.getMemSize());
 					find_and_replace(output,"\n","\r");
 					XOPNotice(output.c_str());
 					XOPNotice("\r");
@@ -353,7 +353,7 @@ done:
 	return err;
 }
 
-int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const char *writebuffer, size_t szwritebuffer){
+int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned char *writebuffer, size_t szwritebuffer){
 	int err = 0;
 	
 	long numDimensions = 2; 

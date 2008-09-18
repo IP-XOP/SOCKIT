@@ -34,8 +34,8 @@ size_t MemoryStruct::getMemSize(){
 };
 
 //return a pointer to the filled memory.
-const char* MemoryStruct::getData(){
-	return (const char*)memory;
+const unsigned char* MemoryStruct::getData(){
+	return (const unsigned char*)memory;
 };
 	
 
@@ -60,7 +60,7 @@ MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *Da
     size_t realsize = size * nmemb;
     MemoryStruct *mem = (MemoryStruct *)Data;
 	
-    mem->memory = (char *)myrealloc(mem->memory, mem->memsize + realsize);
+    mem->memory = (unsigned char *)myrealloc(mem->memory, mem->memsize + realsize);
     if (mem->memory) {
 		memcpy(&(mem->memory[mem->memsize]), ptr, realsize);
 		mem->memsize += realsize;
@@ -74,7 +74,7 @@ MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb)
 {
     size_t realsize = size * nmemb;
 	
-    memory = (char *)myrealloc(memory, memsize + realsize);
+    memory = (unsigned char *)myrealloc(memory, memsize + realsize);
     if (memory) {
 		memcpy(&(memory[memsize]), ptr, realsize);
 		memsize += realsize;
