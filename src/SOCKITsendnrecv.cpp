@@ -213,8 +213,9 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				err2=1;
 				break;
 			} else if(rc > 0){
-				chunk.WriteMemoryCallback(buf, sizeof(char), rc);
-				if(chunk.getData() == NULL){
+				try {
+					chunk.WriteMemoryCallback(buf, sizeof(char), rc);
+				} catch (bad_alloc&){
 					err = NOMEM;
 					goto done;
 				}
@@ -262,8 +263,15 @@ done:
 			err = StoreStringDataUsingVarName(p->ret,(const char*)chunk.getData(),chunk.getMemSize());
 		char nul[1];
 		nul[0] = 0x00;
-		chunk.WriteMemoryCallback(&nul, sizeof(char), 1);
-		SetOperationStrVar("S_tcp", (const char*) chunk.getData());
+
+		try {
+			chunk.WriteMemoryCallback(&nul, sizeof(char), 1);
+		} catch (bad_alloc&) {
+			err = NOMEM;
+		}
+
+		if(!err)
+			SetOperationStrVar("S_tcp", (const char*) chunk.getData());
 	} else {
 		if(p->retEncountered)
 			err = StoreStringDataUsingVarName(p->ret,"",0);
