@@ -320,8 +320,9 @@ int CurrentConnections::checkRecvData(){
 					
 					break;
 				} else if(rc > 0){
-					chunk.WriteMemoryCallback(buf, sizeof(char), rc);
-					if(chunk.getData() == NULL){
+					try {
+						chunk.WriteMemoryCallback(buf, sizeof(char), rc);
+					} catch (bad_alloc&){
 						err = NOMEM;
 						goto done;
 					}

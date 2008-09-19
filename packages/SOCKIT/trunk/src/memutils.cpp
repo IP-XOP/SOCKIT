@@ -1,4 +1,5 @@
 #include "memutils.h"
+#include <new>
 
 //base constructor
 MemoryStruct::MemoryStruct(){
@@ -65,7 +66,8 @@ MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *Da
 		memcpy(&(mem->memory[mem->memsize]), ptr, realsize);
 		mem->memsize += realsize;
 //		mem->memory[mem->memsize] = 0;
-    }
+    } else
+		throw (std::bad_alloc());
     return realsize;
 }
 
@@ -78,7 +80,9 @@ MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb)
     if (memory) {
 		memcpy(&(memory[memsize]), ptr, realsize);
 		memsize += realsize;
-    }
+    } else
+		throw (std::bad_alloc());
+
     return realsize;
 }
 
