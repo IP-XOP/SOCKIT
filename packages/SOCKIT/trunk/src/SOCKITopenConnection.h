@@ -27,7 +27,8 @@ struct SOCKITopenconnectionRuntimeParams {
 	
 	// Parameters for /Q flag group.
 	int QFlagEncountered;
-	// There are no fields for this group because it has no parameters.
+	double QFlagNumber;						// Optional parameter.
+	int QFlagParamsSet[1];
 
 	// Parameters for /TOK flag group.
 	int TOKFlagEncountered;
