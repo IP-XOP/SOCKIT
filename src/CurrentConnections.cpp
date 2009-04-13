@@ -67,7 +67,7 @@ CurrentConnections* pinstance=0;
 void CurrentConnections::Instance(){
 	extern CurrentConnections* pinstance;
 	
-	if(pinstance==0){
+	if(pinstance == 0){
 		pinstance = new CurrentConnections(); // create sole instance
 	}
 }

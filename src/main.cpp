@@ -53,7 +53,9 @@ static int XOPIdle(){
 	#endif
 */	
 	extern CurrentConnections* pinstance;
-	err = pinstance->checkRecvData();
+	if(pinstance->getMaxSockNumber())
+		err = pinstance->checkRecvData();
+	
 	lastTicks = ticks;
 
 
