@@ -38,6 +38,8 @@ resource 'STR#' (1100) {					/* custom error messages */
 		"Problem writing to file.",
 		/* [12] */
 		"No socket with that descriptor.",
+		/* [13] */
+		"Could not start thread to collect messages, SOCKIT won't work.",
 	}
 };
 
@@ -62,13 +64,13 @@ resource 'STR#' (1101) {					// Misc strings for XOP.
 resource 'XOPF' (1100) {
 	{
 		"SOCKITcloseConnection",
-		F_IO | F_EXTERNAL,
+		F_IO | F_THREADSAFE | F_EXTERNAL,
 		NT_FP64,
 		{
 		NT_FP64,
 		},
 		"SOCKITisItOpen",
-		F_IO | F_EXTERNAL,
+		F_IO | F_THREADSAFE | F_EXTERNAL,
 		NT_FP64,
 		{
 		NT_FP64,
@@ -79,6 +81,36 @@ resource 'XOPF' (1100) {
 		{
 			NT_FP64,						/* socket number */
 			HSTRING_TYPE,					/* processor */
+		},
+		"SOCKITpeek",							/* function name */
+		F_IO | F_THREADSAFE| F_EXTERNAL,					/* function category (string) */
+		HSTRING_TYPE,						/* return value type */			
+		{
+			NT_FP64,						/* socket number */
+		},
+		"SOCKITsendmsgF",
+		F_IO | F_THREADSAFE | F_EXTERNAL,
+		NT_FP64,
+		{
+		NT_FP64,
+		HSTRING_TYPE,
+		},
+		"SOCKITsendnrecvF",
+		F_IO | F_THREADSAFE | F_EXTERNAL,
+		HSTRING_TYPE,
+		{
+		NT_FP64,
+		HSTRING_TYPE,
+		NT_FP64,
+		NT_FP64,
+		},
+		"SOCKITopenconnectionF",
+		F_IO | F_THREADSAFE | F_EXTERNAL,
+		NT_FP64,
+		{
+		HSTRING_TYPE,
+		NT_FP64,
+		NT_FP64,
 		},
 	}
 };

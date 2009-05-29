@@ -31,9 +31,9 @@ BEGIN
 		"Problem writing to file.\0",
 		/* [12] */
 		"No socket with that descriptor.\0",
-
-		
-		   
+		/* [13] */
+		"Couldn't start a thread to read incoming messages.\0",
+				   
 	// You can add error messages here.
 
 	0,								// NOTE: 0 required to terminate the resource.
@@ -60,12 +60,12 @@ END
 1100 XOPF							// Describes functions added by XOP to IGOR.
 BEGIN			
 		"SOCKITcloseConnection\0",
-		F_IO | F_EXTERNAL,
+		F_IO | F_THREADSAFE | F_EXTERNAL,
 		NT_FP64,
 	       	NT_FP64,
     	   	0,
 		"SOCKITisItOpen\0",
-		F_IO | F_EXTERNAL,
+		F_IO | F_THREADSAFE | F_EXTERNAL,
 		NT_FP64,
     		  NT_FP64,
 		      0,
@@ -74,6 +74,32 @@ BEGIN
 		NT_FP64,						/* return value type */			
 			NT_FP64,						/* socket number */
 			HSTRING_TYPE,					/* processor */
+			0,
+		"SOCKITpeek\0",							/* function name */
+		F_IO | F_THREADSAFE | F_EXTERNAL,					/* function category (string) */
+		HSTRING_TYPE,						/* return value type */			
+			NT_FP64,						/* socket number */
+			0,
+		"SOCKITsendmsgF\0",							/* function name */
+		F_IO | F_THREADSAFE | F_EXTERNAL,					/* function category (string) */
+		NT_FP64,						/* return value type */			
+			NT_FP64,						/* socket number */
+			HSTRING_TYPE,
+			0,
+		"SOCKITsendnrecvF\0",							/* function name */
+		F_IO | F_THREADSAFE | F_EXTERNAL,					/* function category (string) */
+		HSTRING_TYPE,						/* return value type */			
+			NT_FP64,						/* socket number */
+			HSTRING_TYPE,
+			NT_FP64,
+			NT_FP64,
+			0,
+		"SOCKITopenconnectionF\0",							/* function name */
+		F_IO | F_THREADSAFE | F_EXTERNAL,					/* function category (string) */
+		NT_FP64,						/* return value type */			
+			HSTRING_TYPE,
+			NT_FP64,
+			NT_FP64,
 			0,
 0,
 END

@@ -10,6 +10,7 @@
 #include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITcloseConnectionStruct {
 	DOUBLE socketToClose;
+	void* tp;
 	DOUBLE retval;
 }SOCKITcloseConnectionStruct, *SOCKITcloseConnectionStructPtr;
 #include "XOPStructureAlignmentReset.h"

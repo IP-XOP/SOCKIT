@@ -12,6 +12,8 @@
 struct SOCKITopenconnectionRuntimeParams {
 	// Flag parameters.
 	
+	int NOIDFlagEncountered;
+		
 	int TIMEFlagEncountered;
 	double TIMEFlagNumber;
 	int TIMEFlagParamsSet[1];
@@ -72,3 +74,15 @@ typedef struct SOCKITopenconnectionRuntimeParams* SOCKITopenconnectionRuntimePar
 
 int RegisterSOCKITopenconnection(void);
 static int ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p);
+
+#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+typedef struct SOCKITopenconnectionFStruct {
+	DOUBLE timeout;
+	DOUBLE portNumber;
+	Handle IPStr;
+	void* tp;
+	DOUBLE retval;
+}SOCKITopenconnectionFStruct, *SOCKITopenconnectionFStructPtr;
+#include "XOPStructureAlignmentReset.h"
+
+int SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr);

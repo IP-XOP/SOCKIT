@@ -50,3 +50,16 @@ typedef struct SOCKITsendnrecvRuntimeParams* SOCKITsendnrecvRuntimeParamsPtr;
 
 int RegisterSOCKITsendnrecv(void);
 static int ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParamsPtr p);
+
+#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+typedef struct SOCKITsendnrecvFStruct {
+	DOUBLE TIME;
+	DOUBLE SMAL;
+	Handle message;
+	DOUBLE sockID;
+	void* tp;
+	Handle retval;
+}SOCKITsendnrecvFStruct, *SOCKITsendnrecvFStructPtr;
+#include "XOPStructureAlignmentReset.h"
+
+int SOCKITsendnrecvF(SOCKITsendnrecvFStructPtr);

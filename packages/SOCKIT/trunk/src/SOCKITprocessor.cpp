@@ -6,6 +6,9 @@ int SOCKITregisterProcessor(SOCKITprocessorStruct *p){
 	char processor[MAX_OBJ_NAME+1];
 	
 	extern CurrentConnections *pinstance;
+	extern pthread_mutex_t readThreadMutex;
+	pthread_mutex_lock( &readThreadMutex );
+	
 	SOCKET sockNum;
 	
     p->retval = 0;
@@ -17,8 +20,8 @@ int SOCKITregisterProcessor(SOCKITprocessorStruct *p){
 	sockNum = (SOCKET)p->sockNum;
 			
 	if(!FD_ISSET(sockNum,&tempset)){
-			err = NO_SOCKET_DESCRIPTOR;
-			goto done;
+		err = NO_SOCKET_DESCRIPTOR;
+		goto done;
 	}
 	
 	if(err = GetCStringFromHandle(p->processor,processor,MAX_OBJ_NAME))
@@ -32,6 +35,7 @@ done:
 		DisposeHandle(p->processor);
     if(err)
         p->retval = -1;
-        
+	pthread_mutex_unlock( &readThreadMutex );
+
 return err;
 }
