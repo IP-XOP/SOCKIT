@@ -20,7 +20,10 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	int err = 0, err2=0;
 	
 	extern CurrentConnections *pinstance;
-	
+	extern pthread_mutex_t readThreadMutex;
+	pthread_mutex_lock( &readThreadMutex );
+
+
 #ifdef _WINDOWS_
 	extern WSADATA globalWsaData;
 #endif
@@ -124,9 +127,6 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			goto done;
 	}
 	
-	//flush messages first
-	err = pinstance->checkRecvData();
-	
 	//send the message second;	
 	FD_SET(sockNum,&tempset);
 	res = select(sockNum+1, 0, &tempset, 0, &timeout);				
@@ -219,9 +219,8 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 					err = NOMEM;
 					goto done;
 				}
-				if(fileToWrite){//write to file as well
+				if(fileToWrite)//write to file as well
 					written = fwrite(buf, sizeof(char),rc, (FILE *)fileToWrite);
-				}
 			} else if (rc == 0)
 				break;
 			
@@ -246,11 +245,10 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	}
 	
-	if(!chunk.getData()){
+	if(!chunk.getData())
 		goto done;
-	} 
 	
-	if(err = pinstance->outputBufferDataToWave(sockNum, chunk.getData(), chunk.getMemSize()))
+	if(err = pinstance->outputBufferDataToWave(sockNum, chunk.getData(), chunk.getMemSize(), false))
 		goto done;
 	
 done:
@@ -287,6 +285,194 @@ done:
 		xmlFree(encContent);
 	
 	FD_ZERO(&tempset);
+
+	pthread_mutex_unlock( &readThreadMutex );
+	
+	return err;
+}
+
+int 
+SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
+	int err = 0, err2=0;
+	
+	extern CurrentConnections *pinstance;
+	extern pthread_mutex_t readThreadMutex;
+	pthread_mutex_lock( &readThreadMutex );
+
+
+#ifdef _WINDOWS_
+	extern WSADATA globalWsaData;
+#endif
+	
+	MemoryStruct chunk;	
+	Handle retval;
+	
+    int rc = 0;
+	long charsread = 0;
+	
+    SOCKET sockNum = -1;
+	int res = 0;
+	
+	char buf[BUFLEN+1];
+	string output;
+	long size = 0;
+	
+	xmlNode *added_node = NULL;
+	xmlNode *root_element = NULL;
+	xmlChar *encContent = NULL;
+	long year,month,day,hour,minute,second;
+	char timebuf[100];
+		
+	fd_set tempset;
+	FD_ZERO(&tempset);
+	
+	double timeoutVal=1.;
+	struct timeval timeout;
+	
+	retval = NewHandle(0);
+	if(err = MemError())
+		goto done;
+		
+	if(p->TIME){
+		timeoutVal = fabs(p->TIME);
+	} else {
+		timeoutVal = 1;
+	}
+	
+	timeout.tv_sec = floor(timeoutVal);
+	timeout.tv_usec =  (int)(timeoutVal-(double)floor(timeoutVal))*1000000;
+    
+	memset(buf, 0, sizeof(buf));
+	
+	// Parameter: p->MSG (test for NULL handle before using)
+	if(!p->message){
+		err = OH_EXPECTED_STRING;
+		goto done;
+	}
+	size = GetHandleSize(p->message);
+	if(size > BUFLEN){
+		err2 = 1;
+		goto done;
+	}
+	if(err = GetCStringFromHandle(p->message, buf, sizeof(buf)))
+		goto done;
+		
+	if(!pinstance->isSockitOpen(p->sockID,&sockNum)){
+		err2 = SOCKET_NOT_CONNECTED;
+		goto done;
+	}
+	
+	//send the message
+	FD_SET(sockNum,&tempset);
+	res = select(sockNum+1, 0, &tempset, 0, &timeout);				
+	if(res == -1){
+		err2=1;
+		goto done;
+	}
+	if(FD_ISSET(sockNum, &tempset)){
+		rc = send(sockNum, buf, GetHandleSize(p->message),0);
+		if(rc >= 0){
+			//if there is a logfile then append and save
+			if(pinstance->getWaveBufferInfo(sockNum)->logDoc != NULL){
+				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(sockNum)->logDoc);
+				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(sockNum)->logDoc, BAD_CAST output.c_str());
+				added_node = xmlNewChild(root_element, NULL, BAD_CAST "SEND" ,encContent);
+				if(encContent != NULL){
+					xmlFree(encContent);
+					encContent = NULL;
+				}
+
+				GetTheTime(&year,&month,&day,&hour,&minute,&second);
+				snprintf(timebuf, 99, "%02ld/%02ld/%02ld %02ld:%02ld:%02ld",year,month,day,hour,minute,second);
+
+				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(sockNum)->logDoc, BAD_CAST timebuf);
+				xmlSetProp(added_node, BAD_CAST "time", encContent);
+				
+				rewind((pinstance->getWaveBufferInfo(sockNum)->logFile));
+				if(xmlDocFormatDump((pinstance->getWaveBufferInfo(sockNum)->logFile),pinstance->getWaveBufferInfo(sockNum)->logDoc,0)==-1){
+					XOPCloseFile((pinstance->getWaveBufferInfo(sockNum)->logFile));
+				}
+			}
+		} else if (rc < 0) {
+			// Closed connection or error 
+			pinstance->closeWorker(sockNum);
+			err2=1;
+			goto done;
+		}
+	} else {
+		err2=1;
+		goto done;
+	}
+	
+	//now get an immediate reply
+	
+	FD_ZERO(&tempset);
+	timeout.tv_sec = floor(timeoutVal);
+	timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
+	FD_SET(sockNum,&tempset);
+	res = select(sockNum+1,&tempset,0,0,&timeout);
+	
+	memset(buf,0,sizeof(buf));
+	
+	if ((res>0) && FD_ISSET(sockNum, &tempset)) { 
+	           
+		do{			   
+			rc = recv(sockNum, buf, BUFLEN,0);
+
+			charsread += rc;
+			
+			if (rc < 0) {
+				// Closed connection or error 
+				pinstance->closeWorker(sockNum);
+				err2=1;
+				break;
+			} else if(rc > 0){
+				try {
+					chunk.WriteMemoryCallback(buf, sizeof(char), rc);
+				} catch (bad_alloc&){
+					err = NOMEM;
+					goto done;
+				}
+			} else if (rc == 0)
+				break;
+			
+			if(p->SMAL){
+				res=0;
+			} else {
+				FD_ZERO(&tempset);
+				timeout.tv_sec = floor(timeoutVal);
+				timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
+				FD_SET(sockNum,&tempset);
+				res = select(sockNum+1,&tempset,0,0,&timeout);
+			}
+		}while(res>0);
+		
+	} else if(res==-1) {
+		// Closed connection or error 
+		pinstance->closeWorker(sockNum);
+		err2=1;
+		goto done;
+	}
+	
+	if(!chunk.getData()){
+		goto done;
+	} 
+	
+done:
+	if(err==0 && err2 == 0 && chunk.getData())
+		err = PtrAndHand((void*)chunk.getData(), retval, chunk.getMemSize());
+	
+	p->retval = retval;
+	
+	if(encContent != NULL)
+		xmlFree(encContent);
+	
+	FD_ZERO(&tempset);
+	
+	if(p->message)
+		DisposeHandle(p->message);
+	
+	pthread_mutex_unlock( &readThreadMutex );
 	
 	return err;
 }

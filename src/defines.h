@@ -15,6 +15,9 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#include <pthread.h>
+#include "recursiveMutex.h"
+
 #define SOCKET long
 #endif
 
@@ -24,10 +27,14 @@
 #include <Iphlpapi.h>
 #include <conio.h>
 #include <time.h>
+#include "pthread.h"
+#include "sched.h"
+#include "semaphore.h"
 #define snprintf _snprintf
 #define close closesocket
 #define read recv
 #endif
+
 #include <errno.h>
 #include <map>
 #include <algorithm>
@@ -60,6 +67,7 @@
 #define PROCESSOR_NOT_AVAILABLE 10 + FIRST_XOP_ERR
 #define PROBLEM_WRITING_TO_FILE 11 + FIRST_XOP_ERR
 #define NO_SOCKET_DESCRIPTOR 12 + FIRST_XOP_ERR
+#define CANT_START_READER_THREAD 13 + FIRST_XOP_ERR
 
 #define BUFLEN 4096
 #define MAX_URL_LEN 256

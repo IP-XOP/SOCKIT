@@ -14,6 +14,7 @@
 #include "SOCKITisItOpen.h"
 #include "SOCKITstringtoWave.h"
 #include "SOCKITwaveToString.h"
+#include "SOCKITpeek.h"
 
 /*
 variable sock
@@ -36,29 +37,15 @@ static int XOPIdle(){
 
 //check if any have closed, check if there are messages to receive.
 	int err = 0;
-	unsigned long ticks = 0;							// Current tick count.
-	static unsigned long lastTicks = 0;				// Ticks last time XOP idled.
-		
-/*	#ifdef _MACINTOSH_
-		ticks = TickCount();						// Find current ticks.
-		if (ticks < lastTicks+60)					// Update every second.
-			return err ;
-			XOPNotice("Idling\r");
-	#endif
 	
-	#ifdef _WINDOWS_
-		ticks = GetTickCount();						// Find current ticks.
-		if (ticks < lastTicks+500)					// Update every second.
-			return err;
-	#endif
-*/	
 	extern CurrentConnections* pinstance;
+	extern pthread_mutex_t readThreadMutex;
+	
+	pthread_mutex_lock( &readThreadMutex );
 	if(pinstance->getMaxSockNumber())
 		err = pinstance->checkRecvData();
+	pthread_mutex_unlock( &readThreadMutex);
 	
-	lastTicks = ticks;
-
-
 	return err;
 }
 
@@ -67,7 +54,6 @@ RegisterOperations(void)		// Register any operations with Igor.
 {
 	int result;
 	
-	// Register XOP1 operation.
 	if (result = RegisterSOCKITopenconnection())
 		return result;
 	if (result = RegisterSOCKITsendnrecv())
@@ -78,7 +64,6 @@ RegisterOperations(void)		// Register any operations with Igor.
 		return result;
 	if (result = RegisterSOCKITwaveToString())
 		return result;	
-	// There are no more operations added by this XOP.
 	
 	return 0;
 }
@@ -87,11 +72,6 @@ static long
 RegisterFunction()
 {
 	int funcIndex;
-
-	/*	NOTE:
-		Most XOPs should return a result of NIL in response to the FUNCADDRS message.
-		See XOP manual "Restrictions on Direct XFUNCs" section.
-	*/
     
 	funcIndex = GetXOPItem(0);		/* which function invoked ? */
 	switch (funcIndex) {
@@ -104,6 +84,18 @@ RegisterFunction()
 		case 2:
 			return((long)SOCKITregisterProcessor);
             break;
+		case 3:
+			return((long)SOCKITpeek);
+			break;
+		case 4:
+			return((long)SOCKITsendmsgF);
+			break;
+		case 5:
+			return((long)SOCKITsendnrecvF);
+			break;
+		case 6:
+			return((long)SOCKITopenconnectionF);
+			break;
 	}
 	return(NIL);
 }
@@ -120,26 +112,49 @@ XOPEntry(void)
 	long result = 0;
 	
 	extern CurrentConnections* pinstance;
-	
+	extern pthread_t *readThread;
+	extern pthread_mutex_t readThreadMutex;
+
 	waveHndl wav;
 
 	switch (GetXOPMessage()) {
 		case NEW:
+			pthread_mutex_lock( &readThreadMutex );
 			pinstance->resetCurrentConnections();            
+			pthread_mutex_unlock( &readThreadMutex );
 			break;
 		case CLEANUP:
+			if(readThread){
+				pthread_mutex_lock( &readThreadMutex );
+				pinstance->quitReadThread();
+				pthread_mutex_unlock( &readThreadMutex );
+
+				int res=0;
+				pthread_join(*readThread, (void**)res);
+			}
+			if(readThread)
+				free(readThread);
+				
 			pinstance->resetCurrentConnections();
 			delete pinstance;
 
 #ifdef _WINDOWS_
+			pthread_win32_process_detach_np();
 			WSACleanup( );
 #endif
 			break;
 		case OBJINUSE:
 			//if we're going to tell it to write to buffer, then you can't get rid of the buffer.
 			wav = (waveHndl) GetXOPItem(0);
-			if(pinstance->checkIfWaveInUseAsBuf(wav))
+			
+			if(!pthread_mutex_trylock( &readThreadMutex )){
+				if(pinstance->checkIfWaveInUseAsBuf(wav))
+					result = WAVE_IN_USE;
+				pthread_mutex_unlock( &readThreadMutex );
+			} else {
 				result = WAVE_IN_USE;
+			}
+	
 			break;
 		case FUNCADDRS:
                 result = RegisterFunction();
@@ -171,12 +186,33 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 	SetXOPEntry(XOPEntry);							/* set entry point for future calls */
 	SetXOPType((long)(RESIDENT | IDLES));			// Specify XOP to stick around and to receive IDLE messages.
 
-	extern CurrentConnections *pinstance;
-	CurrentConnections::Instance();
-	
-	pinstance->resetCurrentConnections();
-	
 	long result = 0;
+
+	#ifdef _WINDOWS_
+		pthread_win32_process_attach_np();
+	#endif
+
+	extern pthread_t *readThread;
+	extern CurrentConnections *pinstance;
+	extern pthread_mutex_t readThreadMutex;
+
+	pthread_mutexattr_t attr;
+	pthread_mutexattr_init(&attr);
+	pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
+	pthread_mutex_init( &readThreadMutex, &attr );
+
+	pthread_mutex_lock( &readThreadMutex );
+	CurrentConnections::Instance();
+	pinstance->resetCurrentConnections();
+	pthread_mutex_unlock( &readThreadMutex );
+	
+	readThread = (pthread_t*)malloc(sizeof(pthread_t));
+	if(readThread == NULL)
+		SetXOPResult(NOMEM);
+	if(pthread_create( readThread, NULL, &readerThread, NULL)){
+		SetXOPResult(CANT_START_READER_THREAD);
+		goto done;
+	}
 	
 #ifdef _WINDOWS_
 	WORD wVersionRequested;
@@ -190,14 +226,15 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 	}
 #endif
 
-	if (igorVersion < 504){
-		SetXOPResult(REQUIRES_IGOR_500);
+	if (igorVersion < 600){
+		SetXOPResult(IGOR_OBSOLETE);
 		goto done;
-	} else
-		SetXOPResult(0L);
+	}
 	
-	if (result = RegisterOperations())
+	if (result = RegisterOperations()){
 		SetXOPResult(result);
+		goto done;
+	}
 
 done:
 

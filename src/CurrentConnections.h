@@ -14,11 +14,14 @@
 #include "stringutils.h"
 #endif
 
+
+double roundDouble(double val);
+long doubleToLong(double val);
+void *readerThread(void*);
+
 /**
 *Stores relevant information about what to do with the messages received from the socket.
 */
-double roundDouble(double val);
-long doubleToLong(double val);
 
 class waveBufferInfo {
 	public:
@@ -27,8 +30,11 @@ class waveBufferInfo {
 	char processor[MAX_OBJ_NAME+1];		/**<the name of an IGOR function that is notified when messages are received*/
 	char tokenizer[31];					/**<the output from the socket is tokenized using the characters in this array*/
 	int sztokenizer;
+	bool toClose;
+	MemoryStruct readBuffer;
 	
 	bool DBUG;
+	bool NOIDLES;						//NOIDLES will mean that the user picks up messages with SOCKITpeek, the 
 	xmlDoc *logDoc;
 	XOP_FILE_REF logFile;
 	
@@ -39,15 +45,20 @@ class waveBufferInfo {
 		memset(tokenizer,0,sizeof(tokenizer));
 		sztokenizer = 0;
 		DBUG = false;
+		toClose= false;
 		logDoc = NULL;
 		logFile = NULL;
+		NOIDLES = false;
 	};
 	
 	~waveBufferInfo(){
+		bufferWave = NULL;
 		if(logDoc!=NULL && logFile!=NULL){
 			rewind(logFile);
 			xmlDocFormatDump(logFile,logDoc,0);
 		}
+		readBuffer.reset();
+		
 		if(logDoc)
 			xmlFreeDoc(logDoc);
 		if(logFile){
@@ -119,7 +130,7 @@ class CurrentConnections{
 	*@param bufferInfo Information on what to do with incoming messages.
 	*@see waveBufferInfo
 	*/	
-	void addWorker(SOCKET sockNum,waveBufferInfo bufferInfo);
+	int addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo);
 
 	/**
 	*Reports to IGOR whether the wave is in use.  IGOR sends the OBJINUSE message to the XOP.  Here we check
@@ -153,12 +164,22 @@ class CurrentConnections{
 	fd_set* getReadSet();
 	
 	/**
+	*Sends a signal that you want the read thread to stop.
+	*/		
+	void quitReadThread();
+	
+	/**
+	*Get the flag status to see if you want to quit the reader thread.
+	*/		
+	bool quitReadThreadStatus();
+	
+	/**
 	*Get the waveBufferInfo for a given socket.
 	*@param sockNum the socket that you are interested in.
 	@return a pointer to the waveBufferInfo for a given socket.
 	*@see waveBufferInfo 
 	*/
-	const waveBufferInfo* getWaveBufferInfo(SOCKET sockNum);
+	waveBufferInfo* getWaveBufferInfo(SOCKET sockNum);
 	/**
 	*checks whether any of the sockets have any data waiting to be recv().  When IGOR sends the IDLE
 	*message to the XOP (~1/20 second) this method checks for new messages waiting on the socket.  If there are any it reads them
@@ -178,7 +199,7 @@ class CurrentConnections{
 	*@see registerProcessor()
 	*@see checkProcessor()
 	*/
-	int outputBufferDataToWave(SOCKET sockNum, const unsigned char *bufferData, size_t szbufferdata);
+	int outputBufferDataToWave(SOCKET sockNum, const unsigned char *bufferData, size_t szbufferdata, bool useProcessor);
 	
 	private:
 	/**
@@ -203,8 +224,13 @@ class CurrentConnections{
 	SOCKET maxSockNumber;
 
 	/**
+	*Quit the thread that reads all the messages
+	*/
+	bool quitReadThreadFlag;
+	
+	/**
 	*links the waveBufferInfo to a given socket number.
 	*/
-	std::map<SOCKET,waveBufferInfo> bufferWaves;	//socket descriptor, wave buffer, containing the recv messages.
+	std::map<SOCKET, waveBufferInfo> bufferWaves;	//socket descriptor, wave buffer, containing the recv messages.
 
 	};

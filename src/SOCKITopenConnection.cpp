@@ -9,7 +9,7 @@ RegisterSOCKITopenconnection(void)
 	char* runtimeStrVarList;
 	
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
-	cmdTemplate = "SOCKITopenconnection/TIME=number/LOG=name/DBUG/Q[=number]/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
+	cmdTemplate = "SOCKITopenconnection/NOID/TIME=number/LOG=name/DBUG/Q[=number]/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
 	runtimeNumVarList = "V_flag";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITopenconnectionRuntimeParams), (void*)ExecuteSOCKITopenconnection, 0);
@@ -21,6 +21,9 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	int err = 0, err2 = 0;
 	
 	extern CurrentConnections* pinstance;
+	extern pthread_mutex_t readThreadMutex;
+	pthread_mutex_lock( &readThreadMutex );
+	
 #ifdef _WINDOWS_
 	extern WSADATA globalWsaData;
 #endif
@@ -38,10 +41,10 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	struct timeval timeout;
 	
 	struct sockaddr_in  sa;
-    struct hostent*     hen;
-	unsigned long fdflags;
+    struct hostent     *hen;
+//	unsigned long fdflags;
 	waveBufferInfo *bufferInfo = new waveBufferInfo();
-	
+		
 	xmlNode *root_element = NULL;
 	xmlChar *entityEncoded = NULL;
 	char fnamepath[MAX_PATH_LEN+1];
@@ -97,6 +100,10 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		bufferInfo->DBUG = false;
 	}
 	
+	if(p->NOIDFlagEncountered){
+		bufferInfo->NOIDLES = true;
+	}
+	
 	if (p->QFlagEncountered) {
 		bufferInfo->toPrint = false;
 
@@ -121,10 +128,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		bufferInfo->sztokenizer = GetHandleSize(p->TOKFlagStrH);		
 	}
 	
-	if (p->PORTEncountered) {
-		// Parameter: p->PORTNumber
+	if (p->PORTEncountered)
 		port = (long)p->PORTNumber;
-	}
 	
 	if (p->BUFEncountered) {
 		// Parameter: p->BUFWaveH (test for NULL handle before using)
@@ -173,25 +178,25 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	/* Connect to server */
 #ifdef _MACINTOSH_
-	fdflags = fcntl(sockNum, F_GETFL);
-	if(fcntl(sockNum, F_SETFL, fdflags | O_NONBLOCK) < 0){
-		err2 = 1;
-		XOPNotice("SOCKITerr: fcntl failed\r");
-		goto done;
-	}
+//	fdflags = fcntl(sockNum, F_GETFL);
+//	if(fcntl(sockNum, F_SETFL, fdflags | O_NONBLOCK) < 0){
+//		err2 = 1;
+//		XOPNotice("SOCKITerr: fcntl failed\r");
+//		goto done;
+//	}
 #endif
 #ifdef _WINDOWS_
-	fdflags = 1;
-	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
-		XOPNotice("SOCKITerr: IOCTL failed \r");
-		goto done;
-	}
+//	fdflags = 1;
+//	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+//		XOPNotice("SOCKITerr: IOCTL failed \r");
+//		goto done;
+//	}
 #endif
 
 	rc = connect(sockNum, (struct sockaddr *)&sa, sizeof(sa));
 	res = select(sockNum+1,0,&tempset,0,&timeout);
-	
-	if(FD_ISSET(sockNum, &tempset)){
+
+	if(rc==0 && FD_ISSET(sockNum, &tempset)){
 		if(!p->QFlagEncountered){
 				snprintf(report,sizeof(report),"SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
 				XOPNotice(report);
@@ -207,19 +212,19 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 
 //reset to blocking
 #ifdef _MACINTOSH_
-	fdflags = fcntl(sockNum, F_GETFL);
-	if(fcntl(sockNum, F_SETFL, fdflags | (~O_NONBLOCK)) < 0){
-		err2 = 1;
-		XOPNotice("SOCKITerr:fcntl failed\r");
-		goto done;
-	}
+//	fdflags = fcntl(sockNum, F_GETFL);
+//	if(fcntl(sockNum, F_SETFL, fdflags | (~O_NONBLOCK)) < 0){
+//		err2 = 1;
+//		XOPNotice("SOCKITerr:fcntl failed\r");
+//		goto done;
+//	}
 #endif
 #ifdef _WINDOWS_
-	fdflags = 0;
-	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
-		XOPNotice("SOCKITerr: IOCTL failed \r");
-		goto done;
-	}
+//	fdflags = 0;
+//	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+//		XOPNotice("SOCKITerr: IOCTL failed \r");
+//		goto done;
+//	}
 #endif
 
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
@@ -250,7 +255,11 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			xmlSetProp(root_element, BAD_CAST "port", BAD_CAST xmlEncodeEntitiesReentrant(bufferInfo->logDoc, BAD_CAST entityEncoded));		
 			root_element = xmlDocSetRootElement(bufferInfo->logDoc,root_element);
 		}
-		pinstance->addWorker(sockNum,*bufferInfo);
+
+		if(err = pinstance->addWorker(sockNum, *bufferInfo)){
+			err = SOCKET_ALLOC_FAILED;
+			goto done;
+		}
 		
 		if (p->PROCFlagEncountered) {
 			// Parameter: p->PROCFlagName
@@ -277,8 +286,112 @@ done:
 		err = StoreNumericDataUsingVarName(p->IDVarName,-1,0);
 	}
 	
+	pthread_mutex_unlock( &readThreadMutex );
+	
 	if(entityEncoded!= NULL)
 		xmlFree(entityEncoded);
 	
 	return err;
 }
+
+int
+SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
+{
+	int err = 0, err2 = 0;
+	
+	extern CurrentConnections* pinstance;
+	extern pthread_mutex_t readThreadMutex;
+	pthread_mutex_lock( &readThreadMutex );
+	
+	p->retval=-1;
+	
+#ifdef _WINDOWS_
+	extern WSADATA globalWsaData;
+#endif
+	
+	int rc;
+    SOCKET sockNum = -1;
+	int res = 0;
+	long port = 0;
+	
+	char host[MAX_URL_LEN+1];
+
+	fd_set tempset;	
+	struct timeval timeout;
+	
+	struct sockaddr_in  sa;
+    struct hostent     *hen;
+	waveBufferInfo *bufferInfo = new waveBufferInfo();
+		
+	timeout.tv_sec = floor(p->timeout);
+	timeout.tv_usec =  (int)(p->timeout-(double)floor(p->timeout))*1000000;
+	
+	bufferInfo->NOIDLES = true;
+	bufferInfo->toPrint = false;
+	
+	port = (long)p->portNumber;
+		
+	if(!p->IPStr){
+		err = OH_EXPECTED_STRING;
+		goto done;
+	}
+	if(err = GetCStringFromHandle(p->IPStr, host, MAX_URL_LEN))
+		goto done;
+	
+	/* Address resolution */
+	hen = gethostbyname(host);
+	if (!hen){
+		err = BAD_HOST_RESOLV;
+		goto done;
+	}
+	
+	/* zero internet address struct*/
+	memset(&sa, 0, sizeof(sa));
+	
+	/* populate internet address struct */
+	sa.sin_family = AF_INET;
+	sa.sin_port = htons(port);
+	memcpy(&sa.sin_addr.s_addr, hen->h_addr_list[0], hen->h_length);
+	
+	/* allocate a socket */
+	sockNum = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockNum < 0) 
+		goto done;
+	
+	FD_ZERO(&tempset);
+	FD_SET(sockNum,&tempset);
+	
+	rc = connect(sockNum, (struct sockaddr *)&sa, sizeof(sa));
+	res = select(sockNum+1,0,&tempset,0,&timeout);
+
+	if(rc==0 && FD_ISSET(sockNum, &tempset)){
+	//connection succeeded
+	} else {
+		close(sockNum);
+		sockNum = -1;
+		err2 = 1;
+		goto done;
+	}
+
+	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
+	if(sockNum>0){
+		if(err = pinstance->addWorker(sockNum, *bufferInfo)){
+			err = SOCKET_ALLOC_FAILED;
+			goto done;
+		}
+	}
+	
+done:
+	FD_ZERO(&tempset);
+	if(!err && sockNum>0 && !err2){
+		p->retval = sockNum;
+	} else {
+		p->retval = -1;
+		delete bufferInfo;
+	}
+	
+	pthread_mutex_unlock( &readThreadMutex );
+	
+	return err;
+}
+

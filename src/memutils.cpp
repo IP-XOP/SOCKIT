@@ -19,6 +19,7 @@ MemoryStruct::~MemoryStruct(){
 	if(memory)
 		free(memory);
 	memsize=0;
+	memory=0;
 }
 
 //resets the memory

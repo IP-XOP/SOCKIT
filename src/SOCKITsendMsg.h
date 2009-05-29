@@ -37,3 +37,14 @@ typedef struct SOCKITsendmsgRuntimeParams* SOCKITsendmsgRuntimeParamsPtr;
 
 int RegisterSOCKITsendmsg(void);
 int ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParamsPtr p);
+
+#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+typedef struct SOCKITsendmsgFStruct {
+	Handle message;
+	DOUBLE sockID;
+	void* tp;
+	DOUBLE retval;
+}SOCKITsendmsgFStruct, *SOCKITsendmsgFStructPtr;
+#include "XOPStructureAlignmentReset.h"
+
+int SOCKITsendmsgF(SOCKITsendmsgFStructPtr);
