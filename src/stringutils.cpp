@@ -37,4 +37,4 @@ size_t strlcat(char *d, const char *s, size_t bufsize)
 		d[len1+len2] = 0;
 	}
 	return ret;
-}
+};

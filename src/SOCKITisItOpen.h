@@ -16,3 +16,4 @@ typedef struct SOCKITisItOpenStruct {
 #include "XOPStructureAlignmentReset.h"
 
 int SOCKITisItOpen(SOCKITisItOpenStructPtr);
+

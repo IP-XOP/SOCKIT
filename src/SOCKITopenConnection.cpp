@@ -29,7 +29,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 #endif
 	
 	int rc;
-    SOCKET sockNum = -1;
+    SOCKET sockNum = -1L;
 	int res = 0;
 	long port = 0;
 	int dataType = 0;
