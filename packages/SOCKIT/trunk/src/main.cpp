@@ -240,7 +240,8 @@ done:
 
 #ifdef _MACINTOSH_
 		return 0;
-#else
+#endif
+#ifdef _WINDOWS_
 	return;
 #endif
 }

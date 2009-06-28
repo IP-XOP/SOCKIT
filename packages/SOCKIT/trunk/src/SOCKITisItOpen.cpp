@@ -26,4 +26,5 @@ int SOCKITisItOpen(SOCKITisItOpenStruct *p){
 	
 	pthread_mutex_unlock( &readThreadMutex );
 	return err;
-}
+};
+

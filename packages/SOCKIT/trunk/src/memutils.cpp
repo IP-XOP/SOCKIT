@@ -137,4 +137,4 @@ void* malloc2d(int ii, int jj, int sz)
     *(p+i) = (void*) ((int)p + sz_ptr_array + i * sz_elt_array);
   }
   return p;
-}
+};

@@ -475,4 +475,4 @@ done:
 	pthread_mutex_unlock( &readThreadMutex );
 	
 	return err;
-}
+};
