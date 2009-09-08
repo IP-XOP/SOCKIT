@@ -11,7 +11,9 @@
 
 int SOCKITpeek(SOCKITpeekStructPtr p){
 	int err = 0;
-
+	//this function returns the entirety of the stored byte buffer for a given socket.
+	//it can be called from a threadsafe function.
+	
 	Handle dest;
 	SOCKET sockID = 0;
 	extern CurrentConnections *pinstance;
