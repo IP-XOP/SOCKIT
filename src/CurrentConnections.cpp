@@ -305,7 +305,7 @@ int CurrentConnections::isSockitOpen(double query,SOCKET *sockNum){
 	if(intVal<0)
 		return 0;
 	
-	if(FD_ISSET(intVal,pinstance->getReadSet())){
+	if(FD_ISSET(intVal, pinstance->getReadSet())){
 		*sockNum = (SOCKET)intVal;
 		retval = 1;
 	 } else
