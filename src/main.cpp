@@ -1,4 +1,4 @@
-
+//
 //connect socket (specify timeout for connection?)
 //send to socket
 //receive from socket in idle time+ after send

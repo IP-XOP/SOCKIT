@@ -200,7 +200,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	if ((res>0) && FD_ISSET(sockNum, &tempset)) { 
 	           
 		do{			   
-			rc = recv(sockNum, buf, BUFLEN,0);
+			rc = recv(sockNum, buf, BUFLEN, 0);
 
 			charsread += rc;
 			
