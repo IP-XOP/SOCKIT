@@ -94,9 +94,9 @@ void *readerThread(void *){
 					iters = 0;
 					charsread = 0;
 					rc=0;
-					memset(buf, 0, BUFLEN);
+					memset(buf, 0, BUFLEN * sizeof(char));
 					do{
-						memset(buf, 0, sizeof(BUFLEN));
+						memset(buf, 0, BUFLEN * sizeof(char));
 						iters += 1;
 						//read the characters from the socket
 						rc = recv(ii, buf, BUFLEN,0);
