@@ -46,10 +46,11 @@ int SOCKITpeek(SOCKITpeekStructPtr p){
 	}
 
 done:
+	p->dest = NULL;	// Init to NULL
+	
 	if(dest)
 		p->dest = dest;
 	
-
 	pthread_mutex_unlock( &readThreadMutex );
 	
 	return err;
