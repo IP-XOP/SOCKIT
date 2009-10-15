@@ -81,7 +81,7 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 	}
 	dimensionSizes[0] = numElements;
 	
-	strcpy(waveName,"W_stringToWave");
+	strcpy(waveName, "W_stringToWave");
 	if(err = MDMakeWave(&waveH, waveName, NULL, dimensionSizes, waveType, 1))
 		goto done;
 
@@ -91,10 +91,10 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 	hStateConv = MoveLockHandle(p->conv);
 
 	//copy over the data.  Hmm, a bit scary doing this.
-	memcpy(wp,*(p->conv),GetHandleSize(p->conv));
+	memcpy(wp, *(p->conv), GetHandleSize(p->conv));
 
 	HSetState(waveH, hStateWav);
-	HSetState(p->conv,hStateConv);
+	HSetState(p->conv, hStateConv);
 	
 	WaveHandleModified(waveH);
 

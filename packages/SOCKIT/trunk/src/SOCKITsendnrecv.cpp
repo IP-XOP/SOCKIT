@@ -464,6 +464,8 @@ done:
 	if(err == 0 && err2 == 0 && chunk.getData())
 		err = PtrAndHand((void*)chunk.getData(), retval, chunk.getMemSize());
 	
+	p->retval = NULL;
+	
 	if(retval)
 		p->retval = retval;
 	
