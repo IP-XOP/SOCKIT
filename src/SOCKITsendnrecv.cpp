@@ -330,9 +330,11 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	struct timeval timeout;
 	
 	retval = NewHandle(0);
-	if(err = MemError())
+	if(retval==NULL){
+		err = NOMEM;
 		goto done;
-		
+	}
+	
 	if(p->TIME){
 		timeoutVal = fabs(p->TIME);
 	} else {
@@ -412,7 +414,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	FD_SET(sockNum,&tempset);
 	res = select(sockNum+1,&tempset,0,0,&timeout);
 	
-	memset(buf,0,sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 	
 	if ((res>0) && FD_ISSET(sockNum, &tempset)) { 
 	           
@@ -447,7 +449,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 			}
 		}while(res>0);
 		
-	} else if(res==-1) {
+	} else if(res == -1) {
 		// Closed connection or error 
 		pinstance->closeWorker(sockNum);
 		err2=1;
@@ -459,10 +461,11 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	} 
 	
 done:
-	if(err==0 && err2 == 0 && chunk.getData())
+	if(err == 0 && err2 == 0 && chunk.getData())
 		err = PtrAndHand((void*)chunk.getData(), retval, chunk.getMemSize());
 	
-	p->retval = retval;
+	if(retval)
+		p->retval = retval;
 	
 	if(encContent != NULL)
 		xmlFree(encContent);

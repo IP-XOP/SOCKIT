@@ -22,6 +22,10 @@ int SOCKITpeek(SOCKITpeekStructPtr p){
 	pthread_mutex_lock( &readThreadMutex );
 		
 	dest = NewHandle(0);
+	if(dest == NULL){
+		err = NOMEM;
+		goto done;
+	}
 
 	if(!p->sockID){
 		err = OH_EXPECTED_NUMBER;
@@ -30,7 +34,7 @@ int SOCKITpeek(SOCKITpeekStructPtr p){
 	
 	sockID = (SOCKET)doubleToLong(roundDouble(p->sockID));
 
-	if(pinstance->isSockitOpen(p->sockID,&sockID)){
+	if(pinstance->isSockitOpen(p->sockID, &sockID)){
 		if(pinstance->getWaveBufferInfo(sockID)->readBuffer.getData()){
 			if(err = PtrAndHand((void*)pinstance->getWaveBufferInfo(sockID)->readBuffer.getData(), dest, pinstance->getWaveBufferInfo(sockID)->readBuffer.getMemSize()))
 				goto done;
@@ -39,16 +43,12 @@ int SOCKITpeek(SOCKITpeekStructPtr p){
 				pinstance->closeWorker(sockID);
 			}
 		}
-	} else {
-		err = -1;
 	}
-	
-done:
-	
-	p->dest = dest;
 
-	if(err && dest)
-		DisposeHandle(dest);
+done:
+	if(dest)
+		p->dest = dest;
+	
 
 	pthread_mutex_unlock( &readThreadMutex );
 	
