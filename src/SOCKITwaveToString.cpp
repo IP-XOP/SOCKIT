@@ -5,6 +5,10 @@
 #include "memutils.h"
 #include <map>
 
+#define NUMCHARS 50
+#ifdef _WINDOWS_
+#define snprintf sprintf_s
+#endif
 using namespace std;
 
 
@@ -21,7 +25,6 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	long dimensionSizes[MAX_DIMENSIONS+1];
 	void *wp;
 	
-	int NUMCHARS = 50;
 	MemoryStruct chunk;
 	register char tempNumStr[NUMCHARS+1];
 	
@@ -113,6 +116,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	//TXT flag makes a text representation of the wave
 	if(p->TXTFlagEncountered){
 		long ii, totalIts;
+		int val;
 		waveType = WaveType(p->wavWaveH);
 		wp = (void*) WaveData(p->wavWaveH);
 		totalIts = WavePoints(p->wavWaveH);
@@ -121,28 +125,28 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 		for(ii=0 ; ii< totalIts ; ii+=1){
 			switch(waveType){
 				case NT_FP32:
-					snprintf (tempNumStr, NUMCHARS, "%g ", ((float *)wp)[ii]);
+					val = snprintf(tempNumStr, NUMCHARS, "%g ", ((float *)wp)[ii]);
 					break;
 				case NT_FP64:
-					snprintf (tempNumStr, NUMCHARS,"%g ", ((double *)wp)[ii]);
+					val = snprintf(tempNumStr, NUMCHARS,"%g ", ((double *)wp)[ii]);
 					break;
 				case NT_I8:
-					snprintf (tempNumStr, NUMCHARS, "%hhd ", ((char* )wp)[ii]);
+					val = snprintf(tempNumStr, NUMCHARS, "%hhd ", ((char* )wp)[ii]);
 					break;
 				case NT_I16:
-					snprintf (tempNumStr, NUMCHARS,"%hd ", ((short* )wp)[ii]);
+					val = snprintf(tempNumStr, NUMCHARS,"%hd ", ((short* )wp)[ii]);
 					break;
 				case NT_I32:
-					snprintf (tempNumStr, NUMCHARS,"%li ", ((long* )wp)[ii]);
+					val = snprintf(tempNumStr, NUMCHARS,"%li ", ((long* )wp)[ii]);
 					break;
 				case (NT_UNSIGNED|NT_I32):
-					snprintf (tempNumStr, NUMCHARS,"%d ", ((unsigned long* )wp)[ii]);
+					val = snprintf(tempNumStr, NUMCHARS,"%d ", ((unsigned long* )wp)[ii]);
 					break;
 				case (NT_UNSIGNED|NT_I16):
-					snprintf (tempNumStr, NUMCHARS, "%d ", ((unsigned short* )wp)[ii]);
+					val = snprintf(tempNumStr, NUMCHARS, "%d ", ((unsigned short* )wp)[ii]);
 					break;
 				case NT_UNSIGNED|NT_I8:
-					snprintf (tempNumStr, NUMCHARS, "%d ", ((unsigned char* )wp)[ii]);
+					val = snprintf(tempNumStr, NUMCHARS, "%d ", ((unsigned char* )wp)[ii]);
 					break;
 				default:	//not recognized wavetype
 					goto done;
