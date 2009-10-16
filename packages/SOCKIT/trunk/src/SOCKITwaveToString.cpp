@@ -2,6 +2,11 @@
 
 #include "SOCKITwaveToString.h"
 #include "SwapEndian.h"
+#include "memutils.h"
+#include <map>
+
+using namespace std;
+
 
 int
 ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
@@ -10,13 +15,16 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	int waveType;
 	long bytesForWave;
 	long szString;
-
-	void *wp;
+	
 	int hStateWav = 0;
-
 	long numDimensions;
 	long dimensionSizes[MAX_DIMENSIONS+1];
-
+	void *wp;
+	
+	int NUMCHARS = 50;
+	MemoryStruct chunk;
+	register char tempNumStr[NUMCHARS+1];
+	
 	// Main parameters.
 	if (p->wavEncountered) {
 		// Parameter: p->wav (test for NULL handle before using)
@@ -25,7 +33,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 			goto done;
 		}
 	}
-
+	
 	if (p->strEncountered) {
 		if (p->strParamsSet[0]) {
 			// Optional parameter: p->ret
@@ -38,72 +46,122 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 			}
 		}
 	}
-
-	if (p->strEncountered) {
-		// Parameter: p->str
-	}
 	
-	waveType = WaveType(p->wavWaveH);
-
-	switch(waveType){
-		case 2:
-			bytesForWave = 4;
-		break;
-		case 4:
-			bytesForWave = 8;
-		break;
-		case 8:
-			bytesForWave = 1;
-		break;
-		case 16:
-			bytesForWave = 2;
-		break;
-		case 32:
-			bytesForWave = 4;
-		break;
-		case 96:
-			bytesForWave = 4;
-		break;
-		case 80:
-			bytesForWave = 2;
-			break;
-		case 72:
-			bytesForWave = 1;
-			break;
-		default:	//not recognized wavetype
+	//if the TXT flag is not specified you get a binary representation of the wave
+	//this is useful for sending arrays over networks, compressing arrays, etc.
+	if(!p->TXTFlagEncountered){
+		waveType = WaveType(p->wavWaveH);
+		
+		switch(waveType){
+			case NT_FP32:
+				bytesForWave = 4;
+				break;
+			case NT_FP64:
+				bytesForWave = 8;
+				break;
+			case NT_I8:
+				bytesForWave = 1;
+				break;
+			case NT_I16:
+				bytesForWave = 2;
+				break;
+			case NT_I32:
+				bytesForWave = 4;
+				break;
+			case (NT_UNSIGNED|NT_I32):
+				bytesForWave = 4;
+				break;
+			case (NT_UNSIGNED|NT_I16):
+				bytesForWave = 2;
+				break;
+			case NT_UNSIGNED|NT_I8:
+				bytesForWave = 1;
+				break;
+			default:	//not recognized wavetype
+				goto done;
+				break;
+		}
+		
+		szString = bytesForWave * WavePoints(p->wavWaveH);
+		
+		//E says you expect the data to be big Endian
+		//need to byte swap
+		if(IsLittleEndian() == p->EFlagEncountered){
+			if(err = MDGetWaveDimensions(p->wavWaveH,&numDimensions,dimensionSizes))
+				goto done;
+			
+			if(err = MDChangeWave2(p->wavWaveH,-1, dimensionSizes, 2))
+				goto done;
+		}
+		
+		hStateWav = MoveLockHandle(p->wavWaveH);
+		wp = (void*)WaveData(p->wavWaveH);
+		
+		if(	err = StoreStringDataUsingVarName(p->str, (char*)wp, szString))
 			goto done;
-			break;
-	}
-
-	szString = bytesForWave * WavePoints(p->wavWaveH);
+		
+		HSetState(p->wavWaveH, hStateWav);
+		
+		//E says you expect the data to be big Endian
+		//need to byte swap
+		if(IsLittleEndian() == p->EFlagEncountered){
+			if(err = MDChangeWave2(p->wavWaveH,-1, dimensionSizes, 2))
+				goto done;		
+		}
+	} 
 	
-	//E says you expect the data to be big Endian
-	//need to byte swap
-	if(IsLittleEndian() == p->EFlagEncountered){
-		if(err = MDGetWaveDimensions(p->wavWaveH,&numDimensions,dimensionSizes))
-			goto done;
-
-		if(err = MDChangeWave2(p->wavWaveH,-1, dimensionSizes, 2))
+	//TXT flag makes a text representation of the wave
+	if(p->TXTFlagEncountered){
+		long ii, totalIts;
+		waveType = WaveType(p->wavWaveH);
+		wp = (void*) WaveData(p->wavWaveH);
+		totalIts = WavePoints(p->wavWaveH);
+		hStateWav = MoveLockHandle(p->wavWaveH);
+		
+		for(ii=0 ; ii< totalIts ; ii+=1){
+			switch(waveType){
+				case NT_FP32:
+					snprintf (tempNumStr, NUMCHARS, "%g ", ((float *)wp)[ii]);
+					break;
+				case NT_FP64:
+					snprintf (tempNumStr, NUMCHARS,"%g ", ((double *)wp)[ii]);
+					break;
+				case NT_I8:
+					snprintf (tempNumStr, NUMCHARS, "%hhd ", ((char* )wp)[ii]);
+					break;
+				case NT_I16:
+					snprintf (tempNumStr, NUMCHARS,"%hd ", ((short* )wp)[ii]);
+					break;
+				case NT_I32:
+					snprintf (tempNumStr, NUMCHARS,"%li ", ((long* )wp)[ii]);
+					break;
+				case (NT_UNSIGNED|NT_I32):
+					snprintf (tempNumStr, NUMCHARS,"%d ", ((unsigned long* )wp)[ii]);
+					break;
+				case (NT_UNSIGNED|NT_I16):
+					snprintf (tempNumStr, NUMCHARS, "%d ", ((unsigned short* )wp)[ii]);
+					break;
+				case NT_UNSIGNED|NT_I8:
+					snprintf (tempNumStr, NUMCHARS, "%d ", ((unsigned char* )wp)[ii]);
+					break;
+				default:	//not recognized wavetype
+					goto done;
+					break;
+			}
+			try {
+				chunk.WriteMemoryCallback(tempNumStr, sizeof(char), strlen(tempNumStr));
+			} catch (bad_alloc&){
+				HSetState(p->wavWaveH, hStateWav);
+				err = NOMEM;
+				goto done;
+			}
+		}		
+		HSetState(p->wavWaveH, hStateWav);
+		if(err = StoreStringDataUsingVarName(p->str, (char*)chunk.getData(), chunk.getMemSize()))
 			goto done;
 	}
-
-	hStateWav = MoveLockHandle(p->wavWaveH);
-	wp = (void*)WaveData(p->wavWaveH);
-
-	if(	err = StoreStringDataUsingVarName(p->str, (char*)wp, szString))
-		goto done;
-
-	HSetState(p->wavWaveH, hStateWav);
-
-	//E says you expect the data to be big Endian
-	//need to byte swap
-	if(IsLittleEndian() == p->EFlagEncountered){
-		if(err = MDChangeWave2(p->wavWaveH,-1, dimensionSizes, 2))
-			goto done;		
-	}
-
 done:
-
+	
 	return err;
 }
 
@@ -113,9 +171,9 @@ RegisterSOCKITwaveToString(void)
 	char* cmdTemplate;
 	char* runtimeNumVarList;
 	char* runtimeStrVarList;
-
+	
 	// NOTE: If you change this template, you must change the SOCKITwaveToStringRuntimeParams structure as well.
-	cmdTemplate = "SOCKITwaveToString/E wave:wav, varname:str";
+	cmdTemplate = "SOCKITwaveToString/E/TXT wave:wav, varname:str";
 	runtimeNumVarList = "";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITwaveToStringRuntimeParams), (void*)ExecuteSOCKITwaveToString, 0);

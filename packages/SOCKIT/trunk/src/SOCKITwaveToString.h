@@ -5,6 +5,8 @@ struct SOCKITwaveToStringRuntimeParams {
 
 	// Parameters for /E flag group.
 	int EFlagEncountered;
+	// Parameters for /TXT flag group.
+	int TXTFlagEncountered;
 	// There are no fields for this group because it has no parameters.
 
 	// Main parameters.
