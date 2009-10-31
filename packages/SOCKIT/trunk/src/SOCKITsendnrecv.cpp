@@ -65,7 +65,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	}
 	
 	timeout.tv_sec = floor(timeoutVal);
-	timeout.tv_usec =  (int)(timeoutVal-(double)floor(timeoutVal))*1000000;
+	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
     
 	memset(buf,0,sizeof(buf));
 	
@@ -191,7 +191,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	FD_ZERO(&tempset);
 	timeout.tv_sec = floor(timeoutVal);
-	timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
+	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	FD_SET(sockNum,&tempset);
 	res = select(sockNum+1,&tempset,0,0,&timeout);
 	
@@ -229,7 +229,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			} else {
 				FD_ZERO(&tempset);
 				timeout.tv_sec = floor(timeoutVal);
-				timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
+				timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 				FD_SET(sockNum,&tempset);
 				res = select(sockNum+1,&tempset,0,0,&timeout);
 			}
@@ -338,11 +338,11 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	if(p->TIME){
 		timeoutVal = fabs(p->TIME);
 	} else {
-		timeoutVal = 1;
+		timeoutVal = 1.;
 	}
 	
 	timeout.tv_sec = floor(timeoutVal);
-	timeout.tv_usec =  (int)(timeoutVal-(double)floor(timeoutVal))*1000000;
+	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
     
 	memset(buf, 0, sizeof(buf));
 	
@@ -410,7 +410,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	
 	FD_ZERO(&tempset);
 	timeout.tv_sec = floor(timeoutVal);
-	timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
+	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	FD_SET(sockNum,&tempset);
 	res = select(sockNum+1,&tempset,0,0,&timeout);
 	
@@ -443,7 +443,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 			} else {
 				FD_ZERO(&tempset);
 				timeout.tv_sec = floor(timeoutVal);
-				timeout.tv_usec =  (timeoutVal-(double)floor(timeoutVal))*1000000;
+				timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 				FD_SET(sockNum,&tempset);
 				res = select(sockNum+1,&tempset,0,0,&timeout);
 			}

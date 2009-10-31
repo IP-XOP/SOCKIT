@@ -9,6 +9,7 @@
 #ifdef _WINDOWS_
 #define snprintf sprintf_s
 #endif
+
 using namespace std;
 
 

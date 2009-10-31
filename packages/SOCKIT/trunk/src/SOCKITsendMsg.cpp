@@ -48,9 +48,9 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	
 	if(p->TIMEFlagEncountered){
 		timeout.tv_sec = floor(p->TIMEFlagNumber);
-		timeout.tv_usec =  (int)(p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000;
+		timeout.tv_usec =  (long)((p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000);		
 	} else {
-		timeout.tv_sec = 5;
+		timeout.tv_sec = 5.;
 		timeout.tv_usec = 0;
     }
 	
@@ -74,7 +74,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	}
 	
 	if(!pinstance->isSockitOpen(p->ID,&socketToWrite)){
-		snprintf(report,sizeof(report),"SOCKIT err: socket not connected %d\r", socketToWrite);
+		snprintf(report,sizeof(report),"SOCKIT err: socket not connected %ld\r", socketToWrite);
 		XOPNotice(report);
 		err2 = 1;
 		goto done;
@@ -186,7 +186,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	
 	memset(buf,0,sizeof(buf));
 
-	timeout.tv_sec = 5;
+	timeout.tv_sec = 5.;
 	timeout.tv_usec = 0;
 	
 	if(!p->message){
