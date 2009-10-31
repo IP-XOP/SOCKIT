@@ -42,7 +42,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	struct sockaddr_in  sa;
     struct hostent     *hen;
-//	unsigned long fdflags;
+	unsigned long fdflags;
 	waveBufferInfo *bufferInfo = new waveBufferInfo();
 		
 	xmlNode *root_element = NULL;
@@ -56,7 +56,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	memset(fnamepath,0,sizeof(fnamepath));
 	if(p->TIMEFlagEncountered){
 		timeout.tv_sec = floor(p->TIMEFlagNumber);
-		timeout.tv_usec =  (int)(p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000;
+		timeout.tv_usec =  (long)((p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000);
 	} else {
 		timeout.tv_sec = 10;
 		timeout.tv_usec = 0;
@@ -173,30 +173,31 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		goto done;
 	}
 	
+
 	FD_ZERO(&tempset);
 	FD_SET(sockNum,&tempset);
 	
 	/* Connect to server */
 #ifdef _MACINTOSH_
-//	fdflags = fcntl(sockNum, F_GETFL);
-//	if(fcntl(sockNum, F_SETFL, fdflags | O_NONBLOCK) < 0){
-//		err2 = 1;
-//		XOPNotice("SOCKITerr: fcntl failed\r");
-//		goto done;
-//	}
+	fdflags = fcntl(sockNum, F_GETFL);
+	if(fcntl(sockNum, F_SETFL, fdflags | O_NONBLOCK) < 0){
+		err2 = 1;
+		XOPNotice("SOCKITerr: fcntl failed\r");
+		goto done;
+	}
 #endif
 #ifdef _WINDOWS_
-//	fdflags = 1;
-//	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
-//		XOPNotice("SOCKITerr: IOCTL failed \r");
-//		goto done;
-//	}
+	fdflags = 1;
+	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+		XOPNotice("SOCKITerr: IOCTL failed \r");
+		goto done;
+	}
 #endif
 
 	rc = connect(sockNum, (struct sockaddr *)&sa, sizeof(sa));
 	res = select(sockNum+1,0,&tempset,0,&timeout);
-
-	if(rc==0 && FD_ISSET(sockNum, &tempset)){
+//rc==0 && 
+	if(FD_ISSET(sockNum, &tempset)){
 		if(!p->QFlagEncountered){
 				snprintf(report,sizeof(report),"SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
 				XOPNotice(report);
@@ -212,19 +213,19 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 
 //reset to blocking
 #ifdef _MACINTOSH_
-//	fdflags = fcntl(sockNum, F_GETFL);
-//	if(fcntl(sockNum, F_SETFL, fdflags | (~O_NONBLOCK)) < 0){
-//		err2 = 1;
-//		XOPNotice("SOCKITerr:fcntl failed\r");
-//		goto done;
-//	}
+	fdflags = fcntl(sockNum, F_GETFL);
+	if(fcntl(sockNum, F_SETFL, fdflags | (~O_NONBLOCK)) < 0){
+		err2 = 1;
+		XOPNotice("SOCKITerr:fcntl failed\r");
+		goto done;
+	}
 #endif
 #ifdef _WINDOWS_
-//	fdflags = 0;
-//	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
-//		XOPNotice("SOCKITerr: IOCTL failed \r");
-//		goto done;
-//	}
+	fdflags = 0;
+	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+		XOPNotice("SOCKITerr: IOCTL failed \r");
+		goto done;
+	}
 #endif
 
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
@@ -324,7 +325,7 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	waveBufferInfo *bufferInfo = new waveBufferInfo();
 		
 	timeout.tv_sec = floor(p->timeout);
-	timeout.tv_usec =  (int)(p->timeout-(double)floor(p->timeout))*1000000;
+	timeout.tv_usec =  (long)((p->timeout-(double)floor(p->timeout))*1000000);
 	
 	bufferInfo->NOIDLES = true;
 	bufferInfo->toPrint = false;
