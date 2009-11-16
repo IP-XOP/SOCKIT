@@ -65,7 +65,6 @@ void *readerThread(void *){
 	int rc = 0, res = 0, iters=0;
 	long charsread = 0;		
 	char buf[BUFLEN];
-	char report[MAX_MSG_LEN+1];
 	
 	fd_set tempset;
 	struct timeval sleeper;
