@@ -75,13 +75,13 @@ void *readerThread(void *){
 			
 		FD_ZERO(&tempset);
 		
-//		if(pinstance->quitReadThreadStatus()){
-//			pthread_mutex_unlock(&readThreadMutex);
-//#ifdef _WINDOWS_
-//			pthread_win32_thread_detach_np ();
-//#endif
-//			pthread_exit(NULL);
-//		}
+		if(pinstance->quitReadThreadStatus()){
+			pthread_mutex_unlock(&readThreadMutex);
+#ifdef _WINDOWS_
+			pthread_win32_thread_detach_np ();
+#endif
+			pthread_exit(NULL);
+		}
 		
 		struct timeval timeout;
 		timeout.tv_sec = 0;
