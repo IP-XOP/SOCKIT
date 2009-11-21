@@ -126,12 +126,12 @@ XOPEntry(void)
 		case CLEANUP:
 			if(readThread){
 				pthread_mutex_lock( &readThreadMutex );
-				pthread_cancel(*readThread);
-//				pinstance->quitReadThread();
+//				pthread_cancel(*readThread);
+				pinstance->quitReadThread();
 				pthread_mutex_unlock( &readThreadMutex );
 
-//				int res=0;
-//				pthread_join(*readThread, (void**)res);
+				int res=0;
+				pthread_join(*readThread, (void**)res);
 			}
 			if(readThread)
 				free(readThread);
