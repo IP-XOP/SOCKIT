@@ -140,7 +140,7 @@ XOPEntry(void)
 			delete pinstance;
 
 #ifdef _WINDOWS_
-			pthread_win32_process_detach_np();
+//			pthread_win32_process_detach_np();
 			WSACleanup( );
 #endif
 			break;
@@ -189,9 +189,9 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 
 	long result = 0;
 
-	#ifdef _WINDOWS_
-		pthread_win32_process_attach_np();
-	#endif
+//	#ifdef _WINDOWS_
+//		pthread_win32_process_attach_np();
+//	#endif
 
 	extern pthread_t *readThread;
 	extern CurrentConnections *pinstance;
