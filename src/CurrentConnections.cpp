@@ -77,9 +77,9 @@ void *readerThread(void *){
 		
 		if(pinstance->quitReadThreadStatus()){
 			pthread_mutex_unlock(&readThreadMutex);
-#ifdef _WINDOWS_
-			pthread_win32_thread_detach_np ();
-#endif
+//#ifdef _WINDOWS_
+//			pthread_win32_thread_detach_np ();
+//#endif
 			pthread_exit(NULL);
 		}
 		
