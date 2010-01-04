@@ -14,3 +14,4 @@ typedef struct SOCKITtotalOpened {
 #include "XOPStructureAlignmentReset.h"
 
 int SOCKITtotalOpened(SOCKITtotalOpenedStructPtr);
+int SOCKITcurrentOpened(SOCKITtotalOpenedStructPtr);
