@@ -42,8 +42,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	struct sockaddr_in  sa;
     struct hostent     *hen;
-	unsigned long fdflags;
-	waveBufferInfo *bufferInfo = new waveBufferInfo();
+//	unsigned long fdflags;
+	waveBufferInfo *bufferInfo = NULL;
 		
 	xmlNode *root_element = NULL;
 	xmlChar *entityEncoded = NULL;
@@ -60,6 +60,12 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	} else {
 		timeout.tv_sec = 10;
 		timeout.tv_usec = 0;
+	}
+	
+	bufferInfo = new waveBufferInfo();
+	if(bufferInfo == NULL){
+		err = NOMEM;
+		goto done;
 	}
 	
 	if(p->IDEncountered){
@@ -178,21 +184,21 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	FD_SET(sockNum,&tempset);
 	
 	/* Connect to server */
-#ifdef _MACINTOSH_
-	fdflags = fcntl(sockNum, F_GETFL);
-	if(fcntl(sockNum, F_SETFL, fdflags | O_NONBLOCK) < 0){
-		err2 = 1;
-		XOPNotice("SOCKITerr: fcntl failed\r");
-		goto done;
-	}
-#endif
-#ifdef _WINDOWS_
-	fdflags = 1;
-	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
-		XOPNotice("SOCKITerr: IOCTL failed \r");
-		goto done;
-	}
-#endif
+//#ifdef _MACINTOSH_
+//	fdflags = fcntl(sockNum, F_GETFL);
+//	if(fcntl(sockNum, F_SETFL, fdflags | O_NONBLOCK) < 0){
+//		err2 = 1;
+//		XOPNotice("SOCKITerr: fcntl failed\r");
+//		goto done;
+//	}
+//#endif
+//#ifdef _WINDOWS_
+//	fdflags = 1;
+//	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+//		XOPNotice("SOCKITerr: IOCTL failed \r");
+//		goto done;
+//	}
+//#endif
 
 	rc = connect(sockNum, (struct sockaddr *)&sa, sizeof(sa));
 	res = select(sockNum+1,0,&tempset,0,&timeout);
@@ -212,21 +218,21 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	}
 
 //reset to blocking
-#ifdef _MACINTOSH_
-	fdflags = fcntl(sockNum, F_GETFL);
-	if(fcntl(sockNum, F_SETFL, fdflags | (~O_NONBLOCK)) < 0){
-		err2 = 1;
-		XOPNotice("SOCKITerr:fcntl failed\r");
-		goto done;
-	}
-#endif
-#ifdef _WINDOWS_
-	fdflags = 0;
-	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
-		XOPNotice("SOCKITerr: IOCTL failed \r");
-		goto done;
-	}
-#endif
+//#ifdef _MACINTOSH_
+//	fdflags = fcntl(sockNum, F_GETFL);
+//	if(fcntl(sockNum, F_SETFL, fdflags | (~O_NONBLOCK)) < 0){
+//		err2 = 1;
+//		XOPNotice("SOCKITerr:fcntl failed\r");
+//		goto done;
+//	}
+//#endif
+//#ifdef _WINDOWS_
+//	fdflags = 0;
+//	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+//		XOPNotice("SOCKITerr: IOCTL failed \r");
+//		goto done;
+//	}
+//#endif
 
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum>0){
@@ -279,13 +285,15 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 done:
 	FD_ZERO(&tempset);
 	if(!err && sockNum>0 && !err2){
-		err = SetOperationNumVar("V_flag",0);
-		err = StoreNumericDataUsingVarName(p->IDVarName,sockNum,0);
+		err = SetOperationNumVar("V_flag", 0);
+		err = StoreNumericDataUsingVarName(p->IDVarName, sockNum,0);
 	} else {
-		delete bufferInfo;
 		err = SetOperationNumVar("V_flag",1);
-		err = StoreNumericDataUsingVarName(p->IDVarName,-1,0);
+		err = StoreNumericDataUsingVarName(p->IDVarName, -1, 0);
 	}
+	
+	if(bufferInfo)
+		delete bufferInfo;
 	
 	pthread_mutex_unlock( &readThreadMutex );
 	

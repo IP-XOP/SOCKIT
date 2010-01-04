@@ -201,6 +201,9 @@ class CurrentConnections{
 	*/
 	int outputBufferDataToWave(SOCKET sockNum, const unsigned char *bufferData, size_t szbufferdata, bool useProcessor);
 	
+	//return the total number of sockets opened.
+	long getTotalSocketsOpened();
+	
 	private:
 	/**
 	*Constructor for the singleton class.  Only callable from Instance().  It checks to see if there are currently any other CurrentConnections objects created first.
@@ -222,7 +225,10 @@ class CurrentConnections{
 	*THe highest socket descriptor that is currently open.
 	*/
 	SOCKET maxSockNumber;
-
+	
+	//the total number of sockets opened
+	long totalSocketsOpened;
+	
 	/**
 	*Quit the thread that reads all the messages
 	*/

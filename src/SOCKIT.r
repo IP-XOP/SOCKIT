@@ -112,6 +112,11 @@ resource 'XOPF' (1100) {
 		NT_FP64,
 		NT_FP64,
 		},
+		"SOCKITtotalOpened",
+		F_IO | F_EXTERNAL,
+		NT_FP64,
+		{
+		},
 	}
 };
 

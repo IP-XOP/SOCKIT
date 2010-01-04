@@ -15,6 +15,7 @@
 #include "SOCKITstringtoWave.h"
 #include "SOCKITwaveToString.h"
 #include "SOCKITpeek.h"
+#include "SOCKITinfo.h"
 
 /*
 variable sock
@@ -96,6 +97,10 @@ RegisterFunction()
 		case 6:
 			return((long)SOCKITopenconnectionF);
 			break;
+		case 7:
+			return((long)SOCKITtotalOpened);
+			break;
+			
 	}
 	return(NIL);
 }
