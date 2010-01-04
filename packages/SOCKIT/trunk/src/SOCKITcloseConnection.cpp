@@ -22,9 +22,11 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 
 	if(socketToClose == -1){
 		for (ii=0; ii< pinstance->getMaxSockNumber()+1 ; ii+=1){
-			if (FD_ISSET(ii, pinstance->getReadSet())) { 
-				pinstance->closeWorker(ii);
-			} 
+//			if (FD_ISSET(ii, pinstance->getReadSet()))
+//				pinstance->closeWorker(ii);
+
+			pinstance->resetCurrentConnections();
+			
 		}
 	} else {
 		if(pinstance->isSockitOpen(p->socketToClose,&socketToClose)){

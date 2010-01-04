@@ -170,7 +170,6 @@ void CurrentConnections::resetCurrentConnections(){
 	SOCKET ii;
 	for (ii=0; ii< maxSockNumber+1 ; ii+=1){
 		if (FD_ISSET(ii, &(readSet))) { 
-//			delete &(bufferWaves[ii]);//.~waveBufferInfo();
 			FD_CLR(ii, &(readSet)); 
 			close(ii);
 		} 
@@ -178,7 +177,6 @@ void CurrentConnections::resetCurrentConnections(){
 	FD_ZERO((&(pinstance->readSet)));
 	maxSockNumber = 0;
 	bufferWaves.clear();
-	totalSocketsOpened = 0;
 }
 
 SOCKET CurrentConnections::getMaxSockNumber(){
@@ -235,8 +233,8 @@ int CurrentConnections::closeWorker(SOCKET sockNum){
 */		
 		//shut down the buffering
 		//remove the memory
-//	bufferWaves[sockNum].~waveBufferInfo();
 	bufferWaves.erase(sockNum);
+	
 	return err;
 }
 
@@ -541,3 +539,6 @@ long CurrentConnections::getTotalSocketsOpened(){
 	return totalSocketsOpened;
 }
 
+long CurrentConnections::getCurrentSocketsOpened(){
+	return (long)bufferWaves.size();
+}

@@ -10,15 +10,31 @@
 #include "SOCKIT.h"
 #include "SOCKITinfo.h"
 
+//return how many sockets have been opened historically
 int SOCKITtotalOpened(SOCKITtotalOpenedStruct *p){
 	int	err = 0;
-	//returns the truth abouot whether the given socket is still open.
 	extern CurrentConnections *pinstance;
 	
 	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 	
 	p->retval = pinstance->getTotalSocketsOpened();
+	
+done:
+	
+	pthread_mutex_unlock( &readThreadMutex );
+	return err;
+};
+
+//return how many sockets are opened at the moment
+int SOCKITcurrentOpened(SOCKITtotalOpenedStruct *p){
+	int	err = 0;
+	extern CurrentConnections *pinstance;
+	
+	extern pthread_mutex_t readThreadMutex;
+	pthread_mutex_lock( &readThreadMutex );
+	
+	p->retval = pinstance->getCurrentSocketsOpened();
 	
 done:
 	

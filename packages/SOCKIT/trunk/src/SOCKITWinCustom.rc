@@ -105,6 +105,10 @@ BEGIN
 		F_IO | F_EXTERNAL,					/* function category (string) */
 		NT_FP64,						/* return value type */			
 			0,
+		"SOCKITcurrentOpened\0",							/* function name */
+		F_IO | F_EXTERNAL,					/* function category (string) */
+		NT_FP64,						/* return value type */			
+			0,
 0,
 END
 
