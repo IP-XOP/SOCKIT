@@ -137,7 +137,7 @@ int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, lon
 	
 	time(&rawtime);
 	theTime = localtime(&rawtime);
-	*year = -100+theTime->tm_year;
+	*year = -100 + theTime->tm_year;
 	*month = 1+theTime->tm_mon;
 	*day = theTime->tm_mday;
 	*hour = theTime->tm_hour;
@@ -159,6 +159,7 @@ CurrentConnections::CurrentConnections(){
 	maxSockNumber = 0;
 	quitReadThreadFlag = false;
 	bufferWaves.clear();
+	totalSocketsOpened = 0;
 };
 
 CurrentConnections::~CurrentConnections(){
@@ -169,7 +170,7 @@ void CurrentConnections::resetCurrentConnections(){
 	SOCKET ii;
 	for (ii=0; ii< maxSockNumber+1 ; ii+=1){
 		if (FD_ISSET(ii, &(readSet))) { 
-			delete &(bufferWaves[ii]);//.~waveBufferInfo();
+//			delete &(bufferWaves[ii]);//.~waveBufferInfo();
 			FD_CLR(ii, &(readSet)); 
 			close(ii);
 		} 
@@ -177,6 +178,7 @@ void CurrentConnections::resetCurrentConnections(){
 	FD_ZERO((&(pinstance->readSet)));
 	maxSockNumber = 0;
 	bufferWaves.clear();
+	totalSocketsOpened = 0;
 }
 
 SOCKET CurrentConnections::getMaxSockNumber(){
@@ -214,6 +216,7 @@ waveBufferInfo* CurrentConnections::getWaveBufferInfo(SOCKET sockNum){
 
 int CurrentConnections::closeWorker(SOCKET sockNum){
 	int err = 0;
+
 	/* Disconnect from server */
 	if (FD_ISSET(sockNum, &(readSet))) { 
 		FD_CLR(sockNum, &(readSet)); 
@@ -232,9 +235,8 @@ int CurrentConnections::closeWorker(SOCKET sockNum){
 */		
 		//shut down the buffering
 		//remove the memory
-	bufferWaves[sockNum].~waveBufferInfo();
+//	bufferWaves[sockNum].~waveBufferInfo();
 	bufferWaves.erase(sockNum);
-	
 	return err;
 }
 
@@ -247,6 +249,8 @@ int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfoStru
 	if(sockNum > maxSockNumber){
 		maxSockNumber = sockNum;
 	}
+	
+	totalSocketsOpened += 1;
 	
 	done:
 	return err;
@@ -294,6 +298,7 @@ int CurrentConnections::isSockitOpen(double query,SOCKET *sockNum){
 	*sockNum = (SOCKET)-1;
 	double roundedVal;
 	long intVal;
+	map<SOCKET, waveBufferInfo>::iterator iter;
 	
 	if(IsNaN64(&query))
 		return 0;
@@ -307,7 +312,9 @@ int CurrentConnections::isSockitOpen(double query,SOCKET *sockNum){
 	if(intVal<0)
 		return 0;
 	
-	if(FD_ISSET(intVal, pinstance->getReadSet())){
+	//see if that socket is still contained in the map.
+	iter = bufferWaves.find((SOCKET)intVal);
+	if(	iter != bufferWaves.end() && FD_ISSET(intVal, pinstance->getReadSet())){
 		*sockNum = (SOCKET)intVal;
 		retval = 1;
 	 } else
@@ -530,4 +537,7 @@ done:
 	return err;
 }
 
+long CurrentConnections::getTotalSocketsOpened(){
+	return totalSocketsOpened;
+}
 
