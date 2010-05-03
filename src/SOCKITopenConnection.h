@@ -8,7 +8,7 @@
  */
 #include "XOPStandardHeaders.h"
 
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 struct SOCKITopenconnectionRuntimeParams {
 	// Flag parameters.
 	
@@ -70,12 +70,12 @@ struct SOCKITopenconnectionRuntimeParams {
 };
 typedef struct SOCKITopenconnectionRuntimeParams SOCKITopenconnectionRuntimeParams;
 typedef struct SOCKITopenconnectionRuntimeParams* SOCKITopenconnectionRuntimeParamsPtr;
-#include "XOPStructureAlignmentReset.h"		// Reset structure alignment to default.
+#pragma pack()		// Reset structure alignment to default.
 
 int RegisterSOCKITopenconnection(void);
 static int ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p);
 
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITopenconnectionFStruct {
 	DOUBLE timeout;
 	DOUBLE portNumber;
@@ -83,6 +83,6 @@ typedef struct SOCKITopenconnectionFStruct {
 	void* tp;
 	DOUBLE retval;
 }SOCKITopenconnectionFStruct, *SOCKITopenconnectionFStructPtr;
-#include "XOPStructureAlignmentReset.h"
+#pragma pack()
 
 int SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr);

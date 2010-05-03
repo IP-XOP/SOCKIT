@@ -72,7 +72,7 @@ class waveBufferInfo {
 
 int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, long *second);
 
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 /**
 *The structure definition for calling the IGOR processor function.
 */
@@ -80,7 +80,7 @@ typedef struct SOCKITcallProcessorStruct {
 	Handle bufferWave;	/**<The bufferwave into which the message was placed*/
 	DOUBLE entryRow;	/**<The row in the bufferwave into which the message is placed*/
 }SOCKITcallProcessorStruct, *SOCKITcallProcessorStructPtr;
-#include "XOPStructureAlignmentReset.h"
+#pragma pack()
 
 
 /**

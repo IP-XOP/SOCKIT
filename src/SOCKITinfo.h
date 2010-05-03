@@ -7,11 +7,11 @@
  *
  */
 
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)
 typedef struct SOCKITtotalOpened {
 	DOUBLE retval;
 }SOCKITtotalOpenedStruct, *SOCKITtotalOpenedStructPtr;
-#include "XOPStructureAlignmentReset.h"
+#pragma pack()
 
 int SOCKITtotalOpened(SOCKITtotalOpenedStructPtr);
 int SOCKITcurrentOpened(SOCKITtotalOpenedStructPtr);
