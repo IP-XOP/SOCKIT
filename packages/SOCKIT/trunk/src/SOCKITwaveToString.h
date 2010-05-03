@@ -1,5 +1,5 @@
 #include "XOPStandardHeaders.h"
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)
 struct SOCKITwaveToStringRuntimeParams {
 	// Flag parameters.
 
@@ -27,6 +27,6 @@ struct SOCKITwaveToStringRuntimeParams {
 };
 typedef struct SOCKITwaveToStringRuntimeParams SOCKITwaveToStringRuntimeParams;
 typedef struct SOCKITwaveToStringRuntimeParams* SOCKITwaveToStringRuntimeParamsPtr;
-#include "XOPStructureAlignmentReset.h"		// Reset structure alignment to default.
+#pragma pack()		// Reset structure alignment to default.
 
 int RegisterSOCKITwaveToString(void);

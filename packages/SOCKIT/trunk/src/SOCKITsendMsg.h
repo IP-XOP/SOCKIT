@@ -8,7 +8,8 @@
  */
 #include "XOPStandardHeaders.h"
 
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)
+// All structures passed to Igor are two-byte aligned.
 struct SOCKITsendmsgRuntimeParams {
 
 	// Parameters for /TIME flag group.
@@ -33,18 +34,19 @@ struct SOCKITsendmsgRuntimeParams {
 };
 typedef struct SOCKITsendmsgRuntimeParams SOCKITsendmsgRuntimeParams;
 typedef struct SOCKITsendmsgRuntimeParams* SOCKITsendmsgRuntimeParamsPtr;
-#include "XOPStructureAlignmentReset.h"		// Reset structure alignment to default.
+#pragma pack()		// Reset structure alignment to default.
 
 int RegisterSOCKITsendmsg(void);
 int ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParamsPtr p);
 
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)
+// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITsendmsgFStruct {
 	Handle message;
 	DOUBLE sockID;
 	void* tp;
 	DOUBLE retval;
 }SOCKITsendmsgFStruct, *SOCKITsendmsgFStructPtr;
-#include "XOPStructureAlignmentReset.h"
+#pragma pack()
 
 int SOCKITsendmsgF(SOCKITsendmsgFStructPtr);

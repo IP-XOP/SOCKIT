@@ -7,13 +7,13 @@
  *
  */
 
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITisItOpenStruct {
 	DOUBLE sockitQuery;
 	void* tp;
 	DOUBLE retval;
 }SOCKITisItOpenStruct, *SOCKITisItOpenStructPtr;
-#include "XOPStructureAlignmentReset.h"
+#pragma pack()
 
 int SOCKITisItOpen(SOCKITisItOpenStructPtr);
 

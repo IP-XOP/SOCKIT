@@ -7,7 +7,7 @@
  *
  */
 
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 struct SOCKITsendnrecvRuntimeParams {
 
 	// Parameters for /FILE flag group.
@@ -46,12 +46,12 @@ struct SOCKITsendnrecvRuntimeParams {
 };
 typedef struct SOCKITsendnrecvRuntimeParams SOCKITsendnrecvRuntimeParams;
 typedef struct SOCKITsendnrecvRuntimeParams* SOCKITsendnrecvRuntimeParamsPtr;
-#include "XOPStructureAlignmentReset.h"		// Reset structure alignment to default.
+#pragma pack()		// Reset structure alignment to default.
 
 int RegisterSOCKITsendnrecv(void);
 static int ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParamsPtr p);
 
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITsendnrecvFStruct {
 	DOUBLE TIME;
 	DOUBLE SMAL;
@@ -60,6 +60,6 @@ typedef struct SOCKITsendnrecvFStruct {
 	void* tp;
 	Handle retval;
 }SOCKITsendnrecvFStruct, *SOCKITsendnrecvFStructPtr;
-#include "XOPStructureAlignmentReset.h"
+#pragma pack()
 
 int SOCKITsendnrecvF(SOCKITsendnrecvFStructPtr);

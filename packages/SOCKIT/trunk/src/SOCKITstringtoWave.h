@@ -1,6 +1,6 @@
 // Runtime param structure for SOCKITstringtoWave operation.
 #include "XOPStandardHeaders.h"
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)
 struct SOCKITstringtoWaveRuntimeParams {
 	// Flag parameters.
 
@@ -26,6 +26,6 @@ struct SOCKITstringtoWaveRuntimeParams {
 };
 typedef struct SOCKITstringtoWaveRuntimeParams SOCKITstringtoWaveRuntimeParams;
 typedef struct SOCKITstringtoWaveRuntimeParams* SOCKITstringtoWaveRuntimeParamsPtr;
-#include "XOPStructureAlignmentReset.h"		// Reset structure alignment to default.
+#pragma pack()
 
 int RegisterSOCKITstringtoWave(void);

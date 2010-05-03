@@ -19,9 +19,8 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	int err = 0;
 	int waveType;
 	long bytesForWave;
-	long szString;
+	size_t szString;
 	
-	int hStateWav = 0;
 	long numDimensions;
 	long dimensionSizes[MAX_DIMENSIONS+1];
 	void *wp;
@@ -98,13 +97,11 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 				goto done;
 		}
 		
-		hStateWav = MoveLockHandle(p->wavWaveH);
 		wp = (void*)WaveData(p->wavWaveH);
 		
 		if(	err = StoreStringDataUsingVarName(p->str, (char*)wp, szString))
 			goto done;
 		
-		HSetState(p->wavWaveH, hStateWav);
 		
 		//E says you expect the data to be big Endian
 		//need to byte swap
@@ -121,7 +118,6 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 		waveType = WaveType(p->wavWaveH);
 		wp = (void*) WaveData(p->wavWaveH);
 		totalIts = WavePoints(p->wavWaveH);
-		hStateWav = MoveLockHandle(p->wavWaveH);
 		
 		for(ii=0 ; ii< totalIts ; ii+=1){
 			switch(waveType){
@@ -156,12 +152,10 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 			try {
 				chunk.WriteMemoryCallback(tempNumStr, sizeof(char), strlen(tempNumStr));
 			} catch (bad_alloc&){
-				HSetState(p->wavWaveH, hStateWav);
 				err = NOMEM;
 				goto done;
 			}
 		}		
-		HSetState(p->wavWaveH, hStateWav);
 		if(err = StoreStringDataUsingVarName(p->str, (char*)chunk.getData(), chunk.getMemSize()))
 			goto done;
 	}

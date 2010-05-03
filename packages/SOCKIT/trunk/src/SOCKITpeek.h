@@ -8,12 +8,12 @@
  */
 #include "XOPStandardHeaders.h"			// Include ANSI headers, Mac headers, IgorXOP.h, XOP.h and XOPSupport.h
 
-#include "XOPStructureAlignmentTwoByte.h"	// All structures passed to Igor are two-byte aligned.
+#pragma pack(2)
 typedef struct SOCKITpeekStruct {
 	DOUBLE  sockID;
 	void* tp;
 	Handle dest;			//the string containing the content
 }SOCKITpeekStruct, *SOCKITpeekStructPtr;
-#include "XOPStructureAlignmentReset.h"
+#pragma pack(2)
 
 int SOCKITpeek(SOCKITpeekStructPtr p);
