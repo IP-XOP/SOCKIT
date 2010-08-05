@@ -90,18 +90,18 @@ void *readerThread(void *){
 		memcpy(&tempset, pinstance->getReadSet(), sizeof(fd_set));
 		
 		res = select(maxSockNum+1, &tempset, 0, 0, &timeout);
-		if(res>0){
-			for (ii=0; ii<maxSockNum+1; ii++) { 
-				if (FD_ISSET(ii, &tempset) && pinstance->getWaveBufferInfo(ii)->toClose==false) {
+		if(res > 0){
+			for (ii=0; ii<maxSockNum + 1; ii++) { 
+				if (FD_ISSET(ii, &tempset) && pinstance->getWaveBufferInfo(ii)->toClose == false) {
 					iters = 0;
 					charsread = 0;
-					rc=0;
+					rc = 0;
 					memset(buf, 0, BUFLEN * sizeof(char));
 					do{
 						memset(buf, 0, BUFLEN * sizeof(char));
 						iters += 1;
 						//read the characters from the socket
-						rc = recv(ii, buf, BUFLEN,0);
+						rc = recv(ii, buf, BUFLEN, 0);
 						charsread += rc;
 
 						if (rc <= 0 && iters == 1) {
@@ -113,7 +113,7 @@ void *readerThread(void *){
 								pinstance->getWaveBufferInfo(ii)->readBuffer.reset();
 							}
 						}
-					}while (rc==BUFLEN);					
+					}while (rc == BUFLEN);					
 				}
 			}
 			
