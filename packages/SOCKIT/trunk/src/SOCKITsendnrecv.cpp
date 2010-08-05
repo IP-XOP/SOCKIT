@@ -136,8 +136,8 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	}
 	if(FD_ISSET(sockNum,&tempset)){
-		rc = send(sockNum,buf,GetHandleSize(p->MSG),0);
-		if(rc >= 0){
+		rc = send(sockNum, buf, GetHandleSize(p->MSG), 0);
+		if(rc > 0){
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", sockNum);
 			output = string(buf,GetHandleSize(p->MSG));
 			
@@ -169,7 +169,11 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 					XOPCloseFile((pinstance->getWaveBufferInfo(sockNum)->logFile));
 				}
 			}
-		} else if (rc < 0) {
+		/*on OSX rc<0 if remote peer is disconnected
+		 on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
+		 zero length message (rc would also ==0 in that case.
+		*/
+		} else if (rc < 0 || (rc == 0 && GetHandleSize(p->MSG) > 0)) {
 			if(pinstance->getWaveBufferInfo(sockNum)->toPrint == true){
 				snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", sockNum );
 				XOPNotice(report);
@@ -197,14 +201,15 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	memset(buf,0,sizeof(buf));
 	
-	if ((res>0) && FD_ISSET(sockNum, &tempset)) { 
+	if ((res > 0) && FD_ISSET(sockNum, &tempset)) { 
 	           
 		do{			   
 			rc = recv(sockNum, buf, BUFLEN, 0);
 
 			charsread += rc;
 			
-			if (rc < 0) {
+			//if the recv fails then the manpage indicates that rc <= 0, because we are using blocking sockets.
+			if (rc <= 0) {
 				snprintf(report,sizeof(report),"SOCKIT err: problem reading socket descriptor %d, disconnection???\r", sockNum );
 				if(pinstance->getWaveBufferInfo(sockNum)->toPrint == true)
 					XOPNotice(report);
@@ -221,27 +226,27 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				}
 				if(fileToWrite)//write to file as well
 					written = fwrite(buf, sizeof(char),rc, (FILE *)fileToWrite);
-			} else if (rc == 0)
-				break;
+			} //else if (rc == 0)
+			//	break;
 			
 			if(p->SMALFlagEncountered){
-				res=0;
+				res = 0;
 			} else {
 				FD_ZERO(&tempset);
 				timeout.tv_sec = floor(timeoutVal);
-				timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
-				FD_SET(sockNum,&tempset);
-				res = select(sockNum+1,&tempset,0,0,&timeout);
+				timeout.tv_usec =  (long)((timeoutVal - (double)floor(timeoutVal))*1000000);
+				FD_SET(sockNum, &tempset);
+				res = select(sockNum+1, &tempset, 0, 0, &timeout);
 			}
-		}while(res>0);
+		}while(res > 0);
 		
-	} else if(res==-1) {
+	} else if(res == -1) {
 		snprintf(report,sizeof(report),"SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
 		if(pinstance->getWaveBufferInfo(sockNum)->toPrint == true)
 			XOPNotice(report);
 		// Closed connection or error 
 		pinstance->closeWorker(sockNum);
-		err2=1;
+		err2 = 1;
 		goto done;
 	}
 	
@@ -320,7 +325,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	xmlNode *added_node = NULL;
 	xmlNode *root_element = NULL;
 	xmlChar *encContent = NULL;
-	long year,month,day,hour,minute,second;
+	long year, month, day, hour, minute, second;
 	char timebuf[100];
 		
 	fd_set tempset;
@@ -373,7 +378,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	}
 	if(FD_ISSET(sockNum, &tempset)){
 		rc = send(sockNum, buf, GetHandleSize(p->message),0);
-		if(rc >= 0){
+		if(rc > 0){
 			//if there is a logfile then append and save
 			if(pinstance->getWaveBufferInfo(sockNum)->logDoc != NULL){
 				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(sockNum)->logDoc);
@@ -395,7 +400,11 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 					XOPCloseFile((pinstance->getWaveBufferInfo(sockNum)->logFile));
 				}
 			}
-		} else if (rc < 0) {
+			/*on OSX rc<0 if remote peer is disconnected
+			 on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
+			 zero length message (rc would also ==0 in that case.
+			 */
+		} else if (rc < 0 || (rc == 0 && GetHandleSize(p->message) > 0)) {
 			// Closed connection or error 
 			pinstance->closeWorker(sockNum);
 			err2=1;
@@ -411,22 +420,22 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	FD_ZERO(&tempset);
 	timeout.tv_sec = floor(timeoutVal);
 	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
-	FD_SET(sockNum,&tempset);
-	res = select(sockNum+1,&tempset,0,0,&timeout);
+	FD_SET(sockNum, &tempset);
+	res = select(sockNum+1, &tempset, 0, 0, &timeout);
 	
 	memset(buf, 0, sizeof(buf));
 	
-	if ((res>0) && FD_ISSET(sockNum, &tempset)) { 
-	           
-		do{			   
-			rc = recv(sockNum, buf, BUFLEN,0);
+	if ((res > 0) && FD_ISSET(sockNum, &tempset)){ 
+		do {			   
+			rc = recv(sockNum, buf, BUFLEN, 0);
 
 			charsread += rc;
 			
-			if (rc < 0) {
+			//if recv fails then the manpage indicates that rc <= 0, because we are using blocking sockets.
+			if (rc <= 0) {
 				// Closed connection or error 
 				pinstance->closeWorker(sockNum);
-				err2=1;
+				err2 = 1;
 				break;
 			} else if(rc > 0){
 				try {
@@ -435,19 +444,19 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 					err = NOMEM;
 					goto done;
 				}
-			} else if (rc == 0)
-				break;
+			} //else if (rc == 0)
+			//	break;
 			
 			if(p->SMAL){
-				res=0;
+				res = 0;
 			} else {
 				FD_ZERO(&tempset);
 				timeout.tv_sec = floor(timeoutVal);
 				timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
-				FD_SET(sockNum,&tempset);
-				res = select(sockNum+1,&tempset,0,0,&timeout);
+				FD_SET(sockNum, &tempset);
+				res = select(sockNum + 1, &tempset, 0, 0, &timeout);
 			}
-		}while(res>0);
+		} while(res > 0);
 		
 	} else if(res == -1) {
 		// Closed connection or error 

@@ -33,6 +33,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	int res = 0;
 	long port = 0;
 	int dataType = 0;
+	unsigned long fdflags;
+	int ignoreSIGPIPE = 1;
 	
 	char host[MAX_URL_LEN+1];
 	char report[MAX_MSG_LEN+1];
@@ -42,7 +44,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	struct sockaddr_in  sa;
     struct hostent     *hen;
-//	unsigned long fdflags;
+
 	waveBufferInfo *bufferInfo = NULL;
 		
 	xmlNode *root_element = NULL;
@@ -181,31 +183,35 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 
 	FD_ZERO(&tempset);
-	FD_SET(sockNum,&tempset);
+	FD_SET(sockNum, &tempset);
 	
 	/* Connect to server */
-//#ifdef _MACINTOSH_
-//	fdflags = fcntl(sockNum, F_GETFL);
-//	if(fcntl(sockNum, F_SETFL, fdflags | O_NONBLOCK) < 0){
-//		err2 = 1;
-//		XOPNotice("SOCKITerr: fcntl failed\r");
-//		goto done;
-//	}
-//#endif
-//#ifdef _WINDOWS_
-//	fdflags = 1;
-//	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
-//		XOPNotice("SOCKITerr: IOCTL failed \r");
-//		goto done;
-//	}
-//#endif
+#ifdef _MACINTOSH_
+	fdflags = fcntl(sockNum, F_GETFL, 0);
+	fdflags |= O_NONBLOCK;
+	fcntl(sockNum, F_SETFL, fdflags);
+	/*if you don't ignore SIGPIPE then IGOR could crash if the other side exits prematurely.
+	this is for the case that the connect() operation works, but when you try to send()
+	to it there is nothing connected (or the other end has exited.
+	in this case SIGPIPE is issued and terminates the thread.  We don't want that, we'll
+	just rely on errno = EPIPE.*/
+	setsockopt(sockNum, SOL_SOCKET, SO_NOSIGPIPE, (void *)&ignoreSIGPIPE, sizeof(int));
+#endif
+	
+#ifdef _WINDOWS_
+	fdflags = 1;
+	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+		XOPNotice("SOCKITerr: IOCTL failed \r");
+		goto done;
+	}
+#endif
 
 	rc = connect(sockNum, (struct sockaddr *)&sa, sizeof(sa));
-	res = select(sockNum+1,0,&tempset,0,&timeout);
-//rc==0 && 
-	if(FD_ISSET(sockNum, &tempset)){
+	res = select(sockNum + 1, 0, &tempset,0, &timeout);
+
+	if(res > 0 && FD_ISSET(sockNum, &tempset)){
 		if(!p->QFlagEncountered){
-				snprintf(report,sizeof(report),"SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
+				snprintf(report, sizeof(report), "SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
 				XOPNotice(report);
 		}
 	} else {
@@ -218,24 +224,22 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	}
 
 //reset to blocking
-//#ifdef _MACINTOSH_
-//	fdflags = fcntl(sockNum, F_GETFL);
-//	if(fcntl(sockNum, F_SETFL, fdflags | (~O_NONBLOCK)) < 0){
-//		err2 = 1;
-//		XOPNotice("SOCKITerr:fcntl failed\r");
-//		goto done;
-//	}
-//#endif
-//#ifdef _WINDOWS_
-//	fdflags = 0;
-//	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
-//		XOPNotice("SOCKITerr: IOCTL failed \r");
-//		goto done;
-//	}
-//#endif
+#ifdef _MACINTOSH_
+	fdflags = fcntl(sockNum, F_GETFL, 0);
+	fdflags &= ~(O_NONBLOCK);
+	res = fcntl(sockNum, F_SETFL, fdflags);
+#endif
+	
+#ifdef _WINDOWS_
+	fdflags = 0;
+	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+		XOPNotice("SOCKITerr: IOCTL failed \r");
+		goto done;
+	}
+#endif
 
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
-	if(sockNum>0){
+	if(sockNum > 0){
 		if(strlen(fnamepath) > 0){
 			bufferInfo->logDoc = xmlNewDoc(BAD_CAST "1.0");
 			if(bufferInfo->logDoc == NULL){
@@ -244,7 +248,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 				goto done;
 			}
 			//create the root element
-			root_element=xmlNewNode(NULL , BAD_CAST "SOCKIT");
+			root_element = xmlNewNode(NULL , BAD_CAST "SOCKIT");
 			if(root_element == NULL){
 				if(!p->QFlagEncountered)
 					XOPNotice("SOCKIT err: couldn't create logfile)\r");
@@ -260,7 +264,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			}
 			entityEncoded = xmlEncodeEntitiesReentrant(bufferInfo->logDoc, BAD_CAST report);
 			xmlSetProp(root_element, BAD_CAST "port", BAD_CAST xmlEncodeEntitiesReentrant(bufferInfo->logDoc, BAD_CAST entityEncoded));		
-			root_element = xmlDocSetRootElement(bufferInfo->logDoc,root_element);
+			root_element = xmlDocSetRootElement(bufferInfo->logDoc, root_element);
 		}
 
 		if(err = pinstance->addWorker(sockNum, *bufferInfo)){
@@ -322,6 +326,8 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
     SOCKET sockNum = -1;
 	int res = 0;
 	long port = 0;
+	unsigned long fdflags;
+	int ignoreSIGPIPE = 1;
 	
 	char host[MAX_URL_LEN+1];
 
@@ -368,12 +374,32 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 		goto done;
 	
 	FD_ZERO(&tempset);
-	FD_SET(sockNum,&tempset);
+	FD_SET(sockNum, &tempset);
+	
+	/* Connect to server */
+#ifdef _MACINTOSH_
+	fdflags = fcntl(sockNum, F_GETFL, 0);
+	fdflags |= O_NONBLOCK;
+	fcntl(sockNum, F_SETFL, fdflags);
+	/*if you don't ignore SIGPIPE then IGOR could crash if the other side exits prematurely.
+	 this is for the case that the connect() operation works, but when you try to send()
+	 to it there is nothing connected (or the other end has exited.
+	 in this case SIGPIPE is issued and terminates the thread.  We don't want that, we'll
+	 just rely on errno = EPIPE.*/
+	setsockopt(sockNum, SOL_SOCKET, SO_NOSIGPIPE, (void *)&ignoreSIGPIPE, sizeof(int));
+#endif
+#ifdef _WINDOWS_
+	fdflags = 1;
+	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+		XOPNotice("SOCKITerr: IOCTL failed \r");
+		goto done;
+	}
+#endif
 	
 	rc = connect(sockNum, (struct sockaddr *)&sa, sizeof(sa));
-	res = select(sockNum+1,0,&tempset,0,&timeout);
+	res = select(sockNum+1, 0, &tempset, 0, &timeout);
 
-	if(rc==0 && FD_ISSET(sockNum, &tempset)){
+	if(res > 0 && FD_ISSET(sockNum, &tempset)){
 	//connection succeeded
 	} else {
 		close(sockNum);
@@ -382,8 +408,23 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 		goto done;
 	}
 
+	//reset to blocking
+#ifdef _MACINTOSH_
+	fdflags = fcntl(sockNum, F_GETFL, 0);
+	fdflags &= ~(O_NONBLOCK);
+	res = fcntl(sockNum, F_SETFL, fdflags);
+#endif
+	
+#ifdef _WINDOWS_
+	fdflags = 0;
+	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
+		XOPNotice("SOCKITerr: IOCTL failed \r");
+		goto done;
+	}
+#endif
+	
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
-	if(sockNum>0){
+	if(sockNum > 0){
 		if(err = pinstance->addWorker(sockNum, *bufferInfo)){
 			err = SOCKET_ALLOC_FAILED;
 			goto done;
@@ -392,7 +433,7 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	
 done:
 	FD_ZERO(&tempset);
-	if(!err && sockNum>0 && !err2){
+	if(!err && sockNum > 0 && !err2){
 		p->retval = sockNum;
 	} else {
 		p->retval = -1;

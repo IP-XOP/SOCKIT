@@ -92,7 +92,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
 		rc = send(socketToWrite, buf, GetHandleSize(p->MSG), 0);
-		if(rc >= 0){
+		if(rc > 0){
 			snprintf(report,sizeof(report), "SOCKITmsg: wrote to socket %d\r", socketToWrite);
 			output = string(buf, GetHandleSize(p->MSG));
 			find_and_replace(output, "\n", "\r");
@@ -124,7 +124,11 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 				}
 			}
 			goto done;
-		} else if (rc < 0) {// Closed connection or error
+		/*on OSX rc<0 if remote peer is disconnected
+		  on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
+		 zero length message (rc would also ==0 in that case.
+		 */
+		} else if (rc < 0 || (rc == 0 && GetHandleSize(p->MSG) > 0)) {// Closed connection or error
 			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", socketToWrite );
 			if(pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true)
 				XOPNotice(report);
@@ -222,7 +226,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
 		rc = send(socketToWrite, buf, GetHandleSize(p->message), 0);
-		if(rc >= 0){
+		if(rc > 0){
 			//if there is a logfile then append and save
 			if(pinstance->getWaveBufferInfo(socketToWrite)->logDoc != NULL){
 				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(socketToWrite)->logDoc);
@@ -245,7 +249,11 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 				}
 			}
 			goto done;
-		} else if (rc < 0) {// Closed connection or error
+			/*on OSX rc<0 if remote peer is disconnected
+			 on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
+			 zero length message (rc would also ==0 in that case.
+			 */
+		} else if (rc < 0 || (rc == 0 && GetHandleSize(p->message) > 0)) {
 			pinstance->closeWorker(socketToWrite);
 			err2 = 1;
 		}
