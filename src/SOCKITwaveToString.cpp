@@ -17,12 +17,10 @@ int
 ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 {
 	int err = 0;
-	int waveType;
-	long bytesForWave;
+	int dataType;
+	int bytesPerPoint, dataFormat, isComplex;
 	size_t szString;
-	
-	long numDimensions;
-	long dimensionSizes[MAX_DIMENSIONS+1];
+	long numElements;
 	void *wp;
 	
 	MemoryStruct chunk;
@@ -49,78 +47,46 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 			}
 		}
 	}
-	
+
+	numElements = WavePoints(p->wavWaveH);
+	dataType = WaveType(p->wavWaveH);
+
 	//if the TXT flag is not specified you get a binary representation of the wave
 	//this is useful for sending arrays over networks, compressing arrays, etc.
 	if(!p->TXTFlagEncountered){
-		waveType = WaveType(p->wavWaveH);
+		int little_endian = IsLittleEndian();
 		
-		switch(waveType){
-			case NT_FP32:
-				bytesForWave = 4;
-				break;
-			case NT_FP64:
-				bytesForWave = 8;
-				break;
-			case NT_I8:
-				bytesForWave = 1;
-				break;
-			case NT_I16:
-				bytesForWave = 2;
-				break;
-			case NT_I32:
-				bytesForWave = 4;
-				break;
-			case (NT_UNSIGNED|NT_I32):
-				bytesForWave = 4;
-				break;
-			case (NT_UNSIGNED|NT_I16):
-				bytesForWave = 2;
-				break;
-			case NT_UNSIGNED|NT_I8:
-				bytesForWave = 1;
-				break;
-			default:	//not recognized wavetype
-				goto done;
-				break;
-		}
+		if(err = NumTypeToNumBytesAndFormat(dataType, 
+											&bytesPerPoint,
+											&dataFormat,
+											&isComplex))
+			goto done;
+	
+		if(isComplex)
+			bytesPerPoint *= 2;
 		
-		szString = bytesForWave * WavePoints(p->wavWaveH);
-		
-		//E says you expect the data to be big Endian
-		//need to byte swap
-		if(IsLittleEndian() == p->EFlagEncountered){
-			if(err = MDGetWaveDimensions(p->wavWaveH,&numDimensions,dimensionSizes))
-				goto done;
-			
-			if(err = MDChangeWave2(p->wavWaveH,-1, dimensionSizes, 2))
-				goto done;
-		}
+		szString = bytesPerPoint * numElements;
 		
 		wp = (void*)WaveData(p->wavWaveH);
-		
-		if(	err = StoreStringDataUsingVarName(p->str, (char*)wp, szString))
-			goto done;
-		
-		
+
 		//E says you expect the data to be big Endian
 		//need to byte swap
-		if(IsLittleEndian() == p->EFlagEncountered){
-			if(err = MDChangeWave2(p->wavWaveH,-1, dimensionSizes, 2))
-				goto done;		
-		}
+		if((little_endian == p->EFlagEncountered) || (!little_endian == !p->EFlagEncountered))
+			FixByteOrder(wp, bytesPerPoint, numElements);
+				
+		if(	err = StoreStringDataUsingVarName(p->str, (char*)wp, szString))
+			goto done;
+
 	} 
 	
 	//TXT flag makes a text representation of the wave
 	if(p->TXTFlagEncountered){
-		long ii, totalIts;
+		long ii;
 		int val;
-		waveType = WaveType(p->wavWaveH);
 		wp = (void*) WaveData(p->wavWaveH);
-		totalIts = WavePoints(p->wavWaveH);
 		
-		for(ii=0 ; ii< totalIts ; ii+=1){
-			switch(waveType){
+		for(ii=0 ; ii < numElements ; ii+=1){
+			switch(dataType){
 				case NT_FP32:
 					val = snprintf(tempNumStr, NUMCHARS, "%g ", ((float *)wp)[ii]);
 					break;

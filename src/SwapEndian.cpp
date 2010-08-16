@@ -1,4 +1,8 @@
+#include "XOPStandardHeaders.h"
 #include "SwapEndian.h"
+#ifdef _WINDOWS_
+#include <winsock2.h>
+#endif
 #include <algorithm> //required for std::swap
 
 void ByteSwap(unsigned char * b, int n)
