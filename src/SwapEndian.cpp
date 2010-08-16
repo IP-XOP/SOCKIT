@@ -1,10 +1,16 @@
 #include "SwapEndian.h"
 
-static long _TestEndian=1;
+//static long _TestEndian=1;
 
 int IsLittleEndian(void) {
-	return *(char*)&_TestEndian;
+	if ( htonl(47) == 47 ) {
+		return 0;
+	} else {
+		return 1;
+	}	
+//	return *(char*)&_TestEndian;
 }
+
 
 /******************************************************************************
   FUNCTION: SwapEndian
