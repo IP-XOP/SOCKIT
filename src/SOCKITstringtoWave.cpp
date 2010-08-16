@@ -2,17 +2,19 @@
 
 #include "SOCKITstringtoWave.h"
 #include "SwapEndian.h"
+#include "defines.h"
 
 static int
 ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 {
 	int err = 0;
-	int waveType;
-	long bytesForWave;
+	int dataType;
+	int bytesPerPoint;
 	long numElements;
+	int dataFormat, isComplex;
+
 	size_t szString;
 	void *wp;
-	char *cp = NULL;
 
 	waveHndl waveH;
 	char waveName[MAX_OBJ_NAME+1];
@@ -40,69 +42,98 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 	}
 	
 	szString = GetHandleSize(p->conv);
+	dataType = (int)(p->num);
 
-	waveType = (int)(p->num);
-	switch(waveType){
-		case 2:
-			bytesForWave = 4;
-		break;
-		case 4:
-			bytesForWave = 8;
-		break;
-		case 8:
-			bytesForWave = 1;
-		break;
-		case 16:
-			bytesForWave = 2;
-		break;
-		case 32:
-			bytesForWave = 4;
-		break;
-		case 96:
-			bytesForWave = 4;
-		break;
-		case 80:
-			bytesForWave = 2;
+	if(err = NumTypeToNumBytesAndFormat(dataType, 
+							   &bytesPerPoint,
+							   &dataFormat,
+							   &isComplex))
+		goto done;
+	
+	
+/*	switch(waveType){
+		case 2:	//NT_FP32
+			bytesPerPoint = 4;
 			break;
-		case 72:
-			bytesForWave = 1;
+		case 3:	//NT_FP32 | NT_CMPLX
+			bytesPerPoint = 8;
 			break;
+		case 4:	//NT_FP64
+			bytesPerPoint = 8;
+			break;
+		case 5:	//NT_FP64 | NT_CMPLX
+			bytesPerPoint = 16;
+			break;
+		case 8:	//NT_I8
+			bytesPerPoint = 1;
+			break;
+		case 9:	//NT_I8 | NT_CMPLX
+			bytesPerPoint = 2;
+			break;
+		case 16:  //NT_I16
+			bytesPerPoint = 2;
+			break;
+		case 17:  //NT_I16 | NT_CMPLX
+			bytesPerPoint = 4;
+			break;			
+		case 32:  //NT_I32
+			bytesPerPoint = 4;
+			break;
+		case 33:  //NT_I32 | NT_CMPLX
+			bytesPerPoint = 8;
+			break;			
+		case 96:  //NT_I32 | NT_UNSIGNED
+			bytesPerPoint = 4;
+			break;
+		case 97: //NT_I32 | NT_UNSIGNED | NT_CMPLX
+			bytesPerPoint = 8;
+			break;			
+		case 80:  //NT_I16 | NT_UNSIGNED
+			bytesPerPoint = 2;
+			break;
+		case 81:  //NT_I16 | NT_UNSIGNED | NT_CMPLX
+			bytesPerPoint = 4;
+			break;
+		case 72: //NT_I8 | NT_UNSIGNED
+			bytesPerPoint = 1;
+			break;
+		case 73: //NT_I8 | NT_UNSIGNED | NT_CMPLX
+			bytesPerPoint = 2;
+			break;
+			
 		default:	//not recognized wavetype
 			goto done;
 			break;
-	}
+	}*/
 
-	numElements = szString / bytesForWave;
-	if(numElements * bytesForWave != szString){
-		err = 1;
+	numElements = szString / bytesPerPoint;
+	if(isComplex)
+		numElements *= 2;
+	
+	if(numElements * bytesPerPoint != szString){
+		err = STRING_INCORRECT_LEN_FOR_NUMTYPE;
 		goto done;
 	}
+	
 	dimensionSizes[0] = numElements;
 	
 	strcpy(waveName, "W_stringToWave");
-	if(err = MDMakeWave(&waveH, waveName, NULL, dimensionSizes, waveType, 1))
+	if(err = MDMakeWave(&waveH, waveName, NULL, dimensionSizes, dataType, 1))
 		goto done;
 
 	wp = (void*) WaveData(waveH);
 
-	//copy over the data.  Hmm, a bit scary doing this.
+	//copy over the data.
 	memcpy(wp, *(p->conv), GetHandleSize(p->conv));
 	
 	//E says you expect the data to be big Endian
 	//need to byte swap
-	if((little_endian == p->EFlagEncountered) || (!little_endian == !p->EFlagEncountered)){
-		for (register int i = 0; i < numElements; i++) 
-			ByteSwap(((unsigned char*) wp) + i, bytesForWave);
-		//		if(err = MDChangeWave2(waveH, WaveType(waveH), dimensionSizes, 2))
-		//			goto done;
-		//		WaveHandleModified(waveH);
-	}
-	
+	if((little_endian == p->EFlagEncountered) || (!little_endian == !p->EFlagEncountered))
+		FixByteOrder(wp, bytesPerPoint, numElements);
+					
 	WaveHandleModified(waveH);
 
 done:
-	if(cp!= NULL)
-		free(cp);
 
 	return err;
 }

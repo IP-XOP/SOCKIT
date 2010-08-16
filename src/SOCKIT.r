@@ -40,6 +40,8 @@ resource 'STR#' (1100) {					/* custom error messages */
 		"No socket with that descriptor.",
 		/* [13] */
 		"Could not start thread to collect messages, SOCKIT won't work.",
+		/* [14] */
+		"The supplied string is not an exact multiple of the bytes required for that wavetype.",
 	}
 };
 

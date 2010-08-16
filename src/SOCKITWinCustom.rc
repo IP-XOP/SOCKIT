@@ -33,7 +33,8 @@ BEGIN
 		"No socket with that descriptor.\0",
 		/* [13] */
 		"Couldn't start a thread to read incoming messages.\0",
-				   
+		/* [14] */
+		"The supplied string is not an exact multiple of the bytes required for that wavetype.\0",
 	// You can add error messages here.
 
 	0,								// NOTE: 0 required to terminate the resource.
