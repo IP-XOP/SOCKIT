@@ -18,8 +18,10 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 	char waveName[MAX_OBJ_NAME+1];
 	long dimensionSizes[MAX_DIMENSIONS+1];
 
-	memset(dimensionSizes,0, sizeof(dimensionSizes));
+	memset(dimensionSizes, 0, sizeof(dimensionSizes));
 
+	int little_endian = IsLittleEndian();
+	
 	// Flag parameters.
 	if (p->EFlagEncountered) {
 	}
@@ -70,7 +72,7 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 			break;
 	}
 
-	numElements = szString/bytesForWave;
+	numElements = szString / bytesForWave;
 	if(numElements * bytesForWave != szString){
 		err = 1;
 		goto done;
@@ -81,21 +83,22 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 	if(err = MDMakeWave(&waveH, waveName, NULL, dimensionSizes, waveType, 1))
 		goto done;
 
-	wp = (void*)WaveData(waveH);
+	wp = (void*) WaveData(waveH);
 
 	//copy over the data.  Hmm, a bit scary doing this.
 	memcpy(wp, *(p->conv), GetHandleSize(p->conv));
 	
-	WaveHandleModified(waveH);
-
 	//E says you expect the data to be big Endian
 	//need to byte swap
-
-	if(IsLittleEndian() ==	 p->EFlagEncountered){
-		if(err = MDChangeWave2(waveH,-1, dimensionSizes, 2))
-			goto done;
-		WaveHandleModified(waveH);
+	if((little_endian == p->EFlagEncountered) || (!little_endian == !p->EFlagEncountered)){
+		for (register int i = 0; i < numElements; i++) 
+			ByteSwap(((unsigned char*) wp) + i, bytesForWave);
+		//		if(err = MDChangeWave2(waveH, WaveType(waveH), dimensionSizes, 2))
+		//			goto done;
+		//		WaveHandleModified(waveH);
 	}
+	
+	WaveHandleModified(waveH);
 
 done:
 	if(cp!= NULL)
