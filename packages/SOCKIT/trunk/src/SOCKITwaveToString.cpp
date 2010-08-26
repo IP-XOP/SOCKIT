@@ -22,6 +22,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	size_t szString;
 	long numElements;
 	void *wp;
+	Handle textDataP = NULL;
 	
 	MemoryStruct chunk;
 	register char tempNumStr[NUMCHARS+1];
@@ -50,82 +51,104 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 
 	numElements = WavePoints(p->wavWaveH);
 	dataType = WaveType(p->wavWaveH);
-
-	//if the TXT flag is not specified you get a binary representation of the wave
-	//this is useful for sending arrays over networks, compressing arrays, etc.
-	if(!p->TXTFlagEncountered){
-		int little_endian = IsLittleEndian();
-		
-		if(err = NumTypeToNumBytesAndFormat(dataType, 
-											&bytesPerPoint,
-											&dataFormat,
-											&isComplex))
-			goto done;
 	
-		if(isComplex)
-			bytesPerPoint *= 2;
+	if(dataType == TEXT_WAVE_TYPE){
+		//IT'S A TEXT WAVE
+		long *pTableOffset;
+		char *pTextDataStart, *pTextDataEnd;
 		
-		szString = bytesPerPoint * numElements;
-		
-		wp = (void*)WaveData(p->wavWaveH);
-
-		//E says you expect the data to be big Endian
-		//need to byte swap
-		if((little_endian == p->EFlagEncountered) || (!little_endian == !p->EFlagEncountered))
-			FixByteOrder(wp, bytesPerPoint, numElements);
-				
-		if(	err = StoreStringDataUsingVarName(p->str, (char*)wp, szString))
+		if(err = GetTextWaveData(p->wavWaveH, 2, &textDataP))
 			goto done;
-
-	} 
-	
-	//TXT flag makes a text representation of the wave
-	if(p->TXTFlagEncountered){
-		long ii;
-		int val;
-		wp = (void*) WaveData(p->wavWaveH);
 		
-		for(ii=0 ; ii < numElements ; ii+=1){
-			switch(dataType){
-				case NT_FP32:
-					val = snprintf(tempNumStr, NUMCHARS, "%g ", ((float *)wp)[ii]);
-					break;
-				case NT_FP64:
-					val = snprintf(tempNumStr, NUMCHARS,"%g ", ((double *)wp)[ii]);
-					break;
-				case NT_I8:
-					val = snprintf(tempNumStr, NUMCHARS, "%hhd ", ((char* )wp)[ii]);
-					break;
-				case NT_I16:
-					val = snprintf(tempNumStr, NUMCHARS,"%hd ", ((short* )wp)[ii]);
-					break;
-				case NT_I32:
-					val = snprintf(tempNumStr, NUMCHARS,"%li ", ((long* )wp)[ii]);
-					break;
-				case (NT_UNSIGNED|NT_I32):
-					val = snprintf(tempNumStr, NUMCHARS,"%d ", ((unsigned long* )wp)[ii]);
-					break;
-				case (NT_UNSIGNED|NT_I16):
-					val = snprintf(tempNumStr, NUMCHARS, "%d ", ((unsigned short* )wp)[ii]);
-					break;
-				case NT_UNSIGNED|NT_I8:
-					val = snprintf(tempNumStr, NUMCHARS, "%d ", ((unsigned char* )wp)[ii]);
-					break;
-				default:	//not recognized wavetype
-					goto done;
-					break;
-			}
-			try {
-				chunk.WriteMemoryCallback(tempNumStr, sizeof(char), strlen(tempNumStr));
-			} catch (bad_alloc&){
-				err = NOMEM;
+		pTableOffset = (long*)*textDataP;					// Pointer to table of offsets if mode==1 or mode==2
+		
+		pTextDataStart = *textDataP;
+		pTextDataStart += (numElements + 1) * sizeof(long);
+		pTextDataEnd = *textDataP;
+		pTextDataEnd +=  pTableOffset[numElements];
+		szString = pTextDataEnd - pTextDataStart;
+			
+		if(err = StoreStringDataUsingVarName(p->str, pTextDataStart, szString))
+			goto done;
+		
+	} else {
+		//IT'S A NUMERICAL WAVE
+		//if the TXT flag is not specified you get a binary representation of the wave
+		//this is useful for sending arrays over networks, compressing arrays, etc.
+		if(!p->TXTFlagEncountered){
+			int little_endian = IsLittleEndian();
+			
+			if(err = NumTypeToNumBytesAndFormat(dataType, 
+												&bytesPerPoint,
+												&dataFormat,
+												&isComplex))
 				goto done;
-			}
-		}		
-		if(err = StoreStringDataUsingVarName(p->str, (char*)chunk.getData(), chunk.getMemSize()))
-			goto done;
+			
+			if(isComplex)
+				bytesPerPoint *= 2;
+			
+			szString = bytesPerPoint * numElements;
+			
+			wp = (void*)WaveData(p->wavWaveH);
+			
+			//E says you expect the data to be big Endian
+			//need to byte swap
+			if((little_endian == p->EFlagEncountered) || (!little_endian == !p->EFlagEncountered))
+				FixByteOrder(wp, bytesPerPoint, numElements);
+			
+			if(	err = StoreStringDataUsingVarName(p->str, (char*)wp, szString))
+				goto done;
+			
+		} else {
+			//TXT flag makes a text representation of the wave
+			long ii;
+			int val;
+			wp = (void*) WaveData(p->wavWaveH);
+			
+			for(ii=0 ; ii < numElements ; ii+=1){
+				switch(dataType){
+					case NT_FP32:
+						val = snprintf(tempNumStr, NUMCHARS, "%g ", ((float *)wp)[ii]);
+						break;
+					case NT_FP64:
+						val = snprintf(tempNumStr, NUMCHARS,"%g ", ((double *)wp)[ii]);
+						break;
+					case NT_I8:
+						val = snprintf(tempNumStr, NUMCHARS, "%hhd ", ((char* )wp)[ii]);
+						break;
+					case NT_I16:
+						val = snprintf(tempNumStr, NUMCHARS,"%hd ", ((short* )wp)[ii]);
+						break;
+					case NT_I32:
+						val = snprintf(tempNumStr, NUMCHARS,"%li ", ((long* )wp)[ii]);
+						break;
+					case (NT_UNSIGNED|NT_I32):
+						val = snprintf(tempNumStr, NUMCHARS,"%d ", ((unsigned long* )wp)[ii]);
+						break;
+					case (NT_UNSIGNED|NT_I16):
+						val = snprintf(tempNumStr, NUMCHARS, "%d ", ((unsigned short* )wp)[ii]);
+						break;
+					case NT_UNSIGNED|NT_I8:
+						val = snprintf(tempNumStr, NUMCHARS, "%d ", ((unsigned char* )wp)[ii]);
+						break;
+					default:	//not recognized wavetype
+						goto done;
+						break;
+				}
+				try {
+					chunk.WriteMemoryCallback(tempNumStr, sizeof(char), strlen(tempNumStr));
+				} catch (bad_alloc&){
+					err = NOMEM;
+					goto done;
+				}
+			}		
+			if(err = StoreStringDataUsingVarName(p->str, (char*)chunk.getData(), chunk.getMemSize()))
+				goto done;
+		}
 	}
 done:
+	if (textDataP)
+		DisposeHandle(textDataP);
 	
 	return err;
 }
