@@ -71,6 +71,13 @@ public:
 	*reset allows the MemoryStruct object to be reused
 	*/
 	void reset();
+	/**
+	these resets allow the memory to be overwritten from scratch
+	 */
+	int reset(void *ptr, size_t size, size_t nmemb);
+	int reset(void *ptr, size_t numbytes);
+	
+	
 		
 	private:
 	/**

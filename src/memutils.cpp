@@ -30,6 +30,29 @@ void MemoryStruct::reset(){
 	memory = NULL;
 }
 
+//resets the memory
+int MemoryStruct::reset(void *ptr, size_t size, size_t nmemb){
+	long numbytes = 0;
+	if(memory)
+		free(memory);
+	memsize = 0;
+	memory = NULL;
+	numbytes = append(ptr, size, nmemb);
+	return numbytes;
+}
+
+//resets the memory
+int MemoryStruct::reset(void *ptr, size_t numbytes){
+	long newbytes = 0;
+	if(memory)
+		free(memory);
+	memsize = 0;
+	memory = NULL;
+	newbytes = append(ptr, numbytes);
+	return newbytes;
+}
+
+
 //return the size of the memory used
 size_t MemoryStruct::getMemSize(){
 	return memsize;
