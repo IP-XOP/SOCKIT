@@ -136,7 +136,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 						break;
 				}
 				try {
-					chunk.WriteMemoryCallback(tempNumStr, sizeof(char), strlen(tempNumStr));
+					chunk.append(tempNumStr, sizeof(char), strlen(tempNumStr));
 				} catch (bad_alloc&){
 					err = NOMEM;
 					goto done;

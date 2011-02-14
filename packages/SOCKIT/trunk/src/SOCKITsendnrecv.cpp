@@ -219,7 +219,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				break;
 			} else if(rc > 0){
 				try {
-					chunk.WriteMemoryCallback(buf, sizeof(char), rc);
+					chunk.append(buf, sizeof(char), rc);
 				} catch (bad_alloc&){
 					err = NOMEM;
 					goto done;
@@ -268,7 +268,7 @@ done:
 		nul[0] = 0x00;
 
 		try {
-			chunk.WriteMemoryCallback(&nul, sizeof(char), 1);
+			chunk.append(&nul, sizeof(char), 1);
 		} catch (bad_alloc&) {
 			err = NOMEM;
 		}
@@ -439,7 +439,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 				break;
 			} else if(rc > 0){
 				try {
-					chunk.WriteMemoryCallback(buf, sizeof(char), rc);
+					chunk.append(buf, sizeof(char), rc);
 				} catch (bad_alloc&){
 					err = NOMEM;
 					goto done;

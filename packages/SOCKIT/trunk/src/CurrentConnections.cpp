@@ -108,7 +108,7 @@ void *readerThread(void *){
 							pinstance->getWaveBufferInfo(ii)->toClose = true;
 						} else if(rc > 0){
 							try {
-								pinstance->getWaveBufferInfo(ii)->readBuffer.WriteMemoryCallback(buf, sizeof(char), rc);
+								pinstance->getWaveBufferInfo(ii)->readBuffer.append(buf, sizeof(char), rc);
 							} catch (bad_alloc&){
 								pinstance->getWaveBufferInfo(ii)->readBuffer.reset();
 							}

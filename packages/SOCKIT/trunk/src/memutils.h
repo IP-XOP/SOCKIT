@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define HAVE_MEMUTILS
 /**
 *MemoryStruct - A dynamic memory re-writer.
 *The MemoryStruct class is used as a storage mechanism for data.  It can be sent extra data
@@ -18,7 +19,7 @@ public:
 	*@param Data A MemoryStruct object to which the data will be appended.
 	*@return The amount of memory allocated for the data you are trying to write
 	*/
-	static size_t WriteMemoryCallback(void *ptr, size_t size, size_t nmemb,void* Data);
+	static size_t append(void *ptr, size_t size, size_t nmemb,void* Data);
 
 	/**
 	*Writes data to a MemoryStruct object. 	
@@ -29,7 +30,18 @@ public:
 	*@param nmemb The number of data you are trying to store.
 	*@return The amount of memory allocated for the data you are trying to write.
 	*/
-	size_t WriteMemoryCallback(void *ptr, size_t size, size_t nmemb);
+	size_t append(void *ptr, size_t size, size_t nmemb);
+	
+	/**
+	 *Writes data to a MemoryStruct object. 	
+	 Example:
+	 *MemoryStruct a; double *doublearray; long numdoubles; a.WriteMemoryCallback(doublearray, sizeof(double), numdoubles);
+	 *@param ptr A pointer to the data that you wish to store in the MemoryStruct object.
+	 *@param numbytes The size of the type of data you wish to store.
+	 *@return The amount of memory allocated for the data you are trying to write.
+	 */
+	size_t append(void *ptr, size_t numBytes);
+	
 	/**
 	*Obtain the number of bytes held in a MemoryStruct object.	Example:
 	*MemoryStruct a; long bytesAllocated; bytesAllocated = a.getMemSize();
