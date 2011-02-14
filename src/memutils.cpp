@@ -11,7 +11,7 @@ MemoryStruct::MemoryStruct(){
 MemoryStruct::MemoryStruct(void *ptr, size_t size, size_t nmemb){
 	memory=NULL;
 	memsize=0;
-	WriteMemoryCallback(ptr, size, nmemb);
+	append(ptr, size, nmemb);
 }
 
 //destructor free's the memory
@@ -57,7 +57,7 @@ void *MemoryStruct::myrealloc(void *src_ptr, size_t size)
 //data has to be a point of a MemoryStruct object
 
 size_t
-MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *Data)
+MemoryStruct::append(void *ptr, size_t size, size_t nmemb, void *Data)
 {
     size_t realsize = size * nmemb;
     MemoryStruct *mem = (MemoryStruct *)Data;
@@ -73,7 +73,7 @@ MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *Da
 }
 
 size_t
-MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb)
+MemoryStruct::append(void *ptr, size_t size, size_t nmemb)
 {
     size_t realsize = size * nmemb;
 	
@@ -86,6 +86,22 @@ MemoryStruct::WriteMemoryCallback(void *ptr, size_t size, size_t nmemb)
 
     return realsize;
 }
+
+size_t
+MemoryStruct::append(void *ptr, size_t numbytes)
+{
+    size_t realsize = numbytes;
+	
+    memory = (unsigned char *)myrealloc(memory, memsize + realsize);
+    if (memory) {
+		memcpy(&(memory[memsize]), ptr, realsize);
+		memsize += realsize;
+    } else
+		throw (std::bad_alloc());
+	
+    return realsize;
+}
+
 
 /*
  * \brief Create a two-dimensional array in a single allocation
