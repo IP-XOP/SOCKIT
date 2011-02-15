@@ -74,10 +74,11 @@ public:
 	/**
 	these resets allow the memory to be overwritten from scratch
 	 */
-	int reset(void *ptr, size_t size, size_t nmemb);
-	int reset(void *ptr, size_t numbytes);
+	size_t reset(void *ptr, size_t size, size_t nmemb);
+	size_t reset(void *ptr, size_t numbytes);
 	
-	
+	//NULL terminate the memory block
+	size_t nullTerminate();
 		
 	private:
 	/**

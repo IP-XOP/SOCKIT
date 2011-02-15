@@ -31,7 +31,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	int rc;
     SOCKET sockNum = -1L;
 	int res = 0;
-	long port = 0;
+	char port[7];
 	int dataType = 0;
 	unsigned long fdflags;
 	int ignoreSIGPIPE = 1;
@@ -42,18 +42,17 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	fd_set tempset;	
 	struct timeval timeout;
 	
-	struct sockaddr_in  sa;
-    struct hostent     *hen;
-
+	struct addrinfo hints, *servinfo = NULL;
+	
 	waveBufferInfo *bufferInfo = NULL;
 		
 	xmlNode *root_element = NULL;
 	xmlChar *entityEncoded = NULL;
-	char fnamepath[MAX_PATH_LEN+1];
-	char nativepath[MAX_PATH_LEN+1];
-	char fname[MAX_FILENAME_LEN+1];
+	char fnamepath[MAX_PATH_LEN + 1];
+	char nativepath[MAX_PATH_LEN + 1];
+	char fname[MAX_FILENAME_LEN + 1];
 	char a[10];
-	long year,month,day,hour,minute,second;
+	long year, month, day, hour, minute, second;
 	
 	memset(fnamepath,0,sizeof(fnamepath));
 	if(p->TIMEFlagEncountered){
@@ -81,8 +80,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	if(p->LOGFlagEncountered){
 		memset(fnamepath,0, sizeof(fnamepath));
-		memset(a,0,sizeof(a));
-		snprintf(a,9,"a.xml");
+		memset(a, 0, sizeof(a));
+		snprintf(a, 9, "a.xml");
 
 		if(err = GetFullPathFromSymbolicPathAndFilePath(p->LOGFlagName,a,fnamepath))
 			goto done;
@@ -136,9 +135,6 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		bufferInfo->sztokenizer = GetHandleSize(p->TOKFlagStrH);		
 	}
 	
-	if (p->PORTEncountered)
-		port = (long)p->PORTNumber;
-	
 	if (p->BUFEncountered) {
 		// Parameter: p->BUFWaveH (test for NULL handle before using)
 		if(!p->BUFWaveH || (WaveType(p->BUFWaveH) != TEXT_WAVE_TYPE)){
@@ -158,29 +154,28 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			goto done;
 	}
 	
-	/* Address resolution */
-	hen = gethostbyname(host);
-	if (!hen){
+	
+	/* Address resolution */	
+	memset(&hints, 0, sizeof(hints));
+	memset(port, 0, sizeof(char) * 7);
+	
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	snprintf(port, 6, "%d", (long)p->PORTNumber);
+	
+	if(getaddrinfo(host, port, &hints, &servinfo)){
 		err = BAD_HOST_RESOLV;
 		goto done;
 	}
 	
-	/* zero internet address struct*/
-	memset(&sa, 0, sizeof(sa));
-	
-	/* populate internet address struct */
-	sa.sin_family = AF_INET;
-	sa.sin_port = htons(port);
-	memcpy(&sa.sin_addr.s_addr, hen->h_addr_list[0], hen->h_length);
-	
 	/* allocate a socket */
-	sockNum = socket(AF_INET, SOCK_STREAM, 0);
+	sockNum = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
 	if (sockNum < 0) {
 		if(!p->QFlagEncountered)
 			XOPNotice("SOCKITmsg: Failed to create new socket\r");
 		goto done;
 	}
-	
 
 	FD_ZERO(&tempset);
 	FD_SET(sockNum, &tempset);
@@ -206,7 +201,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	}
 #endif
 
-	rc = connect(sockNum, (struct sockaddr *)&sa, sizeof(sa));
+	rc = connect(sockNum, servinfo->ai_addr, servinfo->ai_addrlen);
 	res = select(sockNum + 1, 0, &tempset,0, &timeout);
 
 	if(res > 0 && FD_ISSET(sockNum, &tempset)){
@@ -287,6 +282,9 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	}
 	
 done:
+	if(servinfo)
+		freeaddrinfo(servinfo);
+	
 	FD_ZERO(&tempset);
 	if(!err && sockNum>0 && !err2){
 		err = SetOperationNumVar("V_flag", 0);

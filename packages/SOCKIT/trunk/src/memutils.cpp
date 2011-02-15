@@ -31,25 +31,45 @@ void MemoryStruct::reset(){
 }
 
 //resets the memory
-int MemoryStruct::reset(void *ptr, size_t size, size_t nmemb){
+size_t MemoryStruct::reset(void *ptr, size_t size, size_t nmemb){
 	long numbytes = 0;
-	if(memory)
-		free(memory);
-	memsize = 0;
-	memory = NULL;
-	numbytes = append(ptr, size, nmemb);
-	return numbytes;
+
+	memory = (unsigned char*) myrealloc(memory, size * nmemb);
+	if(memory){
+		memcpy(memory, ptr, size * nmemb);
+		memsize = size * nmemb;
+		return numbytes;
+	} else {
+		memory = NULL;
+		memsize = 0;
+		return 0;
+	}
 }
 
 //resets the memory
-int MemoryStruct::reset(void *ptr, size_t numbytes){
-	long newbytes = 0;
-	if(memory)
-		free(memory);
-	memsize = 0;
-	memory = NULL;
-	newbytes = append(ptr, numbytes);
-	return newbytes;
+size_t MemoryStruct::reset(void *ptr, size_t numbytes){
+	memory = (unsigned char*) myrealloc(memory, numbytes);
+	if(memory){
+		memcpy(memory, ptr, numbytes);
+		memsize = numbytes;
+		return numbytes;
+	} else {
+		
+		return 0;
+	}
+}
+
+//resets the memory
+size_t MemoryStruct::nullTerminate(){
+	memory = (unsigned char*) myrealloc(memory, memsize + 1);
+	if(memory){
+		memset(memory + memsize, 0, sizeof(unsigned char));
+		memsize = memsize + 1;
+		return memsize;
+	} else {
+		
+		return 0;
+	}
 }
 
 
@@ -125,6 +145,7 @@ MemoryStruct::append(void *ptr, size_t numbytes)
     return realsize;
 }
 
+int nullTerminate();
 
 /*
  * \brief Create a two-dimensional array in a single allocation
