@@ -264,11 +264,9 @@ done:
 	if(err==0 && err2 == 0 && chunk.getData()){
 		if(p->retEncountered)
 			err = StoreStringDataUsingVarName(p->ret,(const char*)chunk.getData(),chunk.getMemSize());
-		char nul[1];
-		nul[0] = 0x00;
 
 		try {
-			chunk.append(&nul, sizeof(char), 1);
+			chunk.nullTerminate();
 		} catch (bad_alloc&) {
 			err = NOMEM;
 		}
