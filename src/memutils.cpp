@@ -121,6 +121,7 @@ MemoryStruct::append(void *ptr, size_t size, size_t nmemb)
     size_t realsize = size * nmemb;
 	
     memory = (unsigned char *)myrealloc(memory, memsize + realsize);
+	
     if (memory) {
 		memcpy(&(memory[memsize]), ptr, realsize);
 		memsize += realsize;
@@ -136,8 +137,10 @@ MemoryStruct::append(void *ptr, size_t numbytes)
     size_t realsize = numbytes;
 	
     memory = (unsigned char *)myrealloc(memory, memsize + realsize);
+	
     if (memory) {
-		memcpy(&(memory[memsize]), ptr, realsize);
+		if(realsize != 0)
+			memcpy(&(memory[memsize]), ptr, realsize);
 		memsize += realsize;
     } else
 		throw (std::bad_alloc());
@@ -145,7 +148,6 @@ MemoryStruct::append(void *ptr, size_t numbytes)
     return realsize;
 }
 
-int nullTerminate();
 
 /*
  * \brief Create a two-dimensional array in a single allocation
