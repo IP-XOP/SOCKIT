@@ -10,7 +10,7 @@ MemoryStruct::MemoryStruct(){
 //constructor with initial data
 MemoryStruct::MemoryStruct(void *ptr, size_t size, size_t nmemb){
 	memory=NULL;
-	memsize=0;
+	memsize = 0;
 	append(ptr, size, nmemb);
 }
 
@@ -18,8 +18,8 @@ MemoryStruct::MemoryStruct(void *ptr, size_t size, size_t nmemb){
 MemoryStruct::~MemoryStruct(){
 	if(memory)
 		free(memory);
-	memsize=0;
-	memory=0;
+	memsize = 0;
+	memory = NULL;
 }
 
 //resets the memory
@@ -31,7 +31,7 @@ void MemoryStruct::reset(){
 }
 
 //resets the memory
-size_t MemoryStruct::reset(void *ptr, size_t size, size_t nmemb){
+long MemoryStruct::reset(void *ptr, size_t size, size_t nmemb){
 	long numbytes = 0;
 
 	memory = (unsigned char*) myrealloc(memory, size * nmemb);
@@ -42,33 +42,33 @@ size_t MemoryStruct::reset(void *ptr, size_t size, size_t nmemb){
 	} else {
 		memory = NULL;
 		memsize = 0;
-		return 0;
+		return -1;
 	}
 }
 
 //resets the memory
-size_t MemoryStruct::reset(void *ptr, size_t numbytes){
+long MemoryStruct::reset(void *ptr, size_t numbytes){
 	memory = (unsigned char*) myrealloc(memory, numbytes);
 	if(memory){
 		memcpy(memory, ptr, numbytes);
 		memsize = numbytes;
 		return numbytes;
 	} else {
-		
-		return 0;
+		memsize = 0;
+		return -1;
 	}
 }
 
 //resets the memory
-size_t MemoryStruct::nullTerminate(){
+long MemoryStruct::nullTerminate(){
 	memory = (unsigned char*) myrealloc(memory, memsize + 1);
 	if(memory){
 		memset(memory + memsize, 0, sizeof(unsigned char));
 		memsize = memsize + 1;
 		return memsize;
 	} else {
-		
-		return 0;
+		memsize = 0;
+		return -1;		
 	}
 }
 
@@ -99,7 +99,7 @@ void *MemoryStruct::myrealloc(void *src_ptr, size_t size)
 //size_t (*f)(void*,size_t,size_t,void*)=(MemoryStruct::WriteMemoryCallback);
 //data has to be a point of a MemoryStruct object
 
-size_t
+long
 MemoryStruct::append(void *ptr, size_t size, size_t nmemb, void *Data)
 {
     size_t realsize = size * nmemb;
@@ -110,12 +110,15 @@ MemoryStruct::append(void *ptr, size_t size, size_t nmemb, void *Data)
 		memcpy(&(mem->memory[mem->memsize]), ptr, realsize);
 		mem->memsize += realsize;
 //		mem->memory[mem->memsize] = 0;
-    } else
-		throw (std::bad_alloc());
+    } else {
+		mem->memsize = 0;
+		return -1;
+	}
+
     return realsize;
 }
 
-size_t
+long
 MemoryStruct::append(void *ptr, size_t size, size_t nmemb)
 {
     size_t realsize = size * nmemb;
@@ -125,13 +128,15 @@ MemoryStruct::append(void *ptr, size_t size, size_t nmemb)
     if (memory) {
 		memcpy(&(memory[memsize]), ptr, realsize);
 		memsize += realsize;
-    } else
-		throw (std::bad_alloc());
+    } else {
+		memsize = 0;
+		return -1;
+	}
 
     return realsize;
 }
 
-size_t
+long
 MemoryStruct::append(void *ptr, size_t numbytes)
 {
     size_t realsize = numbytes;
@@ -142,8 +147,10 @@ MemoryStruct::append(void *ptr, size_t numbytes)
 		if(realsize != 0)
 			memcpy(&(memory[memsize]), ptr, realsize);
 		memsize += realsize;
-    } else
-		throw (std::bad_alloc());
+    } else {
+		memsize = 0;
+		return -1;
+	}
 	
     return realsize;
 }

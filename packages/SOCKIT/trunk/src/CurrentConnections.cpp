@@ -107,11 +107,8 @@ void *readerThread(void *){
 						if (rc <= 0 && iters == 1) {
 							pinstance->getWaveBufferInfo(ii)->toClose = true;
 						} else if(rc > 0){
-							try {
-								pinstance->getWaveBufferInfo(ii)->readBuffer.append(buf, sizeof(char), rc);
-							} catch (bad_alloc&){
+							if(pinstance->getWaveBufferInfo(ii)->readBuffer.append(buf, sizeof(char), rc) == -1)
 								pinstance->getWaveBufferInfo(ii)->readBuffer.reset();
-							}
 						}
 					}while (rc == BUFLEN);					
 				}

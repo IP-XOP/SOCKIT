@@ -135,9 +135,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 						goto done;
 						break;
 				}
-				try {
-					chunk.append(tempNumStr, sizeof(char), strlen(tempNumStr));
-				} catch (bad_alloc&){
+				if(chunk.append(tempNumStr, sizeof(char), strlen(tempNumStr)) == -1){
 					err = NOMEM;
 					goto done;
 				}

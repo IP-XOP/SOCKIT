@@ -218,9 +218,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				err2=1;
 				break;
 			} else if(rc > 0){
-				try {
-					chunk.append(buf, sizeof(char), rc);
-				} catch (bad_alloc&){
+				if(chunk.append(buf, sizeof(char), rc) == -1){
 					err = NOMEM;
 					goto done;
 				}
@@ -436,9 +434,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 				err2 = 1;
 				break;
 			} else if(rc > 0){
-				try {
-					chunk.append(buf, sizeof(char), rc);
-				} catch (bad_alloc&){
+				if(chunk.append(buf, sizeof(char), rc) == -1){
 					err = NOMEM;
 					goto done;
 				}
