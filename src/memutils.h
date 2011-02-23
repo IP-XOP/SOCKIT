@@ -19,7 +19,7 @@ public:
 	*@param Data A MemoryStruct object to which the data will be appended.
 	*@return The amount of memory allocated for the data you are trying to write
 	*/
-	static size_t append(void *ptr, size_t size, size_t nmemb,void* Data);
+	static long append(void *ptr, size_t size, size_t nmemb,void* Data);
 
 	/**
 	*Writes data to a MemoryStruct object. 	
@@ -30,7 +30,7 @@ public:
 	*@param nmemb The number of data you are trying to store.
 	*@return The amount of memory allocated for the data you are trying to write.
 	*/
-	size_t append(void *ptr, size_t size, size_t nmemb);
+	long append(void *ptr, size_t size, size_t nmemb);
 	
 	/**
 	 *Writes data to a MemoryStruct object. 	
@@ -40,7 +40,7 @@ public:
 	 *@param numbytes The size of the type of data you wish to store.
 	 *@return The amount of memory allocated for the data you are trying to write.
 	 */
-	size_t append(void *ptr, size_t numBytes);
+	long append(void *ptr, size_t numBytes);
 	
 	/**
 	*Obtain the number of bytes held in a MemoryStruct object.	Example:
@@ -74,11 +74,11 @@ public:
 	/**
 	these resets allow the memory to be overwritten from scratch
 	 */
-	size_t reset(void *ptr, size_t size, size_t nmemb);
-	size_t reset(void *ptr, size_t numbytes);
+	long reset(void *ptr, size_t size, size_t nmemb);
+	long reset(void *ptr, size_t numbytes);
 	
 	//NULL terminate the memory block
-	size_t nullTerminate();
+	long nullTerminate();
 		
 	private:
 	/**
