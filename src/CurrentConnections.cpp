@@ -272,13 +272,13 @@ int CurrentConnections::registerProcessor(SOCKET sockNum, const char *processor)
 	
 	FunctionInfo fi;
     
-	memset(bufferWaves[sockNum].processor,0,sizeof(bufferWaves[sockNum].processor));
-	strlcpy(bufferWaves[sockNum].processor,processor,sizeof(bufferWaves[sockNum].processor));
+	memset(bufferWaves[sockNum].processor,0, sizeof(bufferWaves[sockNum].processor));
+	strlcpy(bufferWaves[sockNum].processor, processor, sizeof(bufferWaves[sockNum].processor));
 	
 	if(strlen(processor)==0)
 		goto done;
 	
-	if(err = GetFunctionInfo(processor,&fi))
+	if(err = GetFunctionInfo(processor, &fi))
 		err = PROCESSOR_NOT_AVAILABLE;
 	
 	if(err = checkProcessor(sockNum, &fi))
@@ -391,10 +391,10 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	SOCKET ii = 0;
 	
 	DataFolderHandle dfH;
-	char pathName[MAXCMDLEN+1];
-	char waveName[MAX_WAVE_NAME+1];
-	char cmd[MAXCMDLEN+1];
-	char pointsToDeleteStr[MAXCMDLEN+1];
+	char pathName[MAXCMDLEN + 1];
+	char waveName[MAX_WAVE_NAME + 1];
+	char cmd[MAXCMDLEN + 1];
+	char pointsToDeleteStr[MAXCMDLEN + 1];
 	long pointsToDelete = 0;
 	
 	long year,month,day,hour,minute,second;
