@@ -45,6 +45,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	char report[MAX_MSG_LEN+1];
 	string output;
 	long size = 0;
+	bool needToClose = false;
 	
 	xmlNode *added_node = NULL;
 	xmlNode *root_element = NULL;
@@ -210,12 +211,10 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			
 			//if the recv fails then the manpage indicates that rc <= 0, because we are using blocking sockets.
 			if (rc <= 0) {
-				snprintf(report,sizeof(report),"SOCKIT err: problem reading socket descriptor %d, disconnection???\r", sockNum );
+				snprintf(report,sizeof(report),"SOCKIT err: socket descriptor %d, disconnection???\r", sockNum );
 				if(pinstance->getWaveBufferInfo(sockNum)->toPrint == true)
 					XOPNotice(report);
-				// Closed connection or error 
-				pinstance->closeWorker(sockNum);
-				err2=1;
+				needToClose = true;
 				break;
 			} else if(rc > 0){
 				if(chunk.append(buf, sizeof(char), rc) == -1){
@@ -224,7 +223,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				}
 				if(fileToWrite)//write to file as well
 					written = fwrite(buf, sizeof(char),rc, (FILE *)fileToWrite);
-			} //else if (rc == 0)
+			}// else if (rc == 0)
 			//	break;
 			
 			if(p->SMALFlagEncountered){
@@ -234,7 +233,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				timeout.tv_sec = floor(timeoutVal);
 				timeout.tv_usec =  (long)((timeoutVal - (double)floor(timeoutVal))*1000000);
 				FD_SET(sockNum, &tempset);
-				res = select(sockNum+1, &tempset, 0, 0, &timeout);
+				res = select(sockNum + 1, &tempset, 0, 0, &timeout);
 			}
 		}while(res > 0);
 		
@@ -254,7 +253,11 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	if(err = pinstance->outputBufferDataToWave(sockNum, chunk.getData(), chunk.getMemSize(), false))
 		goto done;
 	
+
 done:
+	if(needToClose)
+		pinstance->closeWorker(sockNum);
+
 	if(fileToWrite){
 		if(XOPCloseFile(fileToWrite))
 			err = PROBLEM_WRITING_TO_FILE;

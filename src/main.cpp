@@ -42,10 +42,17 @@ static int XOPIdle(){
 	extern CurrentConnections* pinstance;
 	extern pthread_mutex_t readThreadMutex;
 	
-	pthread_mutex_lock( &readThreadMutex );
-	if(pinstance->getMaxSockNumber())
+	if(err = pthread_mutex_lock( &readThreadMutex )){
+		err = COULDNT_GET_MUTEX;
+		goto done;
+	}
+	if(pinstance->getMaxSockNumber()){
 		err = pinstance->checkRecvData();
-	pthread_mutex_unlock( &readThreadMutex);
+		goto done;
+	}
+	if(err = pthread_mutex_unlock( &readThreadMutex))
+		err = COULDNT_GET_MUTEX;
+done:
 	
 	return err;
 }
