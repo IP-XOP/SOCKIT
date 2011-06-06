@@ -43,16 +43,10 @@
 #include "memutils.h"
 #include "NtoCR.h"
 #include "StringTokenizer.h"
+#include <iostream>
+
 
 #include "XOPStandardHeaders.h"
-
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-#include <libxml/xPath.h>
-#include <libxml/xmlstring.h>
-#include <libxml/xpathInternals.h>
-
-#define LIBXML_STATIC
 
 
 #define REQUIRES_IGOR_500 1 + FIRST_XOP_ERR
@@ -70,6 +64,7 @@
 #define CANT_START_READER_THREAD 13 + FIRST_XOP_ERR
 #define STRING_INCORRECT_LEN_FOR_NUMTYPE 14 + FIRST_XOP_ERR
 #define  COULDNT_GET_MUTEX 15 + FIRST_XOP_ERR
+#define  NO_WAVE_BUFFER_INFO 16 + FIRST_XOP_ERR
 
 #define BUFLEN 4096
 #define MAX_URL_LEN 256

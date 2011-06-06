@@ -28,48 +28,43 @@ class waveBufferInfo {
 	bool toPrint;						/**<if set to true then incoming messages from the socket are printed in the history area.*/
 	char processor[MAX_OBJ_NAME+1];		/**<the name of an IGOR function that is notified when messages are received*/
 	char tokenizer[31];					/**<the output from the socket is tokenized using the characters in this array*/
+	char hostIP[MAX_URL_LEN+1];
 	int sztokenizer;
 	bool toClose;
 	MemoryStruct readBuffer;
 	
 	bool DBUG;
 	bool NOIDLES;						//NOIDLES will mean that the user picks up messages with SOCKITpeek, the 
-	xmlDoc *logDoc;
+
+	char logFileName[MAX_PATH_LEN + 1];
 	XOP_FILE_REF logFile;
-	
+
 	waveBufferInfo(){
 		bufferWave = NULL;
 		toPrint = true;
-		memset(processor, 0 , sizeof(processor));
-		memset(tokenizer,0,sizeof(tokenizer));
+		memset(processor, 0 , sizeof(char) * (MAX_OBJ_NAME + 1));
+		memset(tokenizer,0, sizeof(char) * 31);
+		memset(hostIP, 0, sizeof(char) * (MAX_URL_LEN + 1));
 		sztokenizer = 0;
 		DBUG = false;
 		toClose= false;
-		logDoc = NULL;
-		logFile = NULL;
+		memset(logFileName, 0, sizeof(char) * (MAX_PATH_LEN + 1));
 		NOIDLES = false;
+		logFile = NULL;
 	};
 	
 	~waveBufferInfo(){
 		bufferWave = NULL;
-		if(logDoc!=NULL && logFile!=NULL){
-			rewind(logFile);
-			xmlDocFormatDump(logFile,logDoc,0);
-		}
 		readBuffer.reset();
-		
-		if(logDoc)
-			xmlFreeDoc(logDoc);
-		if(logFile){
-			XOPCloseFile(logFile);
-		}
-		logDoc = NULL;
-		logFile = NULL;
+	
+		if(logFile)
+			fclose(logFile);
 	}
 
 };
 
 int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, long *second);
+void GetTimeStamp(char timestamp[101]);
 
 #pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 /**

@@ -34,16 +34,13 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	char buf[BUFLEN+1];
 	char report[MAX_MSG_LEN+1];
 	string output;			//get rid of the carriage returns
-	
-	xmlNode *added_node = NULL;
-	xmlNode *root_element = NULL;
-	xmlChar *encContent = NULL;
-	long year,month,day,hour,minute,second;
-	char timebuf[100];
+	waveBufferInfo *wbi = NULL;
+	char timestamp[101];
 	long size = 0;
 	fd_set tempset;
 	struct timeval timeout;
 	
+	GetTimeStamp(timestamp);
 	memset(buf,0,sizeof(buf));
 	
 	if(p->TIMEFlagEncountered){
@@ -79,13 +76,15 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 		err2 = 1;
 		goto done;
 	}
-		
+	
+	wbi = pinstance->getWaveBufferInfo(socketToWrite);
+	
 	FD_ZERO(&tempset);
 	FD_SET(socketToWrite, &tempset);
 	
 	res = select(socketToWrite+1, 0, &tempset, 0, &timeout);
 	if(res == -1){
-		if(pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true)
+		if(wbi->toPrint == true)
 			XOPNotice ("SOCKIT err: select returned -1");
 		err2 = 1;
         goto done;
@@ -97,32 +96,22 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 			output = string(buf, GetHandleSize(p->MSG));
 			find_and_replace(output, "\n", "\r");
 			
-			if( pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true){
+			if(wbi->toPrint == true){
 				XOPNotice(report);
 				XOPNotice(output.c_str());
 				XOPNotice("\r");
 			}			
 			//if there is a logfile then append and save
-			if(pinstance->getWaveBufferInfo(socketToWrite)->logDoc != NULL){
-				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(socketToWrite)->logDoc);
-				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(socketToWrite)->logDoc, BAD_CAST output.c_str());
-				added_node = xmlNewChild(root_element, NULL, BAD_CAST "SEND" ,encContent);
-				if(encContent != NULL){
-					xmlFree(encContent);
-					encContent = NULL;
-				}
+			if(wbi->logFile){
+				snprintf(report,
+						 sizeof(char) * MAX_MSG_LEN,
+						 "%s\tSEND:\t%d\t", timestamp, socketToWrite);
 				
-				GetTheTime(&year,&month,&day,&hour,&minute,&second);
-				snprintf(timebuf, 99, "%02ld/%02ld/%02ld %02ld:%02ld:%02ld",year,month,day,hour,minute,second);
-				
-				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(socketToWrite)->logDoc, BAD_CAST timebuf);
-				xmlSetProp(added_node, BAD_CAST "time", encContent);
-				
-				rewind((pinstance->getWaveBufferInfo(socketToWrite)->logFile));
-				if(xmlDocFormatDump((pinstance->getWaveBufferInfo(socketToWrite)->logFile),pinstance->getWaveBufferInfo(socketToWrite)->logDoc,0)==-1){
-					XOPCloseFile((pinstance->getWaveBufferInfo(socketToWrite)->logFile));
-				}
+				fwrite(report, sizeof(char), strlen(report), wbi->logFile);
+				fwrite(output.c_str(), sizeof(char) , output.length(), wbi->logFile);
+				fwrite("\r\n", sizeof(char), 2,  wbi->logFile);
 			}
+				
 			goto done;
 		/*on OSX rc<0 if remote peer is disconnected
 		  on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
@@ -130,22 +119,20 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 		 */
 		} else if (rc < 0 || (rc == 0 && GetHandleSize(p->MSG) > 0)) {// Closed connection or error
 			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", socketToWrite );
-			if(pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true)
+			if(wbi->toPrint == true)
 				XOPNotice(report);
 			pinstance->closeWorker(socketToWrite);
 			err2 = 1;
 		}
 	} else {
 			snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", socketToWrite);
-			if(pinstance->getWaveBufferInfo(socketToWrite)->toPrint == true)
+			if(wbi->toPrint == true)
 				XOPNotice(report);
 		err2 = 1;
 		goto done;
 	}
 	
 done:
-	if(encContent != NULL)
-		xmlFree(encContent);
 	
 	if(err || err2){
 		SetOperationNumVar("V_flag", 1);
@@ -177,13 +164,10 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	int res = 0;
     
 	char buf[BUFLEN+1];
+	char report[MAX_MSG_LEN+1];
 	string output;			//get rid of the carriage returns
-	
-	xmlNode *added_node = NULL;
-	xmlNode *root_element = NULL;
-	xmlChar *encContent = NULL;
-	long year,month,day,hour,minute,second;
-	char timebuf[100];
+	waveBufferInfo *wbi = NULL;
+	char timestamp[101];
 	long size = 0;
 	fd_set tempset;
 	struct timeval timeout;
@@ -215,7 +199,9 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 		err2 = 1;
 		goto done;
 	}
-		
+	
+	wbi = pinstance->getWaveBufferInfo(socketToWrite);
+	
 	FD_ZERO(&tempset);
 	FD_SET(socketToWrite, &tempset);
 	
@@ -228,26 +214,17 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 		rc = send(socketToWrite, buf, GetHandleSize(p->message), 0);
 		if(rc > 0){
 			//if there is a logfile then append and save
-			if(pinstance->getWaveBufferInfo(socketToWrite)->logDoc != NULL){
-				root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(socketToWrite)->logDoc);
-				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(socketToWrite)->logDoc, BAD_CAST output.c_str());
-				added_node = xmlNewChild(root_element, NULL, BAD_CAST "SEND" ,encContent);
-				if(encContent != NULL){
-					xmlFree(encContent);
-					encContent = NULL;
-				}
+			if(pinstance->getWaveBufferInfo(socketToWrite)->logFile){
+				GetTimeStamp(timestamp);
+				snprintf(report,
+						 sizeof(char) * MAX_MSG_LEN,
+						 "%s\tSEND:\t%d\t", timestamp, socketToWrite);
 				
-				GetTheTime(&year,&month,&day,&hour,&minute,&second);
-				snprintf(timebuf, 99, "%02ld/%02ld/%02ld %02ld:%02ld:%02ld",year,month,day,hour,minute,second);
-				
-				encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(socketToWrite)->logDoc, BAD_CAST timebuf);
-				xmlSetProp(added_node, BAD_CAST "time", encContent);
-				
-				rewind((pinstance->getWaveBufferInfo(socketToWrite)->logFile));
-				if(xmlDocFormatDump((pinstance->getWaveBufferInfo(socketToWrite)->logFile),pinstance->getWaveBufferInfo(socketToWrite)->logDoc,0)==-1){
-					XOPCloseFile((pinstance->getWaveBufferInfo(socketToWrite)->logFile));
-				}
+				fwrite(report, sizeof(char), strlen(report), wbi->logFile);
+				fwrite(output.c_str(), sizeof(char) , output.length(), wbi->logFile);
+				fwrite("\r\n", sizeof(char), 2,  wbi->logFile);
 			}
+			
 			goto done;
 			/*on OSX rc<0 if remote peer is disconnected
 			 on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
@@ -263,8 +240,6 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	}
 	
 done:
-	if(encContent != NULL)
-		xmlFree(encContent);
 	
 	if(err || err2){
 		p->retval = 1;
