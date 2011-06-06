@@ -42,6 +42,9 @@ resource 'STR#' (1100) {					/* custom error messages */
 		"Could not start thread to collect messages, SOCKIT won't work.",
 		/* [14] */
 		"The supplied string is not an exact multiple of the bytes required for that wavetype.",
+		/* [15] */
+		"Couldn't lock Mutex.",
+
 	}
 };
 
