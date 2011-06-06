@@ -50,10 +50,9 @@ static int XOPIdle(){
 		err = pinstance->checkRecvData();
 		goto done;
 	}
-	if(err = pthread_mutex_unlock( &readThreadMutex))
-		err = COULDNT_GET_MUTEX;
+
 done:
-	
+	pthread_mutex_unlock( &readThreadMutex);
 	return err;
 }
 

@@ -44,6 +44,8 @@ resource 'STR#' (1100) {					/* custom error messages */
 		"The supplied string is not an exact multiple of the bytes required for that wavetype.",
 		/* [15] */
 		"Couldn't lock Mutex.",
+		/* [16] */
+		"No wave buffer info for some reason.",
 
 	}
 };

@@ -46,15 +46,14 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	waveBufferInfo *bufferInfo = NULL;
 		
-	xmlNode *root_element = NULL;
-	xmlChar *entityEncoded = NULL;
 	char fnamepath[MAX_PATH_LEN + 1];
 	char nativepath[MAX_PATH_LEN + 1];
 	char fname[MAX_FILENAME_LEN + 1];
 	char a[10];
-	long year, month, day, hour, minute, second;
 	
-	memset(fnamepath,0,sizeof(fnamepath));
+	memset(fnamepath, 0, sizeof(char) * (MAX_PATH_LEN + 1));
+	memset(report, 0, sizeof(char) * (MAX_MSG_LEN + 1));
+	
 	if(p->TIMEFlagEncountered){
 		timeout.tv_sec = floor(p->TIMEFlagNumber);
 		timeout.tv_usec =  (long)((p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000);
@@ -79,25 +78,22 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	}
 	
 	if(p->LOGFlagEncountered){
-		memset(fnamepath,0, sizeof(fnamepath));
+		memset(fnamepath, 0, sizeof(fnamepath));
 		memset(a, 0, sizeof(a));
-		snprintf(a, 9, "a.xml");
+		snprintf(a, 9, "log.txt");
 
-		if(err = GetFullPathFromSymbolicPathAndFilePath(p->LOGFlagName,a,fnamepath))
+		if(err = GetFullPathFromSymbolicPathAndFilePath(p->LOGFlagName, a, fnamepath))
 			goto done;
 		if(err = GetDirectoryAndFileNameFromFullPath(fnamepath, fnamepath, a))
 			goto done;
 			
 		if(FullPathPointsToFolder(fnamepath)){
-			GetTheTime(&year,&month,&day,&hour,&minute,&second);
-			snprintf(fname, MAX_FILENAME_LEN, "log%02ld%02ld%02ld%d%d%d.xml",year,month,day,hour,minute,second);
-			if(err = ConcatenatePaths(fnamepath,fname,fnamepath))
+			if(err = ConcatenatePaths(fnamepath,"log.txt",fnamepath))
 				goto done;
 			if(err = GetNativePath(fnamepath,nativepath))
 				goto done;
-			if(err = XOPOpenFile(nativepath,1,&bufferInfo->logFile))
-				goto done;
 		}
+		//TODO
 	}
 	
 	// Flag parameters.
@@ -152,6 +148,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		}
 		if(err = GetCStringFromHandle(p->IPStrH, host, MAX_URL_LEN))
 			goto done;
+		memcpy(bufferInfo->hostIP, host, sizeof(char) * strlen(host));
 	}
 	
 	
@@ -206,7 +203,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 
 	if(res > 0 && FD_ISSET(sockNum, &tempset)){
 		if(!p->QFlagEncountered){
-				snprintf(report, sizeof(report), "SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
+				snprintf(report, sizeof(char) * MAX_MSG_LEN, "SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
 				XOPNotice(report);
 		}
 	} else {
@@ -235,32 +232,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum > 0){
-		if(strlen(fnamepath) > 0){
-			bufferInfo->logDoc = xmlNewDoc(BAD_CAST "1.0");
-			if(bufferInfo->logDoc == NULL){
-				if(!p->QFlagEncountered)
-					XOPNotice("SOCKIT err: couldn't create logfile)\r");
-				goto done;
-			}
-			//create the root element
-			root_element = xmlNewNode(NULL , BAD_CAST "SOCKIT");
-			if(root_element == NULL){
-				if(!p->QFlagEncountered)
-					XOPNotice("SOCKIT err: couldn't create logfile)\r");
-				goto done;
-			}
-			entityEncoded = xmlEncodeEntitiesReentrant(bufferInfo->logDoc, BAD_CAST host);
-			
-			xmlSetProp(root_element, BAD_CAST "IP", entityEncoded);
-			snprintf(report, sizeof(report), "%d",port);
-			if(entityEncoded != NULL){
-				xmlFree(entityEncoded);
-				entityEncoded = NULL;
-			}
-			entityEncoded = xmlEncodeEntitiesReentrant(bufferInfo->logDoc, BAD_CAST report);
-			xmlSetProp(root_element, BAD_CAST "port", BAD_CAST xmlEncodeEntitiesReentrant(bufferInfo->logDoc, BAD_CAST entityEncoded));		
-			root_element = xmlDocSetRootElement(bufferInfo->logDoc, root_element);
-		}
+		if(strlen(fnamepath) > 0)
+			memcpy(bufferInfo->logFileName, fnamepath, sizeof(char) * strlen(fnamepath));
 
 		if(err = pinstance->addWorker(sockNum, *bufferInfo)){
 			err = SOCKET_ALLOC_FAILED;
@@ -299,8 +272,6 @@ done:
 	
 	pthread_mutex_unlock( &readThreadMutex );
 	
-	if(entityEncoded!= NULL)
-		xmlFree(entityEncoded);
 	
 	return err;
 }
@@ -350,6 +321,8 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	}
 	if(err = GetCStringFromHandle(p->IPStr, host, MAX_URL_LEN))
 		goto done;
+	
+	memcpy(bufferInfo->hostIP, host, sizeof(char) * strlen(host));
 	
 	/* Address resolution */
 	hen = gethostbyname(host);

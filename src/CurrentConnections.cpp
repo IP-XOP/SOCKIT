@@ -118,11 +118,11 @@ void *readerThread(void *){
 		pthread_mutex_unlock( &readThreadMutex );
 
 #ifdef _WINDOWS_
-		Sleep(100);
+		Sleep(50);
 #endif
 #ifdef _MACINTOSH_
 		sleeper.tv_sec = 0;
-		sleeper.tv_usec = 50000;
+		sleeper.tv_usec = 10000;
 		select(0,0,0,0,&sleeper);
 #endif
 	}
@@ -141,7 +141,12 @@ int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, lon
 	*minute = theTime->tm_min;
 	*second = theTime->tm_sec; 
 	return 0;
-	
+}
+
+void GetTimeStamp(char timestamp[101]){
+	long year, month, day, hour, minute, second;
+	GetTheTime(&year, &month, &day, &hour, &minute, &second);
+	snprintf(timestamp, 100 * sizeof(char), "%d-%d-%d_T%d:%d:%d",year, month, day, hour, minute, second );
 }
 
 void CurrentConnections::Instance(){
@@ -212,24 +217,29 @@ waveBufferInfo* CurrentConnections::getWaveBufferInfo(SOCKET sockNum){
 int CurrentConnections::closeWorker(SOCKET sockNum){
 	int err = 0;
 
+	
+	char report[MAX_MSG_LEN+1];
+	char timestamp[101];
+	waveBufferInfo *wbi;
+
+	GetTimeStamp(timestamp);
 	/* Disconnect from server */
 	if (FD_ISSET(sockNum, &(readSet))) { 
 		FD_CLR(sockNum, &(readSet)); 
 		close(sockNum);
 		resetMaxSocketNumber();
 	}
-/*		if(getWaveBufferInfo(sockNum)->logDoc != NULL ){
-			rewind((pinstance->getWaveBufferInfo(sockNum)->logFile));
-			if(xmlDocFormatDump((pinstance->getWaveBufferInfo(sockNum)->logFile),pinstance->getWaveBufferInfo(sockNum)->logDoc,0)==-1){
-				XOPCloseFile((pinstance->getWaveBufferInfo(sockNum)->logFile));
-			}
-			
-			xmlFreeDoc(getWaveBufferInfo(sockNum)->logDoc);
-			XOPCloseFile((pinstance->getWaveBufferInfo(sockNum)->logFile));
-		}
-*/		
-		//shut down the buffering
-		//remove the memory
+	wbi = getWaveBufferInfo(sockNum);
+	
+	if(wbi->logFile){
+		snprintf(report,
+				 sizeof(char) * MAX_MSG_LEN,
+				 "%s\tSOCKCLOSE:\t%d\t", timestamp, sockNum);
+		
+		fwrite(report, sizeof(char), strlen(report), wbi->logFile);
+		fwrite("\r\n", sizeof(char), 2,  wbi->logFile);	
+	}
+		
 	bufferWaves.erase(sockNum);
 	
 	return err;
@@ -237,15 +247,36 @@ int CurrentConnections::closeWorker(SOCKET sockNum){
 
 int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfoStruct){
 	int err = 0;
-
-	bufferWaves.insert( make_pair( sockNum, bufferInfoStruct ) );
+	waveBufferInfo *wbi;
+	char timestamp[101];
+	char report[MAX_MSG_LEN+1];
+	
+	bufferWaves.insert(make_pair(sockNum, bufferInfoStruct));
 
 	FD_SET(sockNum,&(readSet));
 	if(sockNum > maxSockNumber){
 		maxSockNumber = sockNum;
 	}
+	wbi = getWaveBufferInfo(sockNum);
 	
 	totalSocketsOpened += 1;
+	
+	if(strlen(wbi->logFileName)){
+		XOPOpenFile(wbi->logFileName, 1, &wbi->logFile);
+		fseek(wbi->logFile, 0, 1);
+		int pos = ftell(wbi->logFile);
+		
+		if(!wbi->logFile)
+			XOPNotice("SOCKIT err: couldn't create logfile)\r");
+		else {
+			GetTimeStamp(timestamp);
+			snprintf(report,
+					 sizeof(char) * MAX_MSG_LEN,
+					 "%s\tSOCKOPEN:\t%d\tIP\t%s\r\n", timestamp, sockNum, wbi->hostIP);
+			
+			fwrite(report, sizeof(char), strlen(report), wbi->logFile);
+		}
+	}
 	
 	done:
 	return err;
@@ -394,26 +425,36 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	char pathName[MAXCMDLEN + 1];
 	char waveName[MAX_WAVE_NAME + 1];
 	char cmd[MAXCMDLEN + 1];
+	char report[MAX_MSG_LEN+1];
 	char pointsToDeleteStr[MAXCMDLEN + 1];
 	long pointsToDelete = 0;
 	
-	long year,month,day,hour,minute,second;
-	char timebuf[100];
+	char timestamp[101];
 	
 	SOCKITcallProcessorStruct callProcessor;
     FunctionInfo fi;
-    waveHndl wav = bufferWaves[sockNum].bufferWave;
+	waveBufferInfo *wbi = NULL;
+    waveHndl wav = NULL;
 	
 	//do you want to debug?
-	bool DBUG = bufferWaves[sockNum].DBUG;
-	
-	//if you want a logfile
-	xmlNode *added_node = NULL;
-	xmlNode *root_element = NULL;
-	xmlChar *encContent = NULL;
-	
+	bool DBUG = false;	
 	double result;
 	
+	wbi = getWaveBufferInfo(sockNum);
+	
+	if(!wbi){
+		err = NO_WAVE_BUFFER_INFO;
+		goto done;
+	}
+	
+	DBUG = wbi->DBUG;
+	wav = wbi->bufferWave;
+	
+	if(!wav){
+		err = NO_WAVE_BUFFER_INFO;
+		goto done;
+	}
+		
 	textH = NewHandle(10); 
 	if (textH == NULL) {
 		err = NOMEM; 
@@ -451,10 +492,9 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		if(err = MDSetTextWavePointValue(wav,indices,textH))
 			goto done;
 		
-		GetTheTime(&year,&month,&day,&hour,&minute,&second);
-		snprintf(timebuf, 99, "%02ld/%02ld/%02ld %02ld:%02ld:%02ld",year,month,day,hour,minute,second);
+		GetTimeStamp(timestamp);
 		
-		if(err = PutCStringInHandle(timebuf,textH))
+		if(err = PutCStringInHandle(timestamp, textH))
 			goto done;
 		indices[1] = 1;
 		
@@ -463,8 +503,8 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		
 		//to Debug put the socket number in the 3rd column
 		if(DBUG){
-			snprintf(timebuf,sizeof(timebuf),"%d",sockNum);
-			if(err = PutCStringInHandle(timebuf,textH))
+			snprintf(timestamp, sizeof(char) * 10, "%d", sockNum);
+			if(err = PutCStringInHandle(timestamp, textH))
 				goto done;
 			indices[1] = 2;
 			if(err = MDSetTextWavePointValue(wav,indices,textH))
@@ -475,11 +515,11 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 			pointsToDelete = 300;//dimensionSizes[0] - BUFFER_WAVE_LEN;
 			indices[0] -= pointsToDelete;
 			
-			if(err = GetWavesDataFolder(wav,&dfH))
+			if(err = GetWavesDataFolder(wav, &dfH))
 				goto done;
-			if(err = GetDataFolderNameOrPath(dfH,1,pathName))
+			if(err = GetDataFolderNameOrPath(dfH, 1, pathName))
 				goto done;
-			WaveName(bufferWaves[sockNum].bufferWave,waveName);
+			WaveName(wav, waveName);
 			strlcat(pathName,waveName,sizeof(pathName));
 			strlcpy(cmd,"Deletepoints 0,",sizeof(cmd));
 			snprintf(pointsToDeleteStr,sizeof(pointsToDeleteStr),"%d,",pointsToDelete);
@@ -490,21 +530,14 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		}
 		
 		//if there is a logfile then append and save
-		if(pinstance->getWaveBufferInfo(sockNum)->logDoc != NULL){
-			root_element = xmlDocGetRootElement(pinstance->getWaveBufferInfo(sockNum)->logDoc);
-			encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(sockNum)->logDoc, BAD_CAST tokens.at(ii).c_str());
-			added_node = xmlNewChild(root_element, NULL, BAD_CAST "RECV" ,encContent);
-			if(encContent != NULL){
-				xmlFree(encContent);
-				encContent = NULL;
-			}
-			encContent = xmlEncodeEntitiesReentrant(pinstance->getWaveBufferInfo(sockNum)->logDoc, BAD_CAST timebuf);
-			xmlSetProp(added_node, BAD_CAST "time", encContent);
-			
-			rewind(pinstance->getWaveBufferInfo(sockNum)->logFile);
-			if(xmlDocFormatDump((pinstance->getWaveBufferInfo(sockNum)->logFile),pinstance->getWaveBufferInfo(sockNum)->logDoc,0)==-1){
-				XOPCloseFile((pinstance->getWaveBufferInfo(sockNum)->logFile));
-			}
+		if(wbi->logFile){
+			snprintf(report,
+					 sizeof(char) * MAX_MSG_LEN,
+					 "%s\tRECV:\t%d\t", timestamp, sockNum);
+			int wrote = 0;
+			fwrite(report, sizeof(char), strlen(report), wbi->logFile);
+			fwrite(tokens.at(ii).c_str(), sizeof(char) , strlen(tokens.at(ii).c_str()), wbi->logFile);
+			fwrite("\r\n", sizeof(char), 2,  wbi->logFile);		
 		}
 		
 		WaveHandleModified(wav);
@@ -514,11 +547,11 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 			if(checkProcessor(sockNum,  &fi)){
 				XOPNotice("SOCKIT error: processor must be f(textWave,variable)\r");
 			} else {
-				if(strlen(getWaveBufferInfo(sockNum)->processor)==0)
+				if(strlen(wbi->processor)==0)
 					continue;
 				callProcessor.entryRow = indices[0];
 				callProcessor.bufferWave = wav;
-				if(err = CallFunction(&fi,&callProcessor,&result))
+				if(err = CallFunction(&fi, &callProcessor, &result))
 					goto done;
 			}
 		}
@@ -526,8 +559,6 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 done:
 	if(textH!=NULL)
 		DisposeHandle(textH);
-	if(encContent != NULL)
-		xmlFree(encContent);
 	
 	return err;
 }
