@@ -20,6 +20,11 @@ struct SOCKITsendnrecvRuntimeParams {
 	double TIMEFlagNumber;
 	int TIMEFlagParamsSet[1];
 
+	// Parameters for /NBYT flag group.
+	int NBYTFlagEncountered;
+	double NBYTFlagNumber;
+	int NBYTFlagParamsSet[1];
+	
 	// Parameters for /SMALL flag group.
 	int SMALFlagEncountered;
 

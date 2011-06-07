@@ -82,9 +82,28 @@ size_t MemoryStruct::getMemSize(){
 const unsigned char* MemoryStruct::getData(){
 	return (const unsigned char*)memory;
 };
+
+//trim the object to trimSz
+long MemoryStruct::trim(size_t trimSz){
+	if(trimSz == 0){
+		reset();
+		return 0;
+	}
+	if(trimSz >= memsize)
+		return memsize;
+	
+	memory = (unsigned char *)myrealloc(memory, trimSz);
+	if (memory) {
+		memsize = trimSz;
+		return memsize;
+    } else {
+		memsize = 0;
+		return -1;
+	}
+};
 	
 
-//create a platform independent routine for continuous reallocation of memory, appending data to it
+//create a platform independent routine for continuous reallocation of memory
 void *MemoryStruct::myrealloc(void *src_ptr, size_t size)
 {
     /* There might be a realloc() out there that doesn't like reallocing
