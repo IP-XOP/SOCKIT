@@ -66,6 +66,14 @@ public:
 	*Destructor frees the memory stored in the MemoryStruct object.
 	*/
 	~MemoryStruct();
+	
+	/**
+	 trims the object to maximum size
+	 @param trimSz - trim to this maximum size
+	 @return trimmedSize - this is the trimmed size.  If the trimSz requested is larger than the current
+	 size then the current size is returned.  Otherwise the object is trimmed and the newsize returned.
+	*/
+	long trim(size_t trimSz);
 
 	/**
 	*reset allows the MemoryStruct object to be reused

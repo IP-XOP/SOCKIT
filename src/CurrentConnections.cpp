@@ -455,19 +455,15 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		goto done;
 	}
 		
-	textH = NewHandle(10); 
-	if (textH == NULL) {
-		err = NOMEM; 
-		goto done;
-	}
+//	textH = NewHandle(10); 
+//	if (textH == NULL) {
+//		err = NOMEM; 
+//		goto done;
+//	}
 	
 	Tokenize(writebuffer, szwritebuffer, tokens, bufferWaves[sockNum].tokenizer,bufferWaves[sockNum].sztokenizer);
 	
-	for(ii=0 ; ii< tokens.size(); ii++){
-		
-		if(err = PtrToHand((Ptr)tokens.at(ii).data(), &textH,tokens.at(ii).length()))
-			goto done;
-		
+	for(ii=0 ; ii< tokens.size(); ii++){		
 		// Clear all dimensions sizes to avoid undefined values. 
 		MemClear(dimensionSizes, sizeof(dimensionSizes)); 
 		MemClear(indices, sizeof(indices)); 
@@ -489,10 +485,22 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		indices[0] = dimensionSizes[0]-1;
 		indices[1] = 0;
 		
+		if(err = PtrToHand((Ptr)tokens.at(ii).data(), &textH,tokens.at(ii).length()))
+			goto done;
+
 		if(err = MDSetTextWavePointValue(wav,indices,textH))
 			goto done;
 		
+		if(textH)
+			DisposeHandle(textH);
+		
 		GetTimeStamp(timestamp);
+		
+		textH = NewHandle(0);
+		if (textH == NULL) {
+			err = NOMEM; 
+			goto done;
+		}
 		
 		if(err = PutCStringInHandle(timestamp, textH))
 			goto done;
@@ -510,6 +518,9 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 			if(err = MDSetTextWavePointValue(wav,indices,textH))
 				goto done;
 		}
+		
+		if(textH)
+			DisposeHandle(textH);
 		
 		if(dimensionSizes[0] > BUFFER_WAVE_LEN){
 			pointsToDelete = 300;//dimensionSizes[0] - BUFFER_WAVE_LEN;
@@ -534,7 +545,6 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 			snprintf(report,
 					 sizeof(char) * MAX_MSG_LEN,
 					 "%s\tRECV:\t%d\t", timestamp, sockNum);
-			int wrote = 0;
 			fwrite(report, sizeof(char), strlen(report), wbi->logFile);
 			fwrite(tokens.at(ii).c_str(), sizeof(char) , strlen(tokens.at(ii).c_str()), wbi->logFile);
 			fwrite("\r\n", sizeof(char), 2,  wbi->logFile);		
@@ -557,7 +567,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		}
 	}
 done:
-	if(textH!=NULL)
+	if(textH)
 		DisposeHandle(textH);
 	
 	return err;

@@ -9,7 +9,7 @@ RegisterSOCKITsendnrecv(void)
 	char* runtimeStrVarList;
 	
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
-	cmdTemplate = "SOCKITsendnrecv/FILE=string/TIME=number/SMAL number:ID,string:MSG [,varname:ret]";
+	cmdTemplate = "SOCKITsendnrecv/FILE=string/TIME=number/NBYT=number/SMAL number:ID,string:MSG [,varname:ret]";
 	runtimeNumVarList = "V_Flag";
 	runtimeStrVarList = "S_tcp";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITsendnrecvRuntimeParams), (void*)ExecuteSOCKITsendnrecv, 0);
@@ -46,6 +46,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	string output;
 	long size = 0;
 	bool needToClose = false;
+	long NBYTES_to_recv = -1;
 	
 	char timestamp[101];
 		
@@ -64,6 +65,12 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	timeout.tv_sec = floor(timeoutVal);
 	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
     
+	if(p->NBYTFlagEncountered){
+		if(IsNaN64(&p->NBYTFlagNumber) || IsINF64(&p->NBYTFlagNumber) || p->NBYTFlagNumber < 0)
+			NBYTES_to_recv = -1;
+
+		NBYTES_to_recv = doubleToLong(roundDouble(p->NBYTFlagNumber));
+	}
 	memset(buf,0,sizeof(buf));
 	
 	if (p->MSGEncountered) {
@@ -211,8 +218,10 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				}
 				if(fileToWrite)//write to file as well
 					written = fwrite(buf, sizeof(char),rc, (FILE *)fileToWrite);
-			}// else if (rc == 0)
-			//	break;
+			}
+			
+			if (NBYTES_to_recv > -1 && rc >= NBYTES_to_recv)
+				break;
 			
 			if(p->SMALFlagEncountered){
 				//set a low timeout to go around again.  You only expect one packet, but you may be connected to a socket who 
@@ -246,6 +255,21 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	if(!chunk.getData())
 		goto done;
 	
+	if(p->NBYTFlagEncountered && NBYTES_to_recv > -1){
+		//send excess bytes back to the buffer
+		int excessToDiscard;
+		unsigned char* excessData = NULL;
+		excessToDiscard = chunk.getMemSize() - NBYTES_to_recv;
+		if(excessToDiscard > 0){
+			excessData = (unsigned char*) chunk.getData() + (NBYTES_to_recv * sizeof(char));
+			wbi->readBuffer.append(excessData, excessToDiscard * sizeof(char));
+		}
+		if(chunk.trim(NBYTES_to_recv) < 0){
+			err = NOMEM;
+			goto done;
+		}
+	}
+
 	if(err = pinstance->outputBufferDataToWave(sockNum, chunk.getData(), chunk.getMemSize(), false))
 		goto done;
 		
