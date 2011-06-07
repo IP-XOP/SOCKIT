@@ -201,6 +201,8 @@ class CurrentConnections{
 	//return the number of sockets opened at the present time.
 	long getCurrentSocketsOpened();
 	
+	void getListOfOpenSockets(vector<SOCKET>&);
+	
 	private:
 	/**
 	*Constructor for the singleton class.  Only callable from Instance().  It checks to see if there are currently any other CurrentConnections objects created first.

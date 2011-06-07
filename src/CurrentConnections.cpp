@@ -60,18 +60,22 @@ void *readerThread(void *){
 #endif
 	
 	SOCKET maxSockNum;
-	SOCKET ii;
 	
-	int rc = 0, res = 0, iters=0;
+	int rc = 0, res = 0, iterations=0;
 	long charsread = 0;		
 	char buf[BUFLEN];
 	
 	fd_set tempset;
 	struct timeval sleeper;
+	vector<SOCKET> openSockets;
+	vector<SOCKET>::iterator iter;
+	waveBufferInfo *wbi;
 	
     for(;;){
-		if(pthread_mutex_trylock( &readThreadMutex ))
-			continue;
+		pthread_mutex_lock(&readThreadMutex);
+		
+//		if(pthread_mutex_trylock( &readThreadMutex ))
+//			continue;
 			
 		FD_ZERO(&tempset);
 		
@@ -91,14 +95,41 @@ void *readerThread(void *){
 		
 		res = select(maxSockNum+1, &tempset, 0, 0, &timeout);
 		if(res > 0){
+			pinstance->getListOfOpenSockets(openSockets);
+			for(iter = openSockets.begin() ; iter != openSockets.end() ; iter++) {
+				if (FD_ISSET(*iter, &tempset) && pinstance->getWaveBufferInfo(*iter)->toClose == false) {
+					wbi = pinstance->getWaveBufferInfo(*iter);
+					
+					iterations = 0;
+					charsread = 0;
+					rc = 0;
+					//					memset(buf, 0, BUFLEN * sizeof(char));
+					do{
+						//						memset(buf, 0, BUFLEN * sizeof(char));
+						iterations += 1;
+						//read the characters from the socket
+						rc = recv(*iter, buf, BUFLEN, 0);
+						charsread += rc;
+						
+						if (rc <= 0 && iterations == 1) {
+							wbi->toClose = true;
+						} else if(rc > 0){
+							if(wbi->readBuffer.append(buf, sizeof(char), rc) == -1)
+								wbi->readBuffer.reset();
+						}
+					}while (rc == BUFLEN);					
+				}
+			}
+			
+/*
 			for (ii=0; ii<maxSockNum + 1; ii++) { 
 				if (FD_ISSET(ii, &tempset) && pinstance->getWaveBufferInfo(ii)->toClose == false) {
 					iters = 0;
 					charsread = 0;
 					rc = 0;
-					memset(buf, 0, BUFLEN * sizeof(char));
+//					memset(buf, 0, BUFLEN * sizeof(char));
 					do{
-						memset(buf, 0, BUFLEN * sizeof(char));
+//						memset(buf, 0, BUFLEN * sizeof(char));
 						iters += 1;
 						//read the characters from the socket
 						rc = recv(ii, buf, BUFLEN, 0);
@@ -113,12 +144,13 @@ void *readerThread(void *){
 					}while (rc == BUFLEN);					
 				}
 			}
-			
+*/			
 		}
+ 
 		pthread_mutex_unlock( &readThreadMutex );
 
 #ifdef _WINDOWS_
-		Sleep(50);
+		Sleep(10);
 #endif
 #ifdef _MACINTOSH_
 		sleeper.tv_sec = 0;
@@ -213,7 +245,6 @@ waveBufferInfo* CurrentConnections::getWaveBufferInfo(SOCKET sockNum){
 	return &(bufferWaves[sockNum]);
 };
 
-
 int CurrentConnections::closeWorker(SOCKET sockNum){
 	int err = 0;
 
@@ -263,9 +294,7 @@ int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfoStru
 	
 	if(strlen(wbi->logFileName)){
 		XOPOpenFile(wbi->logFileName, 1, &wbi->logFile);
-		fseek(wbi->logFile, 0, 1);
-		int pos = ftell(wbi->logFile);
-		
+		fseek(wbi->logFile, 0, 1);		
 		if(!wbi->logFile)
 			XOPNotice("SOCKIT err: couldn't create logfile)\r");
 		else {
@@ -416,18 +445,18 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	long numDimensions = 2; 
 	long dimensionSizes[MAX_DIMENSIONS+1]; 
 	long indices[MAX_DIMENSIONS];
+	long originalInsertPoint;
 	
 	Handle textH = NULL;
 	vector<string> tokens;
-	SOCKET ii = 0;
+	vector<string>::iterator tokens_iter;
+	long numTokens;
 	
 	DataFolderHandle dfH;
 	char pathName[MAXCMDLEN + 1];
 	char waveName[MAX_WAVE_NAME + 1];
 	char cmd[MAXCMDLEN + 1];
 	char report[MAX_MSG_LEN+1];
-	char pointsToDeleteStr[MAXCMDLEN + 1];
-	long pointsToDelete = 0;
 	
 	char timestamp[101];
 	
@@ -455,58 +484,53 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		goto done;
 	}
 		
-//	textH = NewHandle(10); 
-//	if (textH == NULL) {
-//		err = NOMEM; 
-//		goto done;
-//	}
+	textH = NewHandle(10); 
+	if (textH == NULL) {
+		err = NOMEM; 
+		goto done;
+	}
 	
 	Tokenize(writebuffer, szwritebuffer, tokens, bufferWaves[sockNum].tokenizer,bufferWaves[sockNum].sztokenizer);
+	numTokens = tokens.size();
 	
-	for(ii=0 ; ii< tokens.size(); ii++){		
-		// Clear all dimensions sizes to avoid undefined values. 
-		MemClear(dimensionSizes, sizeof(dimensionSizes)); 
-		MemClear(indices, sizeof(indices)); 
-		MemClear(cmd, sizeof(cmd)); 
-		
-		if (err = MDGetWaveDimensions(wav, &numDimensions, dimensionSizes)) 
-			goto done; 
-		
-		dimensionSizes[0] +=1;
-		if(!DBUG)
-			dimensionSizes[1] = 2;    // 2 columns 
-		else
-			dimensionSizes[1] = 3;
-		dimensionSizes[2] = 0;    // 0 layers 
-		
-		if(err = MDChangeWave(wav,-1,dimensionSizes))
-			goto done;
-		
-		indices[0] = dimensionSizes[0]-1;
+	//redimension the text wave to put the tokens in, and put them in.
+	// Clear all dimensions sizes to avoid undefined values. 
+	MemClear(dimensionSizes, sizeof(dimensionSizes)); 
+	MemClear(indices, sizeof(indices)); 
+	
+	if (err = MDGetWaveDimensions(wav, &numDimensions, dimensionSizes)) 
+		goto done; 
+	
+	originalInsertPoint = dimensionSizes[0];
+	indices[0] = originalInsertPoint;
+	
+	dimensionSizes[0] += numTokens;
+	if(!DBUG)
+		dimensionSizes[1] = 2;    // 2 columns 
+	else
+		dimensionSizes[1] = 3;
+	
+	if(err = MDChangeWave(wav, -1, dimensionSizes))
+		goto done;
+
+	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, indices[0]++){
 		indices[1] = 0;
 		
-		if(err = PtrToHand((Ptr)tokens.at(ii).data(), &textH,tokens.at(ii).length()))
+		SetHandleSize(textH, (*tokens_iter).length() * sizeof(char));
+		if(err = MemError())
 			goto done;
+		memcpy(*textH, (*tokens_iter).data(), (*tokens_iter).length() * sizeof(char));
 
-		if(err = MDSetTextWavePointValue(wav,indices,textH))
+		if(err = MDSetTextWavePointValue(wav, indices, textH))
 			goto done;
-		
-		if(textH)
-			DisposeHandle(textH);
 		
 		GetTimeStamp(timestamp);
-		
-		textH = NewHandle(0);
-		if (textH == NULL) {
-			err = NOMEM; 
-			goto done;
-		}
-		
+				
 		if(err = PutCStringInHandle(timestamp, textH))
 			goto done;
 		indices[1] = 1;
 		
-		if(err = MDSetTextWavePointValue(wav,indices,textH))
+		if(err = MDSetTextWavePointValue(wav, indices, textH))
 			goto done;
 		
 		//to Debug put the socket number in the 3rd column
@@ -515,28 +539,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 			if(err = PutCStringInHandle(timestamp, textH))
 				goto done;
 			indices[1] = 2;
-			if(err = MDSetTextWavePointValue(wav,indices,textH))
-				goto done;
-		}
-		
-		if(textH)
-			DisposeHandle(textH);
-		
-		if(dimensionSizes[0] > BUFFER_WAVE_LEN){
-			pointsToDelete = 300;//dimensionSizes[0] - BUFFER_WAVE_LEN;
-			indices[0] -= pointsToDelete;
-			
-			if(err = GetWavesDataFolder(wav, &dfH))
-				goto done;
-			if(err = GetDataFolderNameOrPath(dfH, 1, pathName))
-				goto done;
-			WaveName(wav, waveName);
-			strlcat(pathName,waveName,sizeof(pathName));
-			strlcpy(cmd,"Deletepoints 0,",sizeof(cmd));
-			snprintf(pointsToDeleteStr,sizeof(pointsToDeleteStr),"%d,",pointsToDelete);
-			strlcat(cmd,pointsToDeleteStr,sizeof(cmd));
-			strlcat(cmd,pathName,sizeof(cmd));
-			if(err = XOPSilentCommand(cmd))
+			if(err = MDSetTextWavePointValue(wav, indices, textH))
 				goto done;
 		}
 		
@@ -546,19 +549,23 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 					 sizeof(char) * MAX_MSG_LEN,
 					 "%s\tRECV:\t%d\t", timestamp, sockNum);
 			fwrite(report, sizeof(char), strlen(report), wbi->logFile);
-			fwrite(tokens.at(ii).c_str(), sizeof(char) , strlen(tokens.at(ii).c_str()), wbi->logFile);
+			fwrite((*tokens_iter).c_str(), sizeof(char) , strlen((*tokens_iter).c_str()), wbi->logFile);
 			fwrite("\r\n", sizeof(char), 2,  wbi->logFile);		
 		}
-		
-		WaveHandleModified(wav);
+	}
 	
-		//call a processor for each buffer entry to see if there's anything it has to do with it.
-		if(useProcessor==true){
+	//make the wave as being modified
+	WaveHandleModified(wav);
+	
+	//call a processor for each buffer entry to see if there's anything it has to do with it.
+	if(useProcessor && strlen(wbi->processor)){
+		MemClear(indices, sizeof(indices)); 
+		indices[1] = 0;
+
+		for(indices[0] = originalInsertPoint ; indices[0] < numTokens ; indices[0]++){
 			if(checkProcessor(sockNum,  &fi)){
 				XOPNotice("SOCKIT error: processor must be f(textWave,variable)\r");
 			} else {
-				if(strlen(wbi->processor)==0)
-					continue;
 				callProcessor.entryRow = indices[0];
 				callProcessor.bufferWave = wav;
 				if(err = CallFunction(&fi, &callProcessor, &result))
@@ -566,6 +573,24 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 			}
 		}
 	}
+	
+	MemClear(dimensionSizes, sizeof(dimensionSizes)); 
+	MemClear(cmd, sizeof(cmd)); 
+	
+	if (err = MDGetWaveDimensions(wav, &numDimensions, dimensionSizes)) 
+		goto done; 
+	
+	if(dimensionSizes[0] > BUFFER_WAVE_LEN){			
+		if(err = GetWavesDataFolder(wav, &dfH))
+			goto done;
+		if(err = GetDataFolderNameOrPath(dfH, 1, pathName))
+			goto done;
+		WaveName(wav, waveName);
+		snprintf(cmd, sizeof(char) * MAXCMDLEN , "Deletepoints 0, %d, %s%s", 300L, pathName,waveName);
+		if(err = XOPSilentCommand(cmd))
+			goto done;
+	}
+	
 done:
 	if(textH)
 		DisposeHandle(textH);
@@ -579,4 +604,13 @@ long CurrentConnections::getTotalSocketsOpened(){
 
 long CurrentConnections::getCurrentSocketsOpened(){
 	return (long)bufferWaves.size();
+}
+
+void CurrentConnections::getListOfOpenSockets(vector<SOCKET>& list){
+	list.clear();
+	std::map<SOCKET, waveBufferInfo>::const_iterator iter;
+	iter = bufferWaves.begin();
+	for(iter ; iter != bufferWaves.end() ; iter++){
+		list.push_back(iter->first);
+	}
 }

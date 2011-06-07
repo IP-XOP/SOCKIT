@@ -45,8 +45,8 @@ resource 'STR#' (1100) {					/* custom error messages */
 		/* [15] */
 		"Couldn't lock Mutex.",
 		/* [16] */
-		"No wave buffer info for some reason.",
-
+		"Couldn't find wavebufferinfo.",
+		
 	}
 };
 
