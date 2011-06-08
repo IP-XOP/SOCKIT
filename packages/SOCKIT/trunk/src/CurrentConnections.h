@@ -33,7 +33,6 @@ class waveBufferInfo {
 	bool toClose;
 	MemoryStruct readBuffer;
 	
-	bool DBUG;
 	bool NOIDLES;						//NOIDLES will mean that the user picks up messages with SOCKITpeek, the 
 
 	char logFileName[MAX_PATH_LEN + 1];
@@ -46,7 +45,6 @@ class waveBufferInfo {
 		memset(tokenizer,0, sizeof(char) * 31);
 		memset(hostIP, 0, sizeof(char) * (MAX_URL_LEN + 1));
 		sztokenizer = 0;
-		DBUG = false;
 		toClose= false;
 		memset(logFileName, 0, sizeof(char) * (MAX_PATH_LEN + 1));
 		NOIDLES = false;
