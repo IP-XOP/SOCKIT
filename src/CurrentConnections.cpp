@@ -447,17 +447,18 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	long indices[MAX_DIMENSIONS];
 	long originalInsertPoint;
 	
-	Handle textH = NULL;
 	Handle wavDataH = NULL;
 	
-	long *pTableOffset;
-	long *pTempL, *pTempL2;
-	char *pTextData;
+	unsigned long *pTableOffset;
+	unsigned long *pTempL, *pTempL2;
+	char *pTempC;
 	long ii;
 	
 	vector<string> tokens;
 	vector<string>::iterator tokens_iter;
-	long numTokens;
+	size_t szTotalTokens;
+	unsigned long token_length;
+	unsigned long numTokens;
 	
 	DataFolderHandle dfH;
 	char pathName[MAXCMDLEN + 1];
@@ -487,14 +488,8 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		err = NO_WAVE_BUFFER_INFO;
 		goto done;
 	}
-		
-	textH = NewHandle(10); 
-	if (textH == NULL) {
-		err = NOMEM; 
-		goto done;
-	}
 	
-	Tokenize(writebuffer, szwritebuffer, tokens, bufferWaves[sockNum].tokenizer,bufferWaves[sockNum].sztokenizer);
+	Tokenize(writebuffer, szwritebuffer, tokens, &szTotalTokens, bufferWaves[sockNum].tokenizer,bufferWaves[sockNum].sztokenizer);
 	numTokens = tokens.size();
 	
 	//redimension the text wave to put the tokens in, and put them in.
@@ -513,6 +508,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	indices[0] = originalInsertPoint;
 	
 	dimensionSizes[0] += numTokens;
+	dimensionSizes[1] = 2;
 	
 	if(err = MDChangeWave(wav, -1, dimensionSizes))
 		goto done;
@@ -525,40 +521,45 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	//now stick all the tokens in
 	//resize the handle first
 	//have to add on the size of data you want to add, as well as the timestamp times the number of tokens.
-	SetHandleSize(wavDataH, GetHandleSize(wavDataH) + szwritebuffer + (strlen(timestamp) * sizeof(char) * numTokens));
+	SetHandleSize(wavDataH, GetHandleSize(wavDataH) + szTotalTokens + (strlen(timestamp) * sizeof(char) * numTokens));
 	if(err = MemError())
 		goto done;
+	
 	//**
 	//in IGOR32 the offsets are 32bit.  In IGOR64 they are 64 bit
 	//**
-	pTextData = *wavDataH + (WavePoints(wav) + 1) * sizeof(long);
-	pTableOffset = (long*)*wavDataH;
+	pTableOffset = (unsigned long*)*wavDataH;
 				  
 	//move the existing data after the point you are about to insert into.
-	memmove(pTextData + pTableOffset[originalInsertPoint + numTokens] + szwritebuffer, pTextData + pTableOffset[originalInsertPoint + numTokens], pTableOffset[2 * originalInsertPoint + numTokens] - pTableOffset[originalInsertPoint + numTokens]);
-	
-	//insert the data where we need it.
-	memcpy(pTextData + pTableOffset[originalInsertPoint], writebuffer , szwritebuffer);
+	memmove(*wavDataH + pTableOffset[originalInsertPoint + numTokens] + szTotalTokens, *wavDataH + pTableOffset[originalInsertPoint + numTokens], pTableOffset[2 * originalInsertPoint + numTokens] - pTableOffset[originalInsertPoint + numTokens]);
 	
 	//fill out the END offsets for the data you shifted.
 	pTempL = pTableOffset + originalInsertPoint + numTokens + 1;
 	for(ii = 0 ; ii < originalInsertPoint ; ii++, pTempL++){
 		//the offsets to each of the old data points AFTER the insert point increases by a constant amount
-		*pTempL += szwritebuffer;
+		*pTempL += szTotalTokens;
 	}
 				  
-	//now fill out the END offsets for the new data and copy in the timestamps.
+	//insert the data, fill out the END offsets for the new data and copy in the timestamps.
 	pTempL = pTableOffset + originalInsertPoint;
 	pTempL2 = pTableOffset + (2 * originalInsertPoint + numTokens);
+	pTempC = *wavDataH + pTableOffset[originalInsertPoint];
+	
 	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, pTempL++, pTempL2++){
-		//offset to the END each of the new data points
-		*(pTempL + 1) = *pTempL + (*tokens_iter).length();
-
+		token_length = (*tokens_iter).length();
+		
+		//insert the data
+		memcpy(pTempC, (*tokens_iter).data() , token_length);
+		pTempC += token_length;
+		
+		//offset to the END each of the new data points		
+		*(pTempL + 1) = (*pTempL) + token_length;
+		
 		//and the offsets for the timestamp
 		*(pTempL2 + 1) = *pTempL2 + (strlen(timestamp) * sizeof(char)); 
 		
 		//copy in the timestamp
-		memcpy(pTextData + (*pTempL2), timestamp, strlen(timestamp));		
+		memcpy(*wavDataH + (*pTempL2), timestamp, strlen(timestamp));		
 		
 		//if there is a logfile then append to it
 		if(wbi->logFile){
@@ -574,48 +575,6 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	if(err = SetTextWaveData(wav, 2, wavDataH))
 		goto done;
 		
-	/*
-	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, indices[0]++){
-		indices[1] = 0;
-		
-		SetHandleSize(textH, (*tokens_iter).length() * sizeof(char));
-		if(err = MemError())
-			goto done;
-		memcpy(*textH, (*tokens_iter).data(), (*tokens_iter).length() * sizeof(char));
-
-		if(err = MDSetTextWavePointValue(wav, indices, textH))
-			goto done;
-		
-		GetTimeStamp(timestamp);
-				
-		if(err = PutCStringInHandle(timestamp, textH))
-			goto done;
-		indices[1] = 1;
-		
-		if(err = MDSetTextWavePointValue(wav, indices, textH))
-			goto done;
-		
-		//to Debug put the socket number in the 3rd column
-		if(DBUG){
-			snprintf(timestamp, sizeof(char) * 10, "%d", sockNum);
-			if(err = PutCStringInHandle(timestamp, textH))
-				goto done;
-			indices[1] = 2;
-			if(err = MDSetTextWavePointValue(wav, indices, textH))
-				goto done;
-		}
-		
-		//if there is a logfile then append and save
-		if(wbi->logFile){
-			snprintf(report,
-					 sizeof(char) * MAX_MSG_LEN,
-					 "%s\tRECV:\t%d\t", timestamp, sockNum);
-			fwrite(report, sizeof(char), strlen(report), wbi->logFile);
-			fwrite((*tokens_iter).c_str(), sizeof(char) , strlen((*tokens_iter).c_str()), wbi->logFile);
-			fwrite("\r\n", sizeof(char), 2,  wbi->logFile);		
-		}
-	}
-	*/
 	//make the wave as being modified
 	WaveHandleModified(wav);
 	
@@ -639,23 +598,31 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	MemClear(dimensionSizes, sizeof(dimensionSizes)); 
 	MemClear(cmd, sizeof(cmd)); 
 	
-	if (err = MDGetWaveDimensions(wav, &numDimensions, dimensionSizes)) 
-		goto done; 
+	if (err = MDGetWaveDimensions(wav, &numDimensions, dimensionSizes))
+		goto done;
 	
-	if(dimensionSizes[0] > BUFFER_WAVE_LEN){			
+	if(dimensionSizes[0] > BUFFER_WAVE_LEN){	
+		//have to deletepoints
 		if(err = GetWavesDataFolder(wav, &dfH))
 			goto done;
+		
 		if(err = GetDataFolderNameOrPath(dfH, 1, pathName))
 			goto done;
+
 		WaveName(wav, waveName);
-		snprintf(cmd, sizeof(char) * MAXCMDLEN , "Deletepoints 0, %d, %s%s", 300L, pathName,waveName);
-		if(err = XOPSilentCommand(cmd))
+		snprintf(cmd, sizeof(char) * MAXCMDLEN , "Deletepoints 0, %d, %s%s", dimensionSizes[0]-2700, pathName,waveName);
+		
+		int message = GetXOPMessage();
+		int item = GetXOPItem(0);
+		if(err = XOPSilentCommand(cmd)){
+			err = 9;
 			goto done;
+		}
 	}
 	
 done:
-	if(textH)
-		DisposeHandle(textH);
+	if(err)
+		XOPNotice("oh shit");
 	
 	if(wavDataH)
 		DisposeHandle(wavDataH);

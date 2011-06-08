@@ -32,6 +32,7 @@ WSADATA globalWsaData;
 HOST_IMPORT void main(IORecHandle ioRecHandle);
 #endif
 
+
 static int XOPIdle(){
 //this function should go through all the sockets and see if there are any messages.
 //close off any that don't reply
@@ -127,8 +128,8 @@ XOPEntry(void)
 	extern pthread_mutex_t readThreadMutex;
 
 	waveHndl wav;
-
-	switch (GetXOPMessage()) {
+	int _message = GetXOPMessage();
+	switch (_message) {
 		case NEW:
 			pthread_mutex_lock( &readThreadMutex );
 			pinstance->resetCurrentConnections();            
@@ -173,6 +174,8 @@ XOPEntry(void)
 			break;
 		case IDLE:
 			result = XOPIdle();
+			break;		
+		default:
 			break;
 	}
 	SetXOPResult(result);
