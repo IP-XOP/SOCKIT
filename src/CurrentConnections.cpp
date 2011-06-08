@@ -451,7 +451,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	Handle wavDataH = NULL;
 	
 	long *pTableOffset;
-	long *pTemp;
+	long *pTempL, *pTempL2;
 	char *pTextData;
 	long ii;
 	
@@ -472,8 +472,6 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	waveBufferInfo *wbi = NULL;
     waveHndl wav = NULL;
 	
-	//do you want to debug?
-	bool DBUG = false;	
 	double result;
 	
 	wbi = getWaveBufferInfo(sockNum);
@@ -483,7 +481,6 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		goto done;
 	}
 	
-	DBUG = wbi->DBUG;
 	wav = wbi->bufferWave;
 	
 	if(!wav){
@@ -516,10 +513,6 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	indices[0] = originalInsertPoint;
 	
 	dimensionSizes[0] += numTokens;
-	if(!DBUG)
-		dimensionSizes[1] = 2;    // 2 columns 
-	else
-		dimensionSizes[1] = 3;
 	
 	if(err = MDChangeWave(wav, -1, dimensionSizes))
 		goto done;
@@ -547,30 +540,41 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	//insert the data where we need it.
 	memcpy(pTextData + pTableOffset[originalInsertPoint], writebuffer , szwritebuffer);
 	
-	//fill out the offsets for the data you shifted.
-	pTemp = pTableOffset + originalInsertPoint + numTokens;
-	for(ii = 0 ; ii < originalInsertPoint + 1 ; ii++){
+	//fill out the END offsets for the data you shifted.
+	pTempL = pTableOffset + originalInsertPoint + numTokens + 1;
+	for(ii = 0 ; ii < originalInsertPoint ; ii++, pTempL++){
 		//the offsets to each of the old data points AFTER the insert point increases by a constant amount
-		*pTemp += szwritebuffer;
-		pTemp++;
+		*pTempL += szwritebuffer;
 	}
 				  
-	//now fill out the offsets and copy in the timestamps.
-	ii = 0;
-	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, ii++){
-		//offset to each of the new data points
-		pTableOffset[ii + 1 + originalInsertPoint] = pTableOffset[ii + originalInsertPoint] + (*tokens_iter).length();
+	//now fill out the END offsets for the new data and copy in the timestamps.
+	pTempL = pTableOffset + originalInsertPoint;
+	pTempL2 = pTableOffset + (2 * originalInsertPoint + numTokens);
+	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, pTempL++, pTempL2++){
+		//offset to the END each of the new data points
+		*(pTempL + 1) = *pTempL + (*tokens_iter).length();
 
-		//copy in the timestamp
-		memcpy(pTextData + pTableOffset[2 * originalInsertPoint + numTokens] + (ii * sizeof(char) * strlen(timestamp)), timestamp, strlen(timestamp));
-		
 		//and the offsets for the timestamp
-		pTableOffset[ii + 1 + (2 * originalInsertPoint + numTokens)] = pTableOffset[(2 * originalInsertPoint + numTokens)] + (ii * strlen(timestamp) * sizeof(char)) ;  
+		*(pTempL2 + 1) = *pTempL2 + (strlen(timestamp) * sizeof(char)); 
+		
+		//copy in the timestamp
+		memcpy(pTextData + (*pTempL2), timestamp, strlen(timestamp));		
+		
+		//if there is a logfile then append to it
+		if(wbi->logFile){
+			snprintf(report,
+					 sizeof(char) * MAX_MSG_LEN,
+					 "%s\tRECV:\t%d\t", timestamp, sockNum);
+			fwrite(report, sizeof(char), strlen(report), wbi->logFile);
+			fwrite((*tokens_iter).c_str(), sizeof(char) , strlen((*tokens_iter).c_str()), wbi->logFile);
+			fwrite("\r\n", sizeof(char), 2,  wbi->logFile);		
+		}
 	}
 	
 	if(err = SetTextWaveData(wav, 2, wavDataH))
 		goto done;
-				  
+		
+	/*
 	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, indices[0]++){
 		indices[1] = 0;
 		
@@ -611,7 +615,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 			fwrite("\r\n", sizeof(char), 2,  wbi->logFile);		
 		}
 	}
-	
+	*/
 	//make the wave as being modified
 	WaveHandleModified(wav);
 	
