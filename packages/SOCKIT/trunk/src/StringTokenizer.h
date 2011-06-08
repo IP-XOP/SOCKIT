@@ -13,4 +13,5 @@
 using namespace std;
 
 /* in StringTokenizer.cpp */
-void Tokenize(const unsigned char *, size_t, vector<string>&,  const char*,int);
+void Tokenize(const unsigned char* STR, size_t szStr, vector<string> &tokens, size_t *szTotalTokens, const char* DELIMITERS, int szDELIMITERS);
+
