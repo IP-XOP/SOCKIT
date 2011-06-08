@@ -439,7 +439,7 @@ done:
 	return err;
 }
 
-int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned char *writebuffer, size_t szwritebuffer, bool useProcessor){
+int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned char *writebuffer, unsigned long szwritebuffer, bool useProcessor){
 	int err = 0;
 	
 	long numDimensions = 2; 
@@ -456,7 +456,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	
 	vector<string> tokens;
 	vector<string>::iterator tokens_iter;
-	size_t szTotalTokens;
+	unsigned long szTotalTokens;
 	unsigned long token_length;
 	unsigned long numTokens;
 	
@@ -612,8 +612,6 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		WaveName(wav, waveName);
 		snprintf(cmd, sizeof(char) * MAXCMDLEN , "Deletepoints 0, %d, %s%s", dimensionSizes[0]-2700, pathName,waveName);
 		
-		int message = GetXOPMessage();
-		int item = GetXOPItem(0);
 		if(err = XOPSilentCommand(cmd)){
 			err = 9;
 			goto done;

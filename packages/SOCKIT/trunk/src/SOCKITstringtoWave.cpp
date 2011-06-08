@@ -13,7 +13,7 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 	long numElements;
 	int dataFormat, isComplex;
 
-	size_t szString;
+	unsigned long szString;
 	void *wp;
 
 	waveHndl waveH;

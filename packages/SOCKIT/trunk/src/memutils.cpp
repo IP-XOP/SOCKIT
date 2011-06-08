@@ -8,7 +8,7 @@ MemoryStruct::MemoryStruct(){
 }
 
 //constructor with initial data
-MemoryStruct::MemoryStruct(void *ptr, size_t size, size_t nmemb){
+MemoryStruct::MemoryStruct(void *ptr, unsigned long size, unsigned long nmemb){
 	memory=NULL;
 	memsize = 0;
 	append(ptr, size, nmemb);
@@ -31,7 +31,7 @@ void MemoryStruct::reset(){
 }
 
 //resets the memory
-long MemoryStruct::reset(void *ptr, size_t size, size_t nmemb){
+long MemoryStruct::reset(void *ptr, unsigned long size, unsigned long nmemb){
 	long numbytes = 0;
 
 	memory = (unsigned char*) myrealloc(memory, size * nmemb);
@@ -47,7 +47,7 @@ long MemoryStruct::reset(void *ptr, size_t size, size_t nmemb){
 }
 
 //resets the memory
-long MemoryStruct::reset(void *ptr, size_t numbytes){
+long MemoryStruct::reset(void *ptr, unsigned long numbytes){
 	memory = (unsigned char*) myrealloc(memory, numbytes);
 	if(memory){
 		memcpy(memory, ptr, numbytes);
@@ -74,7 +74,7 @@ long MemoryStruct::nullTerminate(){
 
 
 //return the size of the memory used
-size_t MemoryStruct::getMemSize(){
+unsigned long MemoryStruct::getMemSize(){
 	return memsize;
 };
 
@@ -84,7 +84,7 @@ const unsigned char* MemoryStruct::getData(){
 };
 
 //trim the object to trimSz
-long MemoryStruct::trim(size_t trimSz){
+long MemoryStruct::trim(unsigned long trimSz){
 	if(trimSz == 0){
 		reset();
 		return 0;
@@ -104,7 +104,7 @@ long MemoryStruct::trim(size_t trimSz){
 	
 
 //create a platform independent routine for continuous reallocation of memory
-void *MemoryStruct::myrealloc(void *src_ptr, size_t size)
+void *MemoryStruct::myrealloc(void *src_ptr, unsigned long size)
 {
     /* There might be a realloc() out there that doesn't like reallocing
 	NULL pointers, so we take care of it here */
@@ -119,9 +119,9 @@ void *MemoryStruct::myrealloc(void *src_ptr, size_t size)
 //data has to be a point of a MemoryStruct object
 
 long
-MemoryStruct::append(void *ptr, size_t size, size_t nmemb, void *Data)
+MemoryStruct::append(void *ptr, unsigned long size, unsigned long nmemb, void *Data)
 {
-    size_t realsize = size * nmemb;
+    unsigned long realsize = size * nmemb;
     MemoryStruct *mem = (MemoryStruct *)Data;
 	
     mem->memory = (unsigned char *)myrealloc(mem->memory, mem->memsize + realsize);
@@ -138,9 +138,9 @@ MemoryStruct::append(void *ptr, size_t size, size_t nmemb, void *Data)
 }
 
 long
-MemoryStruct::append(void *ptr, size_t size, size_t nmemb)
+MemoryStruct::append(void *ptr, unsigned long size, unsigned long nmemb)
 {
-    size_t realsize = size * nmemb;
+    unsigned long realsize = size * nmemb;
 	
     memory = (unsigned char *)myrealloc(memory, memsize + realsize);
 	
@@ -156,9 +156,9 @@ MemoryStruct::append(void *ptr, size_t size, size_t nmemb)
 }
 
 long
-MemoryStruct::append(void *ptr, size_t numbytes)
+MemoryStruct::append(void *ptr, unsigned long numbytes)
 {
-    size_t realsize = numbytes;
+    unsigned long realsize = numbytes;
 	
     memory = (unsigned char *)myrealloc(memory, memsize + realsize);
 	
