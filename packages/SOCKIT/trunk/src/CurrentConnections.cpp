@@ -448,6 +448,13 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	long originalInsertPoint;
 	
 	Handle textH = NULL;
+	Handle wavDataH = NULL;
+	
+	long *pTableOffset;
+	long *pTemp;
+	char *pTextData;
+	long ii;
+	
 	vector<string> tokens;
 	vector<string>::iterator tokens_iter;
 	long numTokens;
@@ -498,10 +505,14 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	MemClear(dimensionSizes, sizeof(dimensionSizes)); 
 	MemClear(indices, sizeof(indices)); 
 	
+	//Get the time stamp
+	GetTimeStamp(timestamp);
+	
 	if (err = MDGetWaveDimensions(wav, &numDimensions, dimensionSizes)) 
 		goto done; 
 	
 	originalInsertPoint = dimensionSizes[0];
+	
 	indices[0] = originalInsertPoint;
 	
 	dimensionSizes[0] += numTokens;
@@ -512,7 +523,54 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	
 	if(err = MDChangeWave(wav, -1, dimensionSizes))
 		goto done;
+	
+	//experimental work for inserting the tokens
+	//grab the wave data
+	if(err = GetTextWaveData(wav, 2, &wavDataH))
+		goto done;
+	
+	//now stick all the tokens in
+	//resize the handle first
+	//have to add on the size of data you want to add, as well as the timestamp times the number of tokens.
+	SetHandleSize(wavDataH, GetHandleSize(wavDataH) + szwritebuffer + (strlen(timestamp) * sizeof(char) * numTokens));
+	if(err = MemError())
+		goto done;
+	//**
+	//in IGOR32 the offsets are 32bit.  In IGOR64 they are 64 bit
+	//**
+	pTextData = *wavDataH + (WavePoints(wav) + 1) * sizeof(long);
+	pTableOffset = (long*)*wavDataH;
+				  
+	//move the existing data after the point you are about to insert into.
+	memmove(pTextData + pTableOffset[originalInsertPoint + numTokens] + szwritebuffer, pTextData + pTableOffset[originalInsertPoint + numTokens], pTableOffset[2 * originalInsertPoint + numTokens] - pTableOffset[originalInsertPoint + numTokens]);
+	
+	//insert the data where we need it.
+	memcpy(pTextData + pTableOffset[originalInsertPoint], writebuffer , szwritebuffer);
+	
+	//fill out the offsets for the data you shifted.
+	pTemp = pTableOffset + originalInsertPoint + numTokens;
+	for(ii = 0 ; ii < originalInsertPoint + 1 ; ii++){
+		//the offsets to each of the old data points AFTER the insert point increases by a constant amount
+		*pTemp += szwritebuffer;
+		pTemp++;
+	}
+				  
+	//now fill out the offsets and copy in the timestamps.
+	ii = 0;
+	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, ii++){
+		//offset to each of the new data points
+		pTableOffset[ii + 1 + originalInsertPoint] = pTableOffset[ii + originalInsertPoint] + (*tokens_iter).length();
 
+		//copy in the timestamp
+		memcpy(pTextData + pTableOffset[2 * originalInsertPoint + numTokens] + (ii * sizeof(char) * strlen(timestamp)), timestamp, strlen(timestamp));
+		
+		//and the offsets for the timestamp
+		pTableOffset[ii + 1 + (2 * originalInsertPoint + numTokens)] = pTableOffset[(2 * originalInsertPoint + numTokens)] + (ii * strlen(timestamp) * sizeof(char)) ;  
+	}
+	
+	if(err = SetTextWaveData(wav, 2, wavDataH))
+		goto done;
+				  
 	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, indices[0]++){
 		indices[1] = 0;
 		
@@ -594,6 +652,9 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 done:
 	if(textH)
 		DisposeHandle(textH);
+	
+	if(wavDataH)
+		DisposeHandle(wavDataH);
 	
 	return err;
 }
