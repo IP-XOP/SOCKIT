@@ -19,7 +19,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	int err = 0;
 	int dataType;
 	int bytesPerPoint, dataFormat, isComplex;
-	size_t szString;
+	unsigned long szString;
 	long numElements;
 	void *wp;
 	Handle textDataP = NULL;

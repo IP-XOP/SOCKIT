@@ -19,7 +19,7 @@ public:
 	*@param Data A MemoryStruct object to which the data will be appended.
 	*@return The amount of memory allocated for the data you are trying to write
 	*/
-	static long append(void *ptr, size_t size, size_t nmemb,void* Data);
+	static long append(void *ptr, unsigned long size, unsigned long nmemb,void* Data);
 
 	/**
 	*Writes data to a MemoryStruct object. 	
@@ -30,7 +30,7 @@ public:
 	*@param nmemb The number of data you are trying to store.
 	*@return The amount of memory allocated for the data you are trying to write.
 	*/
-	long append(void *ptr, size_t size, size_t nmemb);
+	long append(void *ptr, unsigned long size, unsigned long nmemb);
 	
 	/**
 	 *Writes data to a MemoryStruct object. 	
@@ -40,7 +40,7 @@ public:
 	 *@param numbytes The size of the type of data you wish to store.
 	 *@return The amount of memory allocated for the data you are trying to write.
 	 */
-	long append(void *ptr, size_t numBytes);
+	long append(void *ptr, unsigned long numBytes);
 	
 	/**
 	*Obtain the number of bytes held in a MemoryStruct object.	Example:
@@ -61,7 +61,7 @@ public:
 	/**
 	*Constructor with some initial data to store.
 	*/
-	MemoryStruct(void *ptr, size_t size, size_t nmemb);
+	MemoryStruct(void *ptr, unsigned long size, unsigned long nmemb);
 	/**
 	*Destructor frees the memory stored in the MemoryStruct object.
 	*/
@@ -73,7 +73,7 @@ public:
 	 @return trimmedSize - this is the trimmed size.  If the trimSz requested is larger than the current
 	 size then the current size is returned.  Otherwise the object is trimmed and the newsize returned.
 	*/
-	long trim(size_t trimSz);
+	long trim(unsigned long trimSz);
 
 	/**
 	*reset allows the MemoryStruct object to be reused
@@ -82,8 +82,8 @@ public:
 	/**
 	these resets allow the memory to be overwritten from scratch
 	 */
-	long reset(void *ptr, size_t size, size_t nmemb);
-	long reset(void *ptr, size_t numbytes);
+	long reset(void *ptr, unsigned long size, unsigned long nmemb);
+	long reset(void *ptr, unsigned long numbytes);
 	
 	//NULL terminate the memory block
 	long nullTerminate();
@@ -92,10 +92,10 @@ public:
 	/**
 	*A platform independent reallocator of memory.  Uses malloc and realloc to assign more memory.
 	*/
-	static void *myrealloc(void *ptr, size_t size);
+	static void *myrealloc(void *ptr, unsigned long size);
 	
 	unsigned char *memory; /**< A pointer to the data stored. */ 
-	size_t memsize; /**< The number of bytes stored. */ 
+	unsigned long memsize; /**< The number of bytes stored. */ 
 };
 
 
