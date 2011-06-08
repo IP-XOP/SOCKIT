@@ -21,7 +21,6 @@ CurrentConnections* pinstance=0;
 pthread_t *readThread=0;
 pthread_mutex_t readThreadMutex = PTHREAD_MUTEX_INITIALIZER;
 
-
 /*
 	roundDouble returns a rounded value for val
  */
@@ -413,8 +412,8 @@ int CurrentConnections::checkRecvData(){
     for( iter = bufferWaves.begin(); iter != bufferWaves.end(); ++iter ) {
 		if(!bufferWaves[iter->first].NOIDLES && bufferWaves[iter->first].readBuffer.getMemSize()>0 && bufferWaves[iter->first].readBuffer.getData()){
 
-			if(err = outputBufferDataToWave(iter->first, bufferWaves[iter->first].readBuffer.getData(),  bufferWaves[iter->first].readBuffer.getMemSize(), true))
-				goto done;
+			if(err = outputBufferDataToWave(iter->first, bufferWaves[iter->first].readBuffer.getData(),  bufferWaves[iter->first].readBuffer.getMemSize(), true));
+//				goto done;
 			if(bufferWaves[iter->first].toPrint == true){
 				memset(report, 0, sizeof(report));
 				snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", iter->first);
@@ -459,6 +458,8 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	unsigned long szTotalTokens;
 	unsigned long token_length;
 	unsigned long numTokens;
+	
+	unsigned long hs1, hs2, hs3;
 	
 	DataFolderHandle dfH;
 	char pathName[MAXCMDLEN + 1];
@@ -518,6 +519,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	if(err = GetTextWaveData(wav, 2, &wavDataH))
 		goto done;
 	
+	hs1 = GetHandleSize(wavDataH);
 	//now stick all the tokens in
 	//resize the handle first
 	//have to add on the size of data you want to add, as well as the timestamp times the number of tokens.
@@ -610,7 +612,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 			goto done;
 
 		WaveName(wav, waveName);
-		snprintf(cmd, sizeof(char) * MAXCMDLEN , "Deletepoints 0, %d, %s%s", dimensionSizes[0]-2700, pathName,waveName);
+		snprintf(cmd, sizeof(char) * MAXCMDLEN , "Deletepoints 0, %d, %s%s", 300L, pathName,waveName);
 		
 		if(err = XOPSilentCommand(cmd)){
 			err = 9;

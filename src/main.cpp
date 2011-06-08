@@ -42,7 +42,7 @@ static int XOPIdle(){
 	
 	extern CurrentConnections* pinstance;
 	extern pthread_mutex_t readThreadMutex;
-	
+
 	if(err = pthread_mutex_lock( &readThreadMutex )){
 		err = COULDNT_GET_MUTEX;
 		goto done;
@@ -126,9 +126,10 @@ XOPEntry(void)
 	extern CurrentConnections* pinstance;
 	extern pthread_t *readThread;
 	extern pthread_mutex_t readThreadMutex;
-
+	
 	waveHndl wav;
 	int _message = GetXOPMessage();
+
 	switch (_message) {
 		case NEW:
 			pthread_mutex_lock( &readThreadMutex );
