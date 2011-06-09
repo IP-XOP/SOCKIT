@@ -70,6 +70,7 @@
 #define MAX_URL_LEN 256
 #define MAX_MSG_LEN 256
 #define BUFFER_WAVE_LEN 3000
+#define BUFFER_TO_KEEP 2700
 
 
 
