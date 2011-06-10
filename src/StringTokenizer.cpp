@@ -2,7 +2,7 @@
 #include "StringTokenizer.h"
 
 
-void Tokenize(const unsigned char* STR, size_t szStr, vector<string> &tokens, size_t *szTotalTokens, const char* DELIMITERS, int szDELIMITERS)
+void Tokenize(const unsigned char* STR, unsigned long szStr, vector<string> &tokens, unsigned long *szTotalTokens, const char* DELIMITERS, int szDELIMITERS)
 {
     // Skip delimiters at beginning.
 	string str((const char*)STR, szStr);

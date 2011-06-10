@@ -47,7 +47,7 @@ public:
 	*MemoryStruct a; long bytesAllocated; bytesAllocated = a.getMemSize();
 	*@return The total amount of memory allocated in the MemoryStruct object
 	*/
-	size_t getMemSize();
+	unsigned long getMemSize();
 	/**
 	*Access the data held in a MemoryStruct object.
 	*@return A constant character pointer to the start of the memory that you have stored.

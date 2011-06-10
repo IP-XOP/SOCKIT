@@ -191,7 +191,7 @@ class CurrentConnections{
 	*@see registerProcessor()
 	*@see checkProcessor()
 	*/
-	int outputBufferDataToWave(SOCKET sockNum, const unsigned char *bufferData, size_t szbufferdata, bool useProcessor);
+	int outputBufferDataToWave(SOCKET sockNum, const unsigned char *bufferData, unsigned long szbufferdata, bool useProcessor);
 	
 	//return the total number of sockets opened.
 	long getTotalSocketsOpened();
