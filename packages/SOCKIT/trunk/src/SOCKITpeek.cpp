@@ -36,8 +36,10 @@ int SOCKITpeek(SOCKITpeekStructPtr p){
 
 	if(pinstance->isSockitOpen(p->sockID, &sockID)){
 		if(pinstance->getWaveBufferInfo(sockID)->readBuffer.getData()){
-			if(err = PtrAndHand((void*)pinstance->getWaveBufferInfo(sockID)->readBuffer.getData(), dest, pinstance->getWaveBufferInfo(sockID)->readBuffer.getMemSize()))
+			if(err = PtrAndHand((void*)pinstance->getWaveBufferInfo(sockID)->readBuffer.getData(), dest, pinstance->getWaveBufferInfo(sockID)->readBuffer.getMemSize())){
+				dest = NULL;
 				goto done;
+			}
 			pinstance->getWaveBufferInfo(sockID)->readBuffer.reset();
 			if(pinstance->getWaveBufferInfo(sockID)->toClose){
 				pinstance->closeWorker(sockID);
