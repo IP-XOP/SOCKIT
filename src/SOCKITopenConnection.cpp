@@ -401,8 +401,9 @@ done:
 		p->retval = sockNum;
 	} else {
 		p->retval = -1;
-		delete bufferInfo;
 	}
+	if(bufferInfo)
+		delete bufferInfo;
 	
 	pthread_mutex_unlock( &readThreadMutex );
 	
