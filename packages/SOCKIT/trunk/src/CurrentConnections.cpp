@@ -593,8 +593,10 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	if(err = SetTextWaveData(wav, 2, wavDataH))
 		goto done;
 	
-	if(wavDataH)
+	if(wavDataH){
 		DisposeHandle(wavDataH);
+		wavDataH = NULL;
+	}
 	
 	//make the wave as being modified
 	WaveHandleModified(wav);
@@ -604,11 +606,11 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		MemClear(indices, sizeof(indices)); 
 		indices[1] = 0;
 
-		for(indices[0] = originalInsertPoint ; indices[0] < numTokens ; indices[0]++){
+		for(ii = originalInsertPoint ; ii < numTokens + originalInsertPoint ; ii++){
 			if(checkProcessor(sockNum,  &fi)){
 				XOPNotice("SOCKIT error: processor must be f(textWave,variable)\r");
 			} else {
-				callProcessor.entryRow = indices[0];
+				callProcessor.entryRow = ii;
 				callProcessor.bufferWave = wav;
 				if(err = CallFunction(&fi, &callProcessor, &result))
 					goto done;
