@@ -1,5 +1,6 @@
 #include "SOCKIT.h"
 #include "SOCKITopenconnection.h"
+#include "errno.h"
 
 int
 RegisterSOCKITopenconnection(void)
@@ -192,8 +193,10 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 #endif
 
 	rc = connect(sockNum, servinfo->ai_addr, servinfo->ai_addrlen);
+	//rc returns -1, with EINPROGRESS, because we set the socket to blocking.  Therefore you 
+	//have to test if the socket is writable with select
 	res = select(sockNum + 1, 0, &tempset,0, &timeout);
-
+	
 	if(res > 0 && FD_ISSET(sockNum, &tempset)){
 		if(!p->QFlagEncountered){
 				snprintf(report, sizeof(char) * MAX_MSG_LEN, "SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
@@ -356,6 +359,8 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 #endif
 	
 	rc = connect(sockNum, servinfo->ai_addr, servinfo->ai_addrlen);
+	//rc returns -1, with EINPROGRESS, because we set the socket to blocking.  Therefore you 
+	//have to test if the socket is writable with select
 	res = select(sockNum + 1, 0, &tempset,0, &timeout);
 	
 	if(res > 0 && FD_ISSET(sockNum, &tempset)){
