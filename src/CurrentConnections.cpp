@@ -412,8 +412,8 @@ int CurrentConnections::checkRecvData(){
     for( iter = bufferWaves.begin(); iter != bufferWaves.end(); ++iter ) {
 		if(!bufferWaves[iter->first].NOIDLES && bufferWaves[iter->first].readBuffer.getMemSize()>0 && bufferWaves[iter->first].readBuffer.getData()){
 
-			if(err = outputBufferDataToWave(iter->first, bufferWaves[iter->first].readBuffer.getData(),  bufferWaves[iter->first].readBuffer.getMemSize(), true));
-//				goto done;
+			if(err = outputBufferDataToWave(iter->first, bufferWaves[iter->first].readBuffer.getData(),  bufferWaves[iter->first].readBuffer.getMemSize(), true))
+				goto done;
 			if(bufferWaves[iter->first].toPrint == true){
 				memset(report, 0, sizeof(report));
 				snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", iter->first);
@@ -461,10 +461,6 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	
 	unsigned long ii;
 	
-	DataFolderHandle dfH;
-	char pathName[MAXCMDLEN + 1];
-	char waveName[MAX_WAVE_NAME + 1];
-	char cmd[MAXCMDLEN + 1];
 	char report[MAX_MSG_LEN+1];
 	
 	char timestamp[101];
@@ -544,7 +540,6 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	//in IGOR32 the offsets are 32bit.  In IGOR64 they are 64 bit
 	//**
 	pTableOffset = (long*)*wavDataH;
-	long origoffset = pTableOffset[0];
 				  
 	//move the existing data after the point you are about to insert into.
 	sizemove = pTableOffset[2 * originalInsertPoint + numTokens] - pTableOffset[originalInsertPoint + numTokens];
@@ -619,7 +614,6 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	}
 	
 	MemClear(dimensionSizes, sizeof(dimensionSizes)); 
-	MemClear(cmd, sizeof(cmd)); 
 	
 	if (err = MDGetWaveDimensions(wav, &numDimensions, dimensionSizes))
 		goto done;
@@ -665,18 +659,14 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		
 		//do the offsets for the shortenedfirst col
 		offsets.push_back(szOffSetsRequired);
-		for(ii = 0 ; ii < BUFFER_TO_KEEP ; ii++){
+		for(ii = 0 ; ii < BUFFER_TO_KEEP ; ii++)
 			offsets.push_back(pTableOffset[numtoDelete + ii + 1] - pTableOffset[numtoDelete + ii] + offsets[ii]);
-		}
+		
 		//offsets for the second col
 		off2col = dimensionSizes[0] + numtoDelete;
-		for(ii = 0 ; ii < BUFFER_TO_KEEP ; ii++){
-			long bs1, bs2, bs3;
-			bs1 = offsets[BUFFER_TO_KEEP];
-			bs2 = pTableOffset[off2col + ii + 1];
-			bs3 = pTableOffset[off2col + ii];
+		for(ii = 0 ; ii < BUFFER_TO_KEEP ; ii++)
 			offsets.push_back(pTableOffset[off2col + ii + 1] - pTableOffset[off2col + ii] + offsets[BUFFER_TO_KEEP + ii]);
-		}
+
 		//copy the offsets in.
 		memcpy(pTableOffset, &(offsets[0]), sizeof(long) * offsets.size());
 		
