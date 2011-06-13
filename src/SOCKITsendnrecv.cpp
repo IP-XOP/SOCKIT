@@ -21,8 +21,6 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	extern CurrentConnections *pinstance;
 	extern pthread_mutex_t readThreadMutex;
-	pthread_mutex_lock( &readThreadMutex );
-
 
 #ifdef _WINDOWS_
 	extern WSADATA globalWsaData;
@@ -51,10 +49,15 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	char timestamp[101];
 		
 	fd_set tempset;
-	FD_ZERO(&tempset);
 	
 	double timeoutVal=1.;
 	struct timeval timeout;
+	
+	pthread_mutex_lock( &readThreadMutex );
+	if(!pinstance)
+		return 0;
+	
+	FD_ZERO(&tempset);
 		
 	if(p->TIMEFlagEncountered){
 		timeoutVal = p->TIMEFlagNumber;
@@ -199,8 +202,8 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	if ((res > 0) && FD_ISSET(sockNum, &tempset)) { 
 	           
-		do{			   
-			rc = recv(sockNum, buf, BUFLEN, 0);
+		do{		
+			rc = recvfrom(sockNum, buf, BUFLEN, 0, NULL, NULL);
 
 			charsread += rc;
 			
@@ -317,15 +320,13 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	
 	extern CurrentConnections *pinstance;
 	extern pthread_mutex_t readThreadMutex;
-	pthread_mutex_lock( &readThreadMutex );
-
 
 #ifdef _WINDOWS_
 	extern WSADATA globalWsaData;
 #endif
 	
 	MemoryStruct chunk;	
-	Handle retval;
+	Handle retval = NULL;
 	
     int rc = 0;
 	long charsread = 0;
@@ -341,27 +342,32 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	char timestamp[101];
 		
 	fd_set tempset;
-	FD_ZERO(&tempset);
-	
+		
 	double timeoutVal=1.;
 	struct timeval timeout;
 	
-	retval = NewHandle(0);
-	if(retval==NULL){
-		err = NOMEM;
-		goto done;
-	}
+	pthread_mutex_lock( &readThreadMutex );
+	if(!pinstance)
+		return 0;
 	
 	if(p->TIME){
 		timeoutVal = fabs(p->TIME);
 	} else {
 		timeoutVal = 1.;
 	}
+	FD_ZERO(&tempset);
+
 	
 	timeout.tv_sec = floor(timeoutVal);
 	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	
 	memset(buf, 0, sizeof(buf));
+	
+	retval = NewHandle(0);
+	if(retval==NULL){
+		err = NOMEM;
+		goto done;
+	}
 	
 	// Parameter: p->MSG (test for NULL handle before using)
 	if(!p->message){
@@ -430,8 +436,8 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	memset(buf, 0, sizeof(buf));
 	
 	if ((res > 0) && FD_ISSET(sockNum, &tempset)){ 
-		do {			   
-			rc = recv(sockNum, buf, BUFLEN, 0);
+		do {
+			rc = recvfrom(sockNum, buf, BUFLEN, 0, NULL, NULL);
 
 			charsread += rc;
 			

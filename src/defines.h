@@ -71,6 +71,7 @@
 #define MAX_MSG_LEN 256
 #define BUFFER_WAVE_LEN 3000
 #define BUFFER_TO_KEEP 2700
+#define PORTLEN 6
 
 
 
