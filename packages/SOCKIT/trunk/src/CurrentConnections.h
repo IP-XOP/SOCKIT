@@ -29,6 +29,7 @@ class waveBufferInfo {
 	char processor[MAX_OBJ_NAME+1];		/**<the name of an IGOR function that is notified when messages are received*/
 	char tokenizer[31];					/**<the output from the socket is tokenized using the characters in this array*/
 	char hostIP[MAX_URL_LEN+1];
+	char port[PORTLEN + 1];
 	int sztokenizer;
 	bool toClose;
 	MemoryStruct readBuffer;
@@ -39,6 +40,7 @@ class waveBufferInfo {
 	XOP_FILE_REF logFile;
 
 	waveBufferInfo(){
+		memset(port, 0, sizeof(char) * (PORTLEN + 1));
 		bufferWave = NULL;
 		toPrint = true;
 		memset(processor, 0 , sizeof(char) * (MAX_OBJ_NAME + 1));

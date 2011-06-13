@@ -13,5 +13,15 @@ typedef struct SOCKITtotalOpened {
 }SOCKITtotalOpenedStruct, *SOCKITtotalOpenedStructPtr;
 #pragma pack()
 
+#pragma pack(2)	// All structures passed to Igor are two-byte aligned.
+typedef struct SOCKITinfoStruct {
+	DOUBLE sockID;
+	void* tp;
+	Handle retval;
+}SOCKITinfoStruct, *SOCKITinfoStructPtr;
+#pragma pack()
+
+
 int SOCKITtotalOpened(SOCKITtotalOpenedStructPtr);
 int SOCKITcurrentOpened(SOCKITtotalOpenedStructPtr);
+int SOCKITinfo(SOCKITinfoStructPtr);

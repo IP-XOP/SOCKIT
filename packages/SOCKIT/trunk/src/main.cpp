@@ -107,6 +107,12 @@ RegisterFunction()
 		case 7:
 			return((long)SOCKITtotalOpened);
 			break;
+		case 8:
+			return((long)SOCKITcurrentOpened);
+			break;			
+		case 9:
+			return((long)SOCKITinfo);
+			break;
 			
 	}
 	return(NIL);
@@ -148,9 +154,13 @@ XOPEntry(void)
 			}
 			if(readThread)
 				free(readThread);
-				
+			
+			//don't unlock the mutex again or it is possible threadsafe functions
+			//can start working.
+			pthread_mutex_lock( &readThreadMutex );
 			pinstance->resetCurrentConnections();
 			delete pinstance;
+			pinstance = NULL;
 
 #ifdef _WINDOWS_
 //			pthread_win32_process_detach_np();
@@ -171,10 +181,16 @@ XOPEntry(void)
 	
 			break;
 		case FUNCADDRS:
+			if(pinstance)
                 result = RegisterFunction();
 			break;
 		case IDLE:
-			result = XOPIdle();
+			if(pinstance)					
+				result = XOPIdle();
+			else {
+				result = 0;
+			}
+
 			break;		
 		default:
 			break;

@@ -8,10 +8,14 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 	
 	extern CurrentConnections *pinstance;
 	extern pthread_mutex_t readThreadMutex;			
-	pthread_mutex_lock( &readThreadMutex );
 	
 	SOCKET ii;
     p->retval = 0;
+
+	if(!pinstance)
+		return 0;
+	pthread_mutex_lock( &readThreadMutex );
+
 	
 	if(!p->socketToClose){
 		err = OH_EXPECTED_NUMBER;

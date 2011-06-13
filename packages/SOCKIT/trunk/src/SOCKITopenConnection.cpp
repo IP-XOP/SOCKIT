@@ -32,10 +32,11 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	int rc;
     SOCKET sockNum = -1L;
 	int res = 0;
-	char port[7];
+	char port[PORTLEN+1];
 	int dataType = 0;
 	unsigned long fdflags;
 	int ignoreSIGPIPE = 1;
+	long bufsize = BUFLEN;
 	
 	char host[MAX_URL_LEN+1];
 	char report[MAX_MSG_LEN+1];
@@ -153,7 +154,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
-	snprintf(port, 6, "%d", (long)p->PORTNumber);
+	snprintf(port, PORTLEN, "%d", (long)p->PORTNumber);
+	snprintf(bufferInfo->port, PORTLEN, "%d", (long)p->PORTNumber);
 	
 	if(getaddrinfo(host, port, &hints, &servinfo)){
 		err = BAD_HOST_RESOLV;
@@ -225,6 +227,18 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		goto done;
 	}
 #endif
+	/*
+	 set the timeout for the blocking socket.
+	NOTE: normally the readerthread and all other reads use select to figure out whether there is something
+	 to be read.  However, in my experience select has failed sometimes, i.e. select indicates something
+	 is available to be read, but there is nothing there.  Therefore, the recv fails.
+	 */
+	memset(&timeout, 0, sizeof(timeout));
+	timeout.tv_usec = 1000;
+	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)))
+	   goto done;
+	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(long)))
+		goto done;
 
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum > 0){
@@ -293,6 +307,7 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	char port[7];
 	unsigned long fdflags;
 	int ignoreSIGPIPE = 1;
+	long bufsize = BUFLEN;
 	
 	char host[MAX_URL_LEN+1];
 		struct addrinfo hints, *servinfo = NULL;
@@ -325,7 +340,8 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 	snprintf(port, 6, "%d", (long)p->portNumber);
-	
+	snprintf(bufferInfo->port, PORTLEN, "%d", (long)p->portNumber);
+
 	if(getaddrinfo(host, port, &hints, &servinfo)){
 		err = BAD_HOST_RESOLV;
 		goto done;
@@ -385,6 +401,20 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 		goto done;
 	}
 #endif
+	
+	/*
+	 set the timeout for the blocking socket.
+	 NOTE: normally the readerthread and all other reads use select to figure out whether there is something
+	 to be read.  However, in my experience select has failed sometimes, i.e. select indicates something
+	 is available to be read, but there is nothing there.  Therefore, the recv fails.
+	 */
+	
+	memset(&timeout, 0, sizeof(timeout));
+	timeout.tv_usec = 1000;
+	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)))
+		goto done;
+	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(long)))
+		goto done;
 	
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum > 0){

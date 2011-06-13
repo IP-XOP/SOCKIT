@@ -107,7 +107,7 @@ void *readerThread(void *){
 						//						memset(buf, 0, BUFLEN * sizeof(char));
 						iterations += 1;
 						//read the characters from the socket
-						rc = recv(*iter, buf, BUFLEN, 0);
+						rc = recvfrom(*iter, buf, BUFLEN, 0, NULL, NULL);
 						charsread += rc;
 						
 						if (rc <= 0 && iterations == 1) {
@@ -177,7 +177,7 @@ int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, lon
 void GetTimeStamp(char timestamp[101]){
 	long year, month, day, hour, minute, second;
 	GetTheTime(&year, &month, &day, &hour, &minute, &second);
-	snprintf(timestamp, 100 * sizeof(char), "%d-%d-%d_T%d:%d:%02d",year, month, day, hour, minute, second );
+	snprintf(timestamp, 100 * sizeof(char), "%d-%d-%d_T%02d:%02d:%02d",year, month, day, hour, minute, second );
 }
 
 void CurrentConnections::Instance(){
@@ -201,6 +201,8 @@ CurrentConnections::~CurrentConnections(){
 
 void CurrentConnections::resetCurrentConnections(){
 	SOCKET ii;
+	//this method resets all the open connections by deleting the waveBufferInfo from 
+	//the map of open sockets.  The waveBufferInfo destructor does all the work.
 	for (ii=0; ii< maxSockNumber+1 ; ii+=1){
 		if (FD_ISSET(ii, &(readSet))) { 
 			FD_CLR(ii, &(readSet)); 
@@ -396,7 +398,7 @@ int CurrentConnections::checkProcessor(SOCKET sockNum, FunctionInfo *fip){
 	if(err = GetFunctionInfo(processor,fip))
 		err = PROCESSOR_NOT_AVAILABLE;
 	
-	if(err = CheckFunctionForm(fip, 2, requiredParameterTypes, &badParam,NT_FP64))
+	if(err = CheckFunctionForm(fip, 2, requiredParameterTypes, &badParam, NT_FP64))
 		err = PROCESSOR_NOT_AVAILABLE;
 	
 done:
@@ -485,7 +487,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		err = NO_WAVE_BUFFER_INFO;
 		goto done;
 	}
-	
+
 	Tokenize(writebuffer, szwritebuffer, tokens, &szTotalTokens, bufferWaves[sockNum].tokenizer,bufferWaves[sockNum].sztokenizer);
 	numTokens = tokens.size();
 	
@@ -510,25 +512,37 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	if(err = MDChangeWave(wav, -1, dimensionSizes))
 		goto done;
 	
-/*	ii=0;
-	wavDataH = NewHandle(0);
-	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, ii++){
-		token_length = (*tokens_iter).length();
-		if(err = PtrAndHand((*tokens_iter).data(), wavDataH, token_length))
-			goto done;
-		//insert the data
-		if(err = MDSetTextWavePointValue(wav, indices, wavDataH))
-			goto done;
-		indices[0] += 1;
-		SetHandleSize(wavDataH, 0);
-	}
-*/
-	
+
+//	ii=0;
+//	wavDataH = NewHandle(0);
+//	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, ii++){
+//		token_length = (*tokens_iter).length();
+//		hs3+=token_length;
+//		indices[1] = 0;
+//		if(err = PtrAndHand((*tokens_iter).data(), wavDataH, token_length))
+//			goto done;
+//		//insert the data
+//		if(err = MDSetTextWavePointValue(wav, indices, wavDataH))
+//			goto done;
+//		
+//		SetHandleSize(wavDataH, 0);
+//		PutCStringInHandle(timestamp, wavDataH);
+//		indices[1] = 1;
+//		if(err = MDSetTextWavePointValue(wav, indices, wavDataH))
+//			goto done;
+//		indices[0] += 1;
+//		SetHandleSize(wavDataH,0);
+//		
+//	}
+//	
+//	DisposeHandle(wavDataH);
+//	WaveHandleModified(wav);
+//	
 	//experimental work for inserting the tokens
 	//grab the wave data
 	if(err = GetTextWaveData(wav, 2, &wavDataH))
 		goto done;
-	
+		
 	//now stick all the tokens in
 	//resize the handle first
 	//have to add on the size of data you want to add, as well as the timestamp times the number of tokens.
@@ -688,9 +702,11 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	}
 	
 done:
-	if(err)
-		XOPNotice("oh shit");
-	
+	if(err){
+		snprintf(report, sizeof(char) * MAX_MSG_LEN, "Oh dear - ERROR NUMBER IS %d: ERRNO is: %d", err, errno);
+		XOPNotice(report);
+	}
+
 	if(wavDataH)
 		DisposeHandle(wavDataH);
 	

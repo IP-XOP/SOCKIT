@@ -129,6 +129,12 @@ resource 'XOPF' (1100) {
 		NT_FP64,
 		{
 		},
+		"SOCKITinfo",
+		F_IO | F_THREADSAFE | F_EXTERNAL,
+		HSTRING_TYPE,
+		{
+		NT_FP64,
+		},
 	}
 };
 
