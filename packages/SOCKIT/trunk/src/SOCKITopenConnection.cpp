@@ -36,7 +36,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	int dataType = 0;
 	unsigned long fdflags;
 	int ignoreSIGPIPE = 1;
-	long bufsize = BUFLEN;
+	int bufsize = BUFLEN;
 	
 	char host[MAX_URL_LEN+1];
 	char report[MAX_MSG_LEN+1];
@@ -50,7 +50,6 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		
 	char fnamepath[MAX_PATH_LEN + 1];
 	char nativepath[MAX_PATH_LEN + 1];
-	char fname[MAX_FILENAME_LEN + 1];
 	char a[10];
 	
 	memset(fnamepath, 0, sizeof(char) * (MAX_PATH_LEN + 1));
@@ -233,12 +232,22 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	 to be read.  However, in my experience select has failed sometimes, i.e. select indicates something
 	 is available to be read, but there is nothing there.  Therefore, the recv fails.
 	 */
+
+#ifdef _MACINTOSH_
 	memset(&timeout, 0, sizeof(timeout));
 	timeout.tv_usec = 1000;
 	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)))
 	   goto done;
-	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(long)))
+	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(int)))
 		goto done;
+#endif
+#ifdef _WINDOWS_
+	DWORD socktimeout = 1000;
+	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVTIMEO, (char*) &socktimeout, sizeof(socktimeout)))
+	   goto done;
+	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVBUF, (char*) &bufsize, sizeof(int)))
+		goto done;
+#endif
 
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum > 0){
@@ -409,13 +418,22 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	 is available to be read, but there is nothing there.  Therefore, the recv fails.
 	 */
 	
+#ifdef _MACINTOSH_
 	memset(&timeout, 0, sizeof(timeout));
 	timeout.tv_usec = 1000;
 	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)))
+	   goto done;
+	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(int)))
 		goto done;
-	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVBUF, &bufsize, sizeof(long)))
+#endif
+#ifdef _WINDOWS_
+	DWORD socktimeout = 1000;
+	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVTIMEO, (char*) &socktimeout, sizeof(socktimeout)))
+	   goto done;
+	if(err2 = setsockopt(sockNum, SOL_SOCKET, SO_RCVBUF, (char*) &bufsize, sizeof(int)))
 		goto done;
-	
+#endif
+
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum > 0){
 		if(err = pinstance->addWorker(sockNum, *bufferInfo)){
