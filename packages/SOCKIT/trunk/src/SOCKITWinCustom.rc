@@ -114,6 +114,11 @@ BEGIN
 		F_IO | F_EXTERNAL,					/* function category (string) */
 		NT_FP64,						/* return value type */			
 			0,
+		"SOCKITinfo\0",							/* function name */
+		F_IO | F_EXTERNAL | F_THREADSAFE,					/* function category (string) */
+		HSTRING_TYPE,						/* return value type */
+		NT_FP64,
+			0,
 0,
 END
 
@@ -128,6 +133,8 @@ BEGIN
 	"SOCKITstringtoWave\0",
 	utilOp | XOPOp | compilableOp,
 	"SOCKITwaveToString\0",
+	utilOp | XOPOp | compilableOp,
+	"SOCKITlist\0",
 	utilOp | XOPOp | compilableOp,
 	"\0"							// NOTE: NULL required to terminate the resource.
 END
