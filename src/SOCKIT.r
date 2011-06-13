@@ -150,5 +150,7 @@ resource 'XOPC' (1100) {
 		XOPOp+UtilOP+compilableOp,			// Operation's category.
 		"SOCKITwaveToString",								// Name of operation.
 		XOPOp+UtilOP+compilableOp,			// Operation's category.
+		"SOCKITlist",								// Name of operation.
+		XOPOp+UtilOP+compilableOp,			// Operation's category.
 	}
 };

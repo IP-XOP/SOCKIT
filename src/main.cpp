@@ -16,6 +16,7 @@
 #include "SOCKITwaveToString.h"
 #include "SOCKITpeek.h"
 #include "SOCKITinfo.h"
+#include "SOCKITlist.h"
 
 /*
 variable sock
@@ -72,7 +73,8 @@ RegisterOperations(void)		// Register any operations with Igor.
 		return result;
 	if (result = RegisterSOCKITwaveToString())
 		return result;	
-	
+	if (result = RegisterSOCKITlist())
+		return result;	
 	return 0;
 }
 
