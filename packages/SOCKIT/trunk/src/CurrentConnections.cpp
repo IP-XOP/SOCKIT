@@ -110,7 +110,7 @@ void *readerThread(void *){
 						rc = recvfrom(*iter, buf, BUFLEN, 0, NULL, NULL);
 						charsread += rc;
 						
-						if (rc <= 0 && iterations == 1) {
+						if (rc <= 0) {
 							wbi->toClose = true;
 						} else if(rc > 0){
 							if(wbi->readBuffer.append(buf, sizeof(char), rc) == -1)
@@ -431,6 +431,7 @@ int CurrentConnections::checkRecvData(){
 			if(bufferWaves[iter->first].toClose){
 				memset(report, 0, sizeof(report));
 				snprintf(report,sizeof(report),"SOCKITmsg: closing socket %d\r", iter->first);
+				XOPNotice(report);
 				pinstance->closeWorker(iter->first);
 			}
 		}
