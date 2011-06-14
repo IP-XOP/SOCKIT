@@ -119,7 +119,9 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			err = OH_EXPECTED_STRING;
 			goto done;
 		}
-		GetCStringFromHandle(p->TOKFlagStrH,bufferInfo->tokenizer,30);
+		int tocopy;
+		tocopy = GetHandleSize(p->TOKFlagStrH) > 30 ? 30 : GetHandleSize(p->TOKFlagStrH);
+		memcpy(bufferInfo->tokenizer, *(p->TOKFlagStrH), tocopy);
 		//we don't use strlen because we're interested in 0x00
 		//that would normally terminate a string.
 		bufferInfo->sztokenizer = GetHandleSize(p->TOKFlagStrH);		

@@ -489,7 +489,12 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		goto done;
 	}
 
-	Tokenize(writebuffer, szwritebuffer, tokens, &szTotalTokens, bufferWaves[sockNum].tokenizer,bufferWaves[sockNum].sztokenizer);
+	if(bufferWaves[sockNum].sztokenizer)
+		Tokenize(writebuffer, szwritebuffer, tokens, &szTotalTokens, bufferWaves[sockNum].tokenizer,bufferWaves[sockNum].sztokenizer);
+	else {
+		tokens.push_back(string((const char*) writebuffer, szwritebuffer));
+		szTotalTokens = szwritebuffer;
+	}
 	numTokens = tokens.size();
 	
 	//redimension the text wave to put the tokens in, and put them in.
