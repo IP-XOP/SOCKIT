@@ -64,7 +64,7 @@ void *readerThread(void *){
 	long charsread = 0;		
 	char buf[BUFLEN];
 	
-	fd_set tempset;
+	fd_set tempset, tempset2;
 	struct timeval sleeper;
 	vector<SOCKET> openSockets;
 	vector<SOCKET>::iterator iter;
@@ -109,14 +109,21 @@ void *readerThread(void *){
 						//read the characters from the socket
 						rc = recvfrom(*iter, buf, BUFLEN, 0, NULL, NULL);
 						charsread += rc;
-						
-						if (rc <= 0) {
+							
+						if (rc == 0 && iterations) {
 							wbi->toClose = true;
 						} else if(rc > 0){
 							if(wbi->readBuffer.append(buf, sizeof(char), rc) == -1)
 								wbi->readBuffer.reset();
 						}
-					}while (rc == BUFLEN);					
+
+						FD_ZERO(&tempset2);
+						timeout.tv_sec = 0;
+						timeout.tv_usec =  0;
+						FD_SET(*iter, &tempset2);
+						res = select((*iter) + 1, &tempset2, 0, 0, &timeout);
+						
+					} while (res > 0);					
 				}
 			}
 			
