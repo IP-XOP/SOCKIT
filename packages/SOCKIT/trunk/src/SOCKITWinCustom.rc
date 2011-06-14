@@ -117,9 +117,9 @@ BEGIN
 		"SOCKITinfo\0",							/* function name */
 		F_IO | F_EXTERNAL | F_THREADSAFE,					/* function category (string) */
 		HSTRING_TYPE,						/* return value type */
-		NT_FP64,
+		    NT_FP64,
 			0,
-0,
+        0,
 END
 
 1100 XOPC							// Describes operations that the XOP adds to IGOR.
@@ -136,5 +136,6 @@ BEGIN
 	utilOp | XOPOp | compilableOp,
 	"SOCKITlist\0",
 	utilOp | XOPOp | compilableOp,
-	"\0"							// NOTE: NULL required to terminate the resource.
+	// NOTE: NULL required to terminate the resource.
+    "\0"							
 END

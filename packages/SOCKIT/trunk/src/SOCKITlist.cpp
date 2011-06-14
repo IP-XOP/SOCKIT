@@ -33,9 +33,10 @@ int ExecuteSOCKITlist(SOCKITlistRuntimeParamsPtr p){
 	
 	pinstance->getListOfOpenSockets(openSockets);
 	
-	data = (long*) WaveData(waveH);
-	
-	memcpy(data, &(openSockets[0]), openSockets.size() * sizeof(long));
+	if(openSockets.size()){
+		data = (long*) WaveData(waveH);
+		memcpy(data, &(openSockets[0]), openSockets.size() * sizeof(long));
+	}
 	
 done:
 	
@@ -44,16 +45,17 @@ done:
 	
 }
 
+
 int
 RegisterSOCKITlist(void)
 {
-	char* cmdTemplate;
-	char* runtimeNumVarList;
-	char* runtimeStrVarList;
-	
+	const char* cmdTemplate;
+	const char* runtimeNumVarList;
+	const char* runtimeStrVarList;
+
 	// NOTE: If you change this template, you must change the SOCKITlistRuntimeParams structure as well.
 	cmdTemplate = "SOCKITlist";
 	runtimeNumVarList = "";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITlistRuntimeParams), (void*)ExecuteSOCKITlist, 0);
-};
+}
