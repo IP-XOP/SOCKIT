@@ -1,4 +1,4 @@
-#include "SOCKIT.h"
+#include "CurrentConnections.h"
 #include "SOCKITsendnrecv.h"
 
 int
@@ -28,7 +28,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	extern WSADATA globalWsaData;
 #endif
 	
-	MemoryStruct chunk;	
+	string chunk;	
 	
 	XOP_FILE_REF fileToWrite = NULL;
 	char fileName[MAX_PATH_LEN+1];
@@ -157,13 +157,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			//if there is a logfile then append and save
 			if(wbi->logFile){
 				GetTimeStamp(timestamp);
-				snprintf(report,
-						 sizeof(char) * MAX_MSG_LEN,
-						 "%s\tSEND:\t%d\t", timestamp, sockNum);
-				
-				fwrite(report, sizeof(char), strlen(report), wbi->logFile);
-				fwrite(output.c_str(), sizeof(char) , output.length(), wbi->logFile);
-				fwrite("\r\n", sizeof(char), 2,  wbi->logFile);				
+				(*wbi->logFile) << timestamp << "\tSEND:\t" << sockNum << "\t" << output.c_str() << endl;
 			}
 		/*on OSX rc<0 if remote peer is disconnected
 		 on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
@@ -212,10 +206,8 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				needToClose = true;
 				break;
 			} else if(rc > 0){
-				if(chunk.append(buf, sizeof(char), rc) == -1){
-					err = NOMEM;
-					goto done;
-				}
+				chunk.append(buf, rc);
+
 				if(fileToWrite)//write to file as well
 					written = fwrite(buf, sizeof(char),rc, (FILE *)fileToWrite);
 			}
@@ -252,25 +244,20 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	}
 	
-	if(!chunk.getData())
+	if(!chunk.length())
 		goto done;
 	
 	if(p->NBYTFlagEncountered && NBYTES_to_recv > -1){
 		//send excess bytes back to the buffer
-		int excessToDiscard;
-		unsigned char* excessData = NULL;
-		excessToDiscard = chunk.getMemSize() - NBYTES_to_recv;
-		if(excessToDiscard > 0){
-			excessData = (unsigned char*) chunk.getData() + (NBYTES_to_recv * sizeof(char));
-			wbi->readBuffer.append(excessData, excessToDiscard * sizeof(char));
+		string excessData = NULL;
+		if(chunk.length() - NBYTES_to_recv > 0){
+			excessData = chunk.substr(NBYTES_to_recv);
+			wbi->readBuffer.append(excessData);
 		}
-		if(chunk.trim(NBYTES_to_recv) < 0){
-			err = NOMEM;
-			goto done;
-		}
+		chunk.resize(NBYTES_to_recv);
 	}
 
-	if(err = pinstance->outputBufferDataToWave(sockNum, chunk.getData(), chunk.getMemSize(), false))
+	if(err = pinstance->outputBufferDataToWave(sockNum, (const unsigned char*) chunk.data(), chunk.length(), false))
 		goto done;
 		
 done:
@@ -281,18 +268,12 @@ done:
 		if(XOPCloseFile(fileToWrite))
 			err = PROBLEM_WRITING_TO_FILE;
 	}
-	if(err==0 && err2 == 0 && chunk.getData()){
+	if(err==0 && err2 == 0 && chunk.length()){
 		if(p->retEncountered)
-			err = StoreStringDataUsingVarName(p->ret,(const char*)chunk.getData(),chunk.getMemSize());
-
-		try {
-			chunk.nullTerminate();
-		} catch (bad_alloc&) {
-			err = NOMEM;
-		}
+			err = StoreStringDataUsingVarName(p->ret,(const char*)chunk.data(),chunk.length());
 
 		if(!err)
-			SetOperationStrVar("S_tcp", (const char*) chunk.getData());
+			SetOperationStrVar("S_tcp", (const char*) chunk.c_str());
 	} else {
 		if(p->retEncountered)
 			err = StoreStringDataUsingVarName(p->ret,"",0);
@@ -317,14 +298,18 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	
 	extern CurrentConnections *pinstance;
 	extern pthread_mutex_t readThreadMutex;
+	extern bool SHOULD_IDLE_SKIP;
 	pthread_mutex_lock( &readThreadMutex );
 
 
 #ifdef _WINDOWS_
 	extern WSADATA globalWsaData;
 #endif
+
+	if(!p->SMAL)
+		SHOULD_IDLE_SKIP = true;
 	
-	MemoryStruct chunk;	
+	string chunk;	
 	Handle retval;
 	
     int rc = 0;
@@ -335,7 +320,6 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	
 	char buf[BUFLEN+1];
 	string output;
-	char report[MAX_MSG_LEN+1];
 	long size = 0;
 	waveBufferInfo *wbi = NULL;
 	char timestamp[101];
@@ -396,13 +380,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 			//if there is a logfile then append and save
 			if(pinstance->getWaveBufferInfo(sockNum)->logFile){
 				GetTimeStamp(timestamp);
-				snprintf(report,
-						 sizeof(char) * MAX_MSG_LEN,
-						 "%s\tSEND:\t%d\t", timestamp, sockNum);
-				
-				fwrite(report, sizeof(char), strlen(report), wbi->logFile);
-				fwrite(buf, sizeof(char) , rc, wbi->logFile);
-				fwrite("\r\n", sizeof(char), 2,  wbi->logFile);					
+				*(wbi->logFile) << timestamp << "\tSEND:\t" << sockNum << "\t" << buf << endl;
 			}
 			/*on OSX rc<0 if remote peer is disconnected
 			 on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
@@ -442,10 +420,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 				err2 = 1;
 				break;
 			} else if(rc > 0){
-				if(chunk.append(buf, sizeof(char), rc) == -1){
-					err = NOMEM;
-					goto done;
-				}
+				chunk.append(buf, rc);
 			} //else if (rc == 0)
 			//	break;
 			
@@ -467,25 +442,18 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 		goto done;
 	}
 	
-	if(!chunk.getData()){
+	if(!chunk.length())
 		goto done;
-	} 
 	
 	if(wbi->logFile){
 		GetTimeStamp(timestamp);
-		snprintf(report,
-				 sizeof(char) * MAX_MSG_LEN,
-				 "%s\tRECV:\t%d\t", timestamp, sockNum);
-		
-		fwrite(report, sizeof(char), strlen(report), wbi->logFile);
-		fwrite(chunk.getData(), sizeof(char), chunk.getMemSize(), wbi->logFile);
-		fwrite("\r\n", sizeof(char), 2,  wbi->logFile);			
+		*(wbi->logFile) << timestamp << "\tRECV:\t" << sockNum << "\t" << chunk.c_str() << endl;
 	}
 	
 	
 done:
-	if(err == 0 && err2 == 0 && chunk.getData())
-		err = PtrAndHand((void*)chunk.getData(), retval, chunk.getMemSize());
+	if(err == 0 && err2 == 0 && chunk.length())
+		err = PtrAndHand((void*)chunk.data(), retval, chunk.length());
 	
 	p->retval = NULL;
 	
@@ -496,6 +464,8 @@ done:
 	
 	if(p->message)
 		DisposeHandle(p->message);
+	
+	SHOULD_IDLE_SKIP = false;
 	
 	pthread_mutex_unlock( &readThreadMutex );
 	

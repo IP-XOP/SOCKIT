@@ -8,6 +8,8 @@
 
 #include "XOPStandardHeaders.h"
 #include "defines.h"
+#include <iostream>
+#include <fstream>
 
 #ifdef _WINDOWS_
 #include "stringutils.h"
@@ -32,13 +34,13 @@ class waveBufferInfo {
 	char port[PORTLEN + 1];
 	int sztokenizer;
 	bool toClose;
-	MemoryStruct readBuffer;
+	string readBuffer;
 	
 	bool NOIDLES;						//NOIDLES will mean that the user picks up messages with SOCKITpeek, the 
 
 	char logFileName[MAX_PATH_LEN + 1];
-	XOP_FILE_REF logFile;
-
+	ofstream *logFile;
+	
 	waveBufferInfo(){
 		memset(port, 0, sizeof(char) * (PORTLEN + 1));
 		bufferWave = NULL;
@@ -48,17 +50,20 @@ class waveBufferInfo {
 		memset(hostIP, 0, sizeof(char) * (MAX_URL_LEN + 1));
 		sztokenizer = 0;
 		toClose= false;
-		memset(logFileName, 0, sizeof(char) * (MAX_PATH_LEN + 1));
 		NOIDLES = false;
-		logFile = NULL;
+		
+		memset(logFileName, 0, sizeof(char) * (MAX_PATH_LEN + 1));
+		ofstream *logFile = NULL;
 	};
 	
 	~waveBufferInfo(){
 		bufferWave = NULL;
-		readBuffer.reset();
-	
-		if(logFile)
-			fclose(logFile);
+		readBuffer.clear();
+		if(logFile){
+			logFile->close();
+			delete logFile;
+		}
+		
 	}
 
 };

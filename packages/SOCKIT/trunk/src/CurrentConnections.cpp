@@ -20,6 +20,7 @@ using namespace std;
 CurrentConnections* pinstance=0;
 pthread_t *readThread=0;
 pthread_mutex_t readThreadMutex = PTHREAD_MUTEX_INITIALIZER;
+bool SHOULD_IDLE_SKIP = false;
 
 /*
 	roundDouble returns a rounded value for val
@@ -112,10 +113,8 @@ void *readerThread(void *){
 							
 						if (rc <= 0) {
 							wbi->toClose = true;
-						} else if(rc > 0){
-							if(wbi->readBuffer.append(buf, sizeof(char), rc) == -1)
-								wbi->readBuffer.reset();
-						}
+						} else if(rc > 0)
+							wbi->readBuffer.append(buf, rc);
 
 						FD_ZERO(&tempset2);
 						timeout.tv_sec = 0;
@@ -256,8 +255,6 @@ waveBufferInfo* CurrentConnections::getWaveBufferInfo(SOCKET sockNum){
 int CurrentConnections::closeWorker(SOCKET sockNum){
 	int err = 0;
 
-	
-	char report[MAX_MSG_LEN+1];
 	char timestamp[101];
 	waveBufferInfo *wbi;
 
@@ -270,27 +267,20 @@ int CurrentConnections::closeWorker(SOCKET sockNum){
 	}
 	wbi = getWaveBufferInfo(sockNum);
 	
-	if(wbi->logFile){
-		snprintf(report,
-				 sizeof(char) * MAX_MSG_LEN,
-				 "%s\tSOCKCLOSE:\t%d\t", timestamp, sockNum);
-		
-		fwrite(report, sizeof(char), strlen(report), wbi->logFile);
-		fwrite("\r\n", sizeof(char), 2,  wbi->logFile);	
-	}
+	if(wbi->logFile)
+		(*wbi->logFile) << timestamp << "\tSOCKCLOSE:\t" << sockNum << endl;
 		
 	bufferWaves.erase(sockNum);
 	
 	return err;
 }
 
-int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfoStruct){
+int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo){
 	int err = 0;
 	waveBufferInfo *wbi;
 	char timestamp[101];
-	char report[MAX_MSG_LEN+1];
 	
-	bufferWaves.insert(make_pair(sockNum, bufferInfoStruct));
+	bufferWaves.insert(make_pair(sockNum, bufferInfo));
 
 	FD_SET(sockNum,&(readSet));
 	if(sockNum > maxSockNumber){
@@ -301,18 +291,15 @@ int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfoStru
 	totalSocketsOpened += 1;
 	
 	if(strlen(wbi->logFileName)){
-		XOPOpenFile(wbi->logFileName, 1, &wbi->logFile);
-		fseek(wbi->logFile, 0, 1);		
+		wbi->logFile = new ofstream(wbi->logFileName);
 		if(!wbi->logFile)
 			XOPNotice("SOCKIT err: couldn't create logfile)\r");
 		else {
-			GetTimeStamp(timestamp);
-			snprintf(report,
-					 sizeof(char) * MAX_MSG_LEN,
-					 "%s\tSOCKOPEN:\t%d\tIP\t%s\r\n", timestamp, sockNum, wbi->hostIP);
-			
-			fwrite(report, sizeof(char), strlen(report), wbi->logFile);
+			GetTimeStamp(timestamp);			
+			*(wbi->logFile) << timestamp << "\tSOCKOPEN:\t" << sockNum << "\t" << wbi->hostIP << endl;
 		}
+	} else {
+		wbi->logFile = NULL;
 	}
 	
 	done:
@@ -419,9 +406,9 @@ int CurrentConnections::checkRecvData(){
 	
 	map<SOCKET,waveBufferInfo>::iterator iter;
     for( iter = bufferWaves.begin(); iter != bufferWaves.end(); ++iter ) {
-		if(!bufferWaves[iter->first].NOIDLES && bufferWaves[iter->first].readBuffer.getMemSize()>0 && bufferWaves[iter->first].readBuffer.getData()){
+		if(!bufferWaves[iter->first].NOIDLES && bufferWaves[iter->first].readBuffer.length()>0){
 
-			if(err = outputBufferDataToWave(iter->first, bufferWaves[iter->first].readBuffer.getData(),  bufferWaves[iter->first].readBuffer.getMemSize(), true))
+			if(err = outputBufferDataToWave(iter->first, (const unsigned char*) bufferWaves[iter->first].readBuffer.data(),  bufferWaves[iter->first].readBuffer.length(), true))
 				goto done;
 			if(bufferWaves[iter->first].toPrint == true){
 				memset(report, 0, sizeof(report));
@@ -429,12 +416,12 @@ int CurrentConnections::checkRecvData(){
 				XOPNotice(report);
 				
 				string output;
-				output = string((const char*)bufferWaves[iter->first].readBuffer.getData(), bufferWaves[iter->first].readBuffer.getMemSize());
+				output = string(bufferWaves[iter->first].readBuffer);
 				find_and_replace(output,"\n","\r");
 				XOPNotice(output.c_str());
 				XOPNotice("\r");
 			}
-			bufferWaves[iter->first].readBuffer.reset();
+			bufferWaves[iter->first].readBuffer.clear();
 			if(bufferWaves[iter->first].toClose){
 				memset(report, 0, sizeof(report));
 				snprintf(report,sizeof(report),"SOCKITmsg: closing socket %d\r", iter->first);
@@ -602,14 +589,9 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		memcpy(*wavDataH + (*pTempL2), timestamp, strlen(timestamp));		
 		
 		//if there is a logfile then append to it
-		if(wbi->logFile){
-			snprintf(report,
-					 sizeof(char) * MAX_MSG_LEN,
-					 "%s\tRECV:\t%d\t", timestamp, sockNum);
-			fwrite(report, sizeof(char), strlen(report), wbi->logFile);
-			fwrite((*tokens_iter).c_str(), sizeof(char) , strlen((*tokens_iter).c_str()), wbi->logFile);
-			fwrite("\r\n", sizeof(char), 2,  wbi->logFile);		
-		}
+		if(wbi->logFile)
+			(*wbi->logFile) << timestamp << "\tRECV:\t" << sockNum << "\t" << (*tokens_iter).c_str() << endl;
+		
 	}
 
 	if(err = SetTextWaveData(wav, 2, wavDataH))

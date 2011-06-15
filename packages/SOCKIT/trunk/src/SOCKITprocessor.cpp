@@ -1,4 +1,4 @@
-#include "SOCKIT.h"
+#include "CurrentConnections.h"
 #include "SOCKITprocessor.h"
 
 int SOCKITregisterProcessor(SOCKITprocessorStruct *p){

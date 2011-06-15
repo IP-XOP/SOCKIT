@@ -1,4 +1,4 @@
-#include "SOCKIT.h"
+#include "CurrentConnections.h"
 #include "SOCKITsendmsg.h"
 
 int
@@ -102,15 +102,8 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 				XOPNotice("\r");
 			}			
 			//if there is a logfile then append and save
-			if(wbi->logFile){
-				snprintf(report,
-						 sizeof(char) * MAX_MSG_LEN,
-						 "%s\tSEND:\t%d\t", timestamp, socketToWrite);
-				
-				fwrite(report, sizeof(char), strlen(report), wbi->logFile);
-				fwrite(output.c_str(), sizeof(char) , output.length(), wbi->logFile);
-				fwrite("\r\n", sizeof(char), 2,  wbi->logFile);
-			}
+			if(wbi->logFile)
+				(*wbi->logFile) << timestamp << "\tSEND:\t" << socketToWrite << "\t" << output.c_str() << endl;
 				
 			goto done;
 		/*on OSX rc<0 if remote peer is disconnected
@@ -164,7 +157,6 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	int res = 0;
     
 	char buf[BUFLEN+1];
-	char report[MAX_MSG_LEN+1];
 	string output;			//get rid of the carriage returns
 	waveBufferInfo *wbi = NULL;
 	char timestamp[101];
@@ -216,13 +208,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 			//if there is a logfile then append and save
 			if(pinstance->getWaveBufferInfo(socketToWrite)->logFile){
 				GetTimeStamp(timestamp);
-				snprintf(report,
-						 sizeof(char) * MAX_MSG_LEN,
-						 "%s\tSEND:\t%d\t", timestamp, socketToWrite);
-				
-				fwrite(report, sizeof(char), strlen(report), wbi->logFile);
-				fwrite(output.c_str(), sizeof(char) , output.length(), wbi->logFile);
-				fwrite("\r\n", sizeof(char), 2,  wbi->logFile);
+				(*wbi->logFile) << timestamp << "\tSEND:\t" << socketToWrite << "\t" << output.c_str() << endl;
 			}
 			
 			goto done;

@@ -7,7 +7,7 @@
  *
  */
 
-#include "SOCKIT.h"
+#include "CurrentConnections.h"
 #include "SOCKITinfo.h"
 
 //return how many sockets have been opened historically
@@ -46,7 +46,7 @@ done:
 //return info about a current sockit
 int SOCKITinfo(SOCKITinfoStruct *p){
 	int	err = 0;
-	MemoryStruct chunk;
+	string chunk;
 	Handle result = NULL;
 	char report[MAXCMDLEN + MAX_OBJ_NAME + 1];
 	unsigned int szReport = (MAXCMDLEN + MAX_OBJ_NAME + 1) * sizeof(char);
@@ -87,7 +87,7 @@ int SOCKITinfo(SOCKITinfoStruct *p){
 	chunk.append(report, strlen(report));
 	
 	//put in the memory size
-	snprintf(report, szReport, "MEMSIZE-%d;", wbi->readBuffer.getMemSize());
+	snprintf(report, szReport, "MEMSIZE-%d;", wbi->readBuffer.length());
 	chunk.append(report, strlen(report));
 	
 	//put in the processor name(if any).
@@ -109,12 +109,9 @@ int SOCKITinfo(SOCKITinfoStruct *p){
 		snprintf(report, szReport, "%s;", bufwavename);
 		chunk.append(report, strlen(report));
 	}
-	
-	chunk.nullTerminate();
-	
-	if(chunk.getData() && chunk.getMemSize())
-		if(err = PutCStringInHandle((const char*) chunk.getData(), result))
-			goto done;
+		
+	if(err = PutCStringInHandle(chunk.c_str(), result))
+		goto done;
 		
 done:
 	if(result)

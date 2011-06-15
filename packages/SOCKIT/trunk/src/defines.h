@@ -40,7 +40,6 @@
 #include <algorithm>
 #include <vector>
 #include <string.h>
-#include "memutils.h"
 #include "NtoCR.h"
 #include "StringTokenizer.h"
 #include <iostream>
