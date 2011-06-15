@@ -293,8 +293,12 @@ int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo){
 	if(strlen(wbi->logFileName)){
 		wbi->logFile = new ofstream(wbi->logFileName);
 		if(!wbi->logFile)
+			wbi->logFile = NULL;
+		else if(wbi->logFile && !wbi->logFile->is_open()){
 			XOPNotice("SOCKIT err: couldn't create logfile)\r");
-		else {
+			delete wbi->logFile;
+			wbi->logFile = NULL;
+		} else if(wbi->logFile && wbi->logFile->is_open()) {
 			GetTimeStamp(timestamp);			
 			*(wbi->logFile) << timestamp << "\tSOCKOPEN:\t" << sockNum << "\t" << wbi->hostIP << endl;
 		}
