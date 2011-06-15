@@ -8,7 +8,7 @@
  */
 
 
-#include "SOCKIT.h"
+#include "CurrentConnections.h"
 #include "SOCKITlist.h"
 
 int ExecuteSOCKITlist(SOCKITlistRuntimeParamsPtr p){

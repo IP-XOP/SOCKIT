@@ -6,7 +6,7 @@
  *  Copyright 2008 __MyCompanyName__. All rights reserved.
  *
  */
-#include "SOCKIT.h"
+#include "CurrentConnections.h"
 #include "SOCKITisItOpen.h"
 
 int SOCKITisItOpen(SOCKITisItOpenStruct *p){

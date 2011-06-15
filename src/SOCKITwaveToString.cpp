@@ -2,8 +2,8 @@
 
 #include "SOCKITwaveToString.h"
 #include "SwapEndian.h"
-#include "memutils.h"
 #include <map>
+#include <string>
 
 #define NUMCHARS 50
 #ifdef _WINDOWS_
@@ -11,7 +11,6 @@
 #endif
 
 using namespace std;
-
 
 int
 ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
@@ -24,7 +23,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	void *wp;
 	Handle textDataP = NULL;
 	
-	MemoryStruct chunk;
+	string chunk;
 	register char tempNumStr[NUMCHARS+1];
 	
 	// Main parameters.
@@ -135,12 +134,9 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 						goto done;
 						break;
 				}
-				if(chunk.append(tempNumStr, sizeof(char), strlen(tempNumStr)) == -1){
-					err = NOMEM;
-					goto done;
-				}
+				chunk.append(tempNumStr, strlen(tempNumStr));
 			}		
-			if(err = StoreStringDataUsingVarName(p->str, (char*)chunk.getData(), chunk.getMemSize()))
+			if(err = StoreStringDataUsingVarName(p->str, (char*)chunk.data(), chunk.length()))
 				goto done;
 		}
 	}

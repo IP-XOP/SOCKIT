@@ -5,7 +5,7 @@
 //get list of connected sockets
 //get info on specific socket
 //close socket. (close all sockets
-#include "SOCKIT.h"
+#include "CurrentConnections.h"
 #include "SOCKITsendmsg.h"
 #include "SOCKITopenConnection.h"
 #include "SOCKITprocessor.h"
@@ -43,11 +43,13 @@ static int XOPIdle(){
 	
 	extern CurrentConnections* pinstance;
 	extern pthread_mutex_t readThreadMutex;
+	extern bool SHOULD_IDLE_SKIP;
+	
+	if(SHOULD_IDLE_SKIP)
+		return 0;
+	
+	pthread_mutex_lock( &readThreadMutex );
 
-	if(err = pthread_mutex_lock( &readThreadMutex )){
-		err = COULDNT_GET_MUTEX;
-		goto done;
-	}
 	if(pinstance->getMaxSockNumber()){
 		err = pinstance->checkRecvData();
 		goto done;

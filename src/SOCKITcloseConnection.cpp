@@ -1,4 +1,4 @@
-#include "SOCKIT.h"
+#include "CurrentConnections.h"
 #include "SOCKITcloseConnection.h"
 
 int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){

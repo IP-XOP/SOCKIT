@@ -6,7 +6,7 @@
  *  Copyright 2009 __MyCompanyName__. All rights reserved.
  *
  */
-#include "SOCKIT.h"
+#include "CurrentConnections.h"
 #include "SOCKITpeek.h"
 
 int SOCKITpeek(SOCKITpeekStructPtr p){
@@ -35,12 +35,12 @@ int SOCKITpeek(SOCKITpeekStructPtr p){
 	sockID = (SOCKET)doubleToLong(roundDouble(p->sockID));
 
 	if(pinstance->isSockitOpen(p->sockID, &sockID)){
-		if(pinstance->getWaveBufferInfo(sockID)->readBuffer.getData()){
-			if(err = PtrAndHand((void*)pinstance->getWaveBufferInfo(sockID)->readBuffer.getData(), dest, pinstance->getWaveBufferInfo(sockID)->readBuffer.getMemSize())){
+		if(pinstance->getWaveBufferInfo(sockID)->readBuffer.length()){
+			if(err = PtrAndHand((void*)pinstance->getWaveBufferInfo(sockID)->readBuffer.data(), dest, pinstance->getWaveBufferInfo(sockID)->readBuffer.length())){
 				dest = NULL;
 				goto done;
 			}
-			pinstance->getWaveBufferInfo(sockID)->readBuffer.reset();
+			pinstance->getWaveBufferInfo(sockID)->readBuffer.clear();
 			if(pinstance->getWaveBufferInfo(sockID)->toClose){
 				pinstance->closeWorker(sockID);
 			}
