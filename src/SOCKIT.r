@@ -17,7 +17,7 @@ resource 'STR#' (1100) {					/* custom error messages */
 		/* [1] */
 		"iPeek requires Igor Pro 5.04 or later.",
 		/* [2] */
-		"iPeek XOP was called to execute an unknown function.",
+		"SOCKIT XOP was called to execute an unknown function.",
 		/* [3] */
 		"Input string is non-existent.",
         /* [4] */
@@ -46,6 +46,8 @@ resource 'STR#' (1100) {					/* custom error messages */
 		"Couldn't lock Mutex.",
 		/* [16] */
 		"Couldn't find wavebufferinfo.",
+		/* [17] */
+		"Couldn't create the logfile requested.",
 		
 	}
 };
