@@ -39,7 +39,8 @@ BEGIN
 		"Could not acquire mutex lock.\0",
 		/* [16] */
 		"Couldn't find wavebufferinfo.\0",
-	// You can add error messages here.
+		/* [17] */
+		"Couldn't open logfile.\0",
 
 	0,								// NOTE: 0 required to terminate the resource.
 END
