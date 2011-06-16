@@ -10,7 +10,7 @@ RegisterSOCKITopenconnection(void)
 	char* runtimeStrVarList;
 	
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
-	cmdTemplate = "SOCKITopenconnection/NOID/TIME=number/LOG=name/Q[=number]/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
+	cmdTemplate = "SOCKITopenconnection/NOID/TIME=number/LOG=string/Q[=number]/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
 	runtimeNumVarList = "V_flag";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITopenconnectionRuntimeParams), (void*)ExecuteSOCKITopenconnection, 0);
@@ -49,7 +49,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		
 	char fnamepath[MAX_PATH_LEN + 1];
 	char nativepath[MAX_PATH_LEN + 1];
-	char a[10];
+	char unixpath[MAX_PATH_LEN + 1];
+	char *isMAC = NULL;
 	
 	memset(fnamepath, 0, sizeof(char) * (MAX_PATH_LEN + 1));
 	memset(report, 0, sizeof(char) * (MAX_MSG_LEN + 1));
@@ -78,23 +79,22 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		}
 	}
 	
-	if(p->LOGFlagEncountered){
+	if(p->LOGFlagEncountered && p->LOGFlagName){
 		memset(fnamepath, 0, sizeof(fnamepath));
-		memset(a, 0, sizeof(a));
-		snprintf(a, 9, "log.txt");
-
-		if(err = GetFullPathFromSymbolicPathAndFilePath(p->LOGFlagName, a, fnamepath))
+		if(err = GetCStringFromHandle(p->LOGFlagName, fnamepath, MAX_PATH_LEN))
 			goto done;
-		if(err = GetDirectoryAndFileNameFromFullPath(fnamepath, fnamepath, a))
+		//get native filesystem filepath
+		if (err = GetNativePath(fnamepath, nativepath))
 			goto done;
-			
-		if(FullPathPointsToFolder(fnamepath)){
-			if(err = ConcatenatePaths(fnamepath,"log.txt",fnamepath))
-				goto done;
-			if(err = GetNativePath(fnamepath,nativepath))
-				goto done;
-		}
-		//TODO
+		
+		
+#ifdef _MACINTOSH_
+		//see if its a MAC path by seeing if there is the Mac delimiter : in there
+		if((isMAC = strstr(nativepath, ":")) && (err = HFSToPosixPath(nativepath, unixpath, 0)))
+			goto done;
+		if(isMAC)
+			strcpy(nativepath, unixpath);
+#endif
 	}
 	
 	if(p->NOIDFlagEncountered){
@@ -253,13 +253,11 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum > 0){
-		if(strlen(fnamepath) > 0)
-			memcpy(bufferInfo->logFileName, fnamepath, sizeof(char) * strlen(fnamepath));
+		if(strlen(nativepath) > 0)
+			memcpy(bufferInfo->logFileName, nativepath, sizeof(char) * strlen(nativepath));
 
-		if(err = pinstance->addWorker(sockNum, *bufferInfo)){
-			err = SOCKET_ALLOC_FAILED;
+		if(err = pinstance->addWorker(sockNum, *bufferInfo))
 			goto done;
-		}
 		
 		if (p->PROCFlagEncountered) {
 			// Parameter: p->PROCFlagName

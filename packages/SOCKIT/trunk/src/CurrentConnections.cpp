@@ -291,11 +291,11 @@ int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo){
 	totalSocketsOpened += 1;
 	
 	if(strlen(wbi->logFileName)){
-		wbi->logFile = new ofstream(wbi->logFileName);
+		wbi->logFile = new ofstream(wbi->logFileName, ios_base::app | ios::binary | ios::out);
 		if(!wbi->logFile)
 			wbi->logFile = NULL;
 		else if(wbi->logFile && !wbi->logFile->is_open()){
-			XOPNotice("SOCKIT err: couldn't create logfile)\r");
+			err = COULDNT_CREATE_LOGFILE;
 			delete wbi->logFile;
 			wbi->logFile = NULL;
 		} else if(wbi->logFile && wbi->logFile->is_open()) {
