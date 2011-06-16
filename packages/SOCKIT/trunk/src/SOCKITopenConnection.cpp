@@ -49,10 +49,12 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		
 	char fnamepath[MAX_PATH_LEN + 1];
 	char nativepath[MAX_PATH_LEN + 1];
-	char unixpath[MAX_PATH_LEN + 1];
+	char unixpath[MAX_PATH_LEN + 1];	
 	char *isMAC = NULL;
 	
 	memset(fnamepath, 0, sizeof(char) * (MAX_PATH_LEN + 1));
+	memset(nativepath, 0, sizeof(char) * (MAX_PATH_LEN + 1));
+	memset(unixpath, 0, sizeof(char) * (MAX_PATH_LEN + 1));
 	memset(report, 0, sizeof(char) * (MAX_MSG_LEN + 1));
 	
 	if(p->TIMEFlagEncountered){
