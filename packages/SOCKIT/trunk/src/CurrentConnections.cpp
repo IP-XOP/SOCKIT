@@ -122,7 +122,7 @@ void *readerThread(void *){
 						FD_SET(*iter, &tempset2);
 						res = select((*iter) + 1, &tempset2, 0, 0, &timeout);
 						
-					} while (res > 0);					
+					} while (res > 0 && rc > 0 && wbi->toClose == false);					
 				}
 			}
 			
