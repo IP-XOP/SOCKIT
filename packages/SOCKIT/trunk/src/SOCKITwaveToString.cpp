@@ -4,6 +4,8 @@
 #include "SwapEndian.h"
 #include <map>
 #include <string>
+#include <iostream>
+#include <sstream>
 
 #define NUMCHARS 50
 #ifdef _WINDOWS_
@@ -24,7 +26,6 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	Handle textDataP = NULL;
 	
 	string chunk;
-	register char tempNumStr[NUMCHARS+1];
 	
 	// Main parameters.
 	if (p->wavEncountered) {
@@ -55,20 +56,33 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 		//IT'S A TEXT WAVE
 		long *pTableOffset;
 		char *pTextDataStart, *pTextDataEnd;
-		
+
 		if(err = GetTextWaveData(p->wavWaveH, 2, &textDataP))
 			goto done;
+
+		pTableOffset = (long*)*textDataP;					// Pointer to table of offsets for mode==2
 		
-		pTableOffset = (long*)*textDataP;					// Pointer to table of offsets if mode==1 or mode==2
-		
-		pTextDataStart = *textDataP;
-		pTextDataStart += (numElements + 1) * sizeof(long);
-		pTextDataEnd = *textDataP;
-		pTextDataEnd +=  pTableOffset[numElements];
-		szString = pTextDataEnd - pTextDataStart;
+		if(p->TXTFlagEncountered && p->TXTFlagParamsSet[0] && p->TXTFlagStrH){
+			string listsep;
+			string output;
+			listsep = string(*(p->TXTFlagStrH), GetHandleSize(p->TXTFlagStrH));
+
+			for(long ii = 0 ; ii < numElements ; ii++){
+				output.append(*textDataP + pTableOffset[ii], pTableOffset[ii + 1] - pTableOffset[ii]);
+				output.append(listsep);
+			}
+			if(err = StoreStringDataUsingVarName(p->str, output.data(), output.length()))
+				goto done;
+		} else {
+			pTextDataStart = *textDataP;
+			pTextDataStart += (numElements + 1) * sizeof(long);
+			pTextDataEnd = *textDataP;
+			pTextDataEnd +=  pTableOffset[numElements];
+			szString = pTextDataEnd - pTextDataStart;
 			
-		if(err = StoreStringDataUsingVarName(p->str, pTextDataStart, szString))
-			goto done;
+			if(err = StoreStringDataUsingVarName(p->str, pTextDataStart, szString))
+				goto done;
+		}
 		
 	} else {
 		//IT'S A NUMERICAL WAVE
@@ -101,41 +115,45 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 		} else {
 			//TXT flag makes a text representation of the wave
 			long ii;
-			int val;
+			stringstream oss;
+			string listsep = string(" ");
+			if(p->TXTFlagParamsSet[0] && p->TXTFlagStrH)
+				listsep = string(*(p->TXTFlagStrH), GetHandleSize(p->TXTFlagStrH));
+			
 			wp = (void*) WaveData(p->wavWaveH);
 			
 			for(ii=0 ; ii < numElements ; ii+=1){
 				switch(dataType){
 					case NT_FP32:
-						val = snprintf(tempNumStr, NUMCHARS, "%g ", ((float *)wp)[ii]);
+						oss << ((float*)wp)[ii] << listsep;
 						break;
 					case NT_FP64:
-						val = snprintf(tempNumStr, NUMCHARS,"%g ", ((double *)wp)[ii]);
+						oss << ((double*)wp)[ii] << listsep;
 						break;
 					case NT_I8:
-						val = snprintf(tempNumStr, NUMCHARS, "%hhd ", ((char* )wp)[ii]);
+						oss << (int)((char*)wp)[ii] << listsep;
 						break;
 					case NT_I16:
-						val = snprintf(tempNumStr, NUMCHARS,"%hd ", ((short* )wp)[ii]);
+						oss << ((short*)wp)[ii] << listsep;
 						break;
 					case NT_I32:
-						val = snprintf(tempNumStr, NUMCHARS,"%li ", ((long* )wp)[ii]);
+						oss << ((long*)wp)[ii] << listsep;
 						break;
 					case (NT_UNSIGNED|NT_I32):
-						val = snprintf(tempNumStr, NUMCHARS,"%d ", ((unsigned long* )wp)[ii]);
+						oss << ((unsigned long*)wp)[ii]<< listsep;
 						break;
 					case (NT_UNSIGNED|NT_I16):
-						val = snprintf(tempNumStr, NUMCHARS, "%d ", ((unsigned short* )wp)[ii]);
+						oss << ((unsigned short*)wp)[ii]<< listsep;
 						break;
 					case NT_UNSIGNED|NT_I8:
-						val = snprintf(tempNumStr, NUMCHARS, "%d ", ((unsigned char* )wp)[ii]);
+						oss << (int)((unsigned char*)wp)[ii]<< listsep;
 						break;
 					default:	//not recognized wavetype
 						goto done;
 						break;
 				}
-				chunk.append(tempNumStr, strlen(tempNumStr));
 			}		
+			chunk = oss.str();
 			if(err = StoreStringDataUsingVarName(p->str, (char*)chunk.data(), chunk.length()))
 				goto done;
 		}
@@ -155,7 +173,7 @@ RegisterSOCKITwaveToString(void)
 	char* runtimeStrVarList;
 	
 	// NOTE: If you change this template, you must change the SOCKITwaveToStringRuntimeParams structure as well.
-	cmdTemplate = "SOCKITwaveToString/E/TXT wave:wav, varname:str";
+	cmdTemplate = "SOCKITwaveToString/E/TXT[=string] wave:wav, varname:str";
 	runtimeNumVarList = "";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITwaveToStringRuntimeParams), (void*)ExecuteSOCKITwaveToString, 0);
