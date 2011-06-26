@@ -7,8 +7,9 @@ struct SOCKITwaveToStringRuntimeParams {
 	int EFlagEncountered;
 	// Parameters for /TXT flag group.
 	int TXTFlagEncountered;
-	// There are no fields for this group because it has no parameters.
-
+	Handle TXTFlagStrH;						// Optional parameter.
+	int TXTFlagParamsSet[1];
+	
 	// Main parameters.
 
 	// Parameters for BUF keyword group.
