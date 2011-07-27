@@ -38,6 +38,7 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 		// Parameter: p->conv (test for NULL handle before using)
 		if(!p->conv){
 			err = OH_EXPECTED_STRING;
+			goto done;
 		}
 	}
 	
