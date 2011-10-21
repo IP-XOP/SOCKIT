@@ -409,6 +409,10 @@ int CurrentConnections::checkRecvData(){
 	char report[MAX_MSG_LEN+1];
 	
 	map<SOCKET,waveBufferInfo>::iterator iter;
+	
+	if(bufferWaves.empty())
+		return err;
+	
     for( iter = bufferWaves.begin(); iter != bufferWaves.end(); ++iter ) {
 		if(!bufferWaves[iter->first].NOIDLES && bufferWaves[iter->first].readBuffer.length()>0){
 
