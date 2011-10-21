@@ -407,34 +407,36 @@ int CurrentConnections::checkRecvData(){
 	int err = 0;
 	
 	char report[MAX_MSG_LEN+1];
-	
-	map<SOCKET,waveBufferInfo>::iterator iter;
+	vector<SOCKET> openSockets;
+	vector<SOCKET>::iterator iter;
 	
 	if(bufferWaves.empty())
 		return err;
 	
-    for( iter = bufferWaves.begin(); iter != bufferWaves.end(); ++iter ) {
-		if(!bufferWaves[iter->first].NOIDLES && bufferWaves[iter->first].readBuffer.length()>0){
+	getListOfOpenSockets(openSockets);
+		
+    for( iter = openSockets.begin(); iter != openSockets.end(); iter++ ) {
+		if(!bufferWaves[*iter].NOIDLES && bufferWaves[*iter].readBuffer.length() > 0){
 
-			if(err = outputBufferDataToWave(iter->first, (const unsigned char*) bufferWaves[iter->first].readBuffer.data(),  bufferWaves[iter->first].readBuffer.length(), true))
+			if(err = outputBufferDataToWave(*iter, (const unsigned char*) bufferWaves[*iter].readBuffer.data(),  bufferWaves[*iter].readBuffer.length(), true))
 				goto done;
-			if(bufferWaves[iter->first].toPrint == true){
+			if(bufferWaves[*iter].toPrint == true){
 				memset(report, 0, sizeof(report));
-				snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", iter->first);
+				snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", *iter);
 				XOPNotice(report);
 				
 				string output;
-				output = string(bufferWaves[iter->first].readBuffer);
-				find_and_replace(output,"\n","\r");
+				output = string(bufferWaves[*iter].readBuffer);
+				find_and_replace(output,"\n", "\r");
 				XOPNotice(output.c_str());
 				XOPNotice("\r");
 			}
-			bufferWaves[iter->first].readBuffer.clear();
-			if(bufferWaves[iter->first].toClose){
+			bufferWaves[*iter].readBuffer.clear();
+			if(bufferWaves[*iter].toClose){
 				memset(report, 0, sizeof(report));
-				snprintf(report,sizeof(report),"SOCKITmsg: closing socket %d\r", iter->first);
+				snprintf(report,sizeof(report),"SOCKITmsg: closing socket %d\r", *iter);
 				XOPNotice(report);
-				pinstance->closeWorker(iter->first);
+				pinstance->closeWorker(*iter);
 			}
 		}
 	}
