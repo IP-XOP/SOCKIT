@@ -50,11 +50,8 @@ static int XOPIdle(){
 	
 	pthread_mutex_lock( &readThreadMutex );
 
-	if(pinstance->getMaxSockNumber()){
-		err = pinstance->checkRecvData();
-		goto done;
-	}
-
+	err = pinstance->checkRecvData();
+	
 done:
 	pthread_mutex_unlock( &readThreadMutex);
 	return err;
