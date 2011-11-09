@@ -20,7 +20,7 @@ struct SOCKITopenconnectionRuntimeParams {
 	
 	// Parameters for /LOG flag group.
 	int LOGFlagEncountered;
-	Handle LOGFlagName;
+	char LOGFlagName[MAX_OBJ_NAME+1];
 	int LOGFlagParamsSet[1];
 
 	// There are no fields for this group because it has no parameters.

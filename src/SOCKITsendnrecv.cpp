@@ -47,9 +47,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	long size = 0;
 	bool needToClose = false;
 	long NBYTES_to_recv = -1;
-	
-	char timestamp[101];
-		
+			
 	fd_set tempset;
 	FD_ZERO(&tempset);
 	
@@ -155,10 +153,8 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				XOPNotice("\r");
 			}
 			//if there is a logfile then append and save
-			if(wbi->logFile){
-				GetTimeStamp(timestamp);
-				(*wbi->logFile) << timestamp << "\tSEND:\t" << sockNum << "\t" << output.c_str() << endl;
-			}
+			wbi->log_msg(output.c_str(), 1);
+			
 		/*on OSX rc<0 if remote peer is disconnected
 		 on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
 		 zero length message (rc would also ==0 in that case.
@@ -322,7 +318,6 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	string output;
 	long size = 0;
 	waveBufferInfo *wbi = NULL;
-	char timestamp[101];
 		
 	fd_set tempset;
 	FD_ZERO(&tempset);
@@ -378,10 +373,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 		rc = send(sockNum, buf, GetHandleSize(p->message),0);
 		if(rc > 0){
 			//if there is a logfile then append and save
-			if(pinstance->getWaveBufferInfo(sockNum)->logFile){
-				GetTimeStamp(timestamp);
-				*(wbi->logFile) << timestamp << "\tSEND:\t" << sockNum << "\t" << buf << endl;
-			}
+			wbi->log_msg(buf, 1);
 			/*on OSX rc<0 if remote peer is disconnected
 			 on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
 			 zero length message (rc would also ==0 in that case.
@@ -445,11 +437,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	if(!chunk.length())
 		goto done;
 	
-	if(wbi->logFile){
-		GetTimeStamp(timestamp);
-		*(wbi->logFile) << timestamp << "\tRECV:\t" << sockNum << "\t" << chunk.c_str() << endl;
-	}
-	
+	wbi->log_msg(chunk.c_str(), 0);	
 	
 done:
 	if(err == 0 && err2 == 0 && chunk.length())

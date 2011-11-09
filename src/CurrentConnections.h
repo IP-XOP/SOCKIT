@@ -19,6 +19,9 @@
 double roundDouble(double val);
 long doubleToLong(double val);
 void *readerThread(void*);
+int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, long *second);
+void GetTimeStamp(char timestamp[101]);
+
 
 /**
 *Stores relevant information about what to do with the messages received from the socket.
@@ -32,16 +35,18 @@ class waveBufferInfo {
 	char tokenizer[31];					/**<the output from the socket is tokenized using the characters in this array*/
 	char hostIP[MAX_URL_LEN+1];
 	char port[PORTLEN + 1];
+	SOCKET sockNum;
 	int sztokenizer;
 	bool toClose;
 	string readBuffer;
 	
 	bool NOIDLES;						//NOIDLES will mean that the user picks up messages with SOCKITpeek, the 
 
-	char logFileName[MAX_PATH_LEN + 1];
+	char logFilePath[MAX_PATH_LEN + 1];
 	ofstream *logFile;
 	
 	waveBufferInfo(){
+		sockNum = 0;
 		memset(port, 0, sizeof(char) * (PORTLEN + 1));
 		bufferWave = NULL;
 		toPrint = true;
@@ -52,7 +57,7 @@ class waveBufferInfo {
 		toClose= false;
 		NOIDLES = false;
 		
-		memset(logFileName, 0, sizeof(char) * (MAX_PATH_LEN + 1));
+		memset(logFilePath, 0, sizeof(char) * (MAX_PATH_LEN + 1));
 		ofstream *logFile = NULL;
 	};
 	
@@ -60,16 +65,20 @@ class waveBufferInfo {
 		bufferWave = NULL;
 		readBuffer.clear();
 		if(logFile){
-			logFile->close();
+			if(logFile->is_open())
+				logFile->close();
 			delete logFile;
 		}
 		
 	}
+	
+	//isSend = 1 -> msg sent
+	//isSend = 0 -> msg recv
+	//isSend = -1 -> close socket
+	//isSend = -2 -> open socket
+	int log_msg(const char *msg, int isSend);
 
 };
-
-int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, long *second);
-void GetTimeStamp(char timestamp[101]);
 
 #pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 /**
