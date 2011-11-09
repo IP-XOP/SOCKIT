@@ -186,6 +186,76 @@ void GetTimeStamp(char timestamp[101]){
 	snprintf(timestamp, 100 * sizeof(char), "%d-%d-%d_T%02d:%02d:%02d",year, month, day, hour, minute, second );
 }
 
+int waveBufferInfo::log_msg(const char *msg, int isSend){
+	int err = 0;
+	streampos fsize = 0;
+	char filename[MAX_FILENAME_LEN + 1];
+	char fullfilepath[MAX_PATH_LEN + 1];
+	
+	long year, month, day, hour, minute, second;
+	
+	if(!logFile && strlen(logFilePath)){
+		GetTheTime(&year, &month, &day, &hour, &minute, &second);	
+		snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%d-%d-%d-%d_T%02d%02d%02d.txt", sockNum, year, month, day, hour, minute, second);
+		
+		memset(fullfilepath, 0, MAX_PATH_LEN + 1);
+		strncpy(fullfilepath, logFilePath, MAX_PATH_LEN);
+		strncat(fullfilepath, filename, MAX_PATH_LEN - strlen(fullfilepath));
+		
+		logFile = new ofstream(fullfilepath, ios_base::app | ios::binary | ios::out);
+		if(!logFile){
+			logFile = NULL;
+			memset(logFilePath, 0, sizeof(char) * (MAX_PATH_LEN + 1));
+			err = COULDNT_CREATE_LOGFILE;
+			goto done;
+		}
+		if(logFile && !logFile->is_open()){
+			err = COULDNT_CREATE_LOGFILE;
+			delete logFile;
+			logFile = NULL;
+			memset(logFilePath, 0, sizeof(char) * (MAX_PATH_LEN + 1));
+			goto done;
+		}
+		*logFile << hostIP << " " << port << endl;
+	}
+	
+	
+	if(strlen(logFilePath) && logFile && logFile->is_open() && strlen(msg) > 0){
+		char timestamp[101];
+		//time to open a new file, max log file size is 50Mb?
+		fsize = logFile->tellp();
+		if(fsize > 52428800){
+			logFile->close();
+			GetTheTime(&year, &month, &day, &hour, &minute, &second);	
+			snprintf(filename, MAX_PATH_LEN * sizeof(char), "LOG%d-%d-%d-%d_T%02d%02d%02d.txt", sockNum, year, month, day, hour, minute, second);
+			
+			memset(fullfilepath, 0, MAX_PATH_LEN + 1);
+			strncpy(fullfilepath, logFilePath, MAX_PATH_LEN);
+			strncat(fullfilepath, filename, MAX_PATH_LEN - strlen(fullfilepath));
+			
+			logFile->open(fullfilepath, ios_base::app | ios::binary | ios::out);
+			if(!logFile->is_open()){
+				delete logFile;
+				memset(logFilePath, 0, sizeof(char) * (MAX_PATH_LEN + 1));
+				err = COULDNT_CREATE_LOGFILE;
+				goto done;
+			}
+		}
+		
+		GetTimeStamp(timestamp);
+		*logFile << timestamp << "\t";
+		if(isSend)
+			*logFile << "SEND" << "\t";
+		if(isSend == 0)
+			*logFile << "RECV" << "\t";
+		
+		*logFile << msg << endl;
+	} 
+done:	
+	return err;
+}
+
+
 void CurrentConnections::Instance(){
 	extern CurrentConnections* pinstance;
 	
@@ -254,11 +324,8 @@ waveBufferInfo* CurrentConnections::getWaveBufferInfo(SOCKET sockNum){
 
 int CurrentConnections::closeWorker(SOCKET sockNum){
 	int err = 0;
-
-	char timestamp[101];
 	waveBufferInfo *wbi;
 
-	GetTimeStamp(timestamp);
 	/* Disconnect from server */
 	if (FD_ISSET(sockNum, &(readSet))) { 
 		FD_CLR(sockNum, &(readSet)); 
@@ -267,8 +334,7 @@ int CurrentConnections::closeWorker(SOCKET sockNum){
 	}
 	wbi = getWaveBufferInfo(sockNum);
 	
-	if(wbi->logFile)
-		(*wbi->logFile) << timestamp << "\tSOCKCLOSE:\t" << sockNum << endl;
+	wbi->log_msg("CLOSE", -1);
 		
 	bufferWaves.erase(sockNum);
 	
@@ -278,7 +344,6 @@ int CurrentConnections::closeWorker(SOCKET sockNum){
 int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo){
 	int err = 0;
 	waveBufferInfo *wbi;
-	char timestamp[101];
 	
 	bufferWaves.insert(make_pair(sockNum, bufferInfo));
 
@@ -290,21 +355,7 @@ int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo){
 	
 	totalSocketsOpened += 1;
 	
-	if(strlen(wbi->logFileName)){
-		wbi->logFile = new ofstream(wbi->logFileName, ios_base::app | ios::binary | ios::out);
-		if(!wbi->logFile)
-			wbi->logFile = NULL;
-		else if(wbi->logFile && !wbi->logFile->is_open()){
-			err = COULDNT_CREATE_LOGFILE;
-			delete wbi->logFile;
-			wbi->logFile = NULL;
-		} else if(wbi->logFile && wbi->logFile->is_open()) {
-			GetTimeStamp(timestamp);			
-			*(wbi->logFile) << timestamp << "\tSOCKOPEN:\t" << sockNum << "\t" << wbi->hostIP << endl;
-		}
-	} else {
-		wbi->logFile = NULL;
-	}
+	wbi->log_msg("OPEN", -2);
 	
 	done:
 	return err;
@@ -599,8 +650,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		memcpy(*wavDataH + (*pTempL2), timestamp, strlen(timestamp));		
 		
 		//if there is a logfile then append to it
-		if(wbi->logFile)
-			(*wbi->logFile) << timestamp << "\tRECV:\t" << sockNum << "\t" << (*tokens_iter).c_str() << endl;
+		wbi->log_msg((*tokens_iter).c_str(), 0);
 		
 	}
 
