@@ -35,12 +35,10 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	char report[MAX_MSG_LEN+1];
 	string output;			//get rid of the carriage returns
 	waveBufferInfo *wbi = NULL;
-	char timestamp[101];
 	long size = 0;
 	fd_set tempset;
 	struct timeval timeout;
 	
-	GetTimeStamp(timestamp);
 	memset(buf,0,sizeof(buf));
 	
 	if(p->TIMEFlagEncountered){
@@ -102,10 +100,8 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 				XOPNotice("\r");
 			}			
 			//if there is a logfile then append and save
-			if(wbi->logFile)
-				(*wbi->logFile) << timestamp << "\tSEND:\t" << socketToWrite << "\t" << output.c_str() << endl;
-				
-			goto done;
+			wbi->log_msg(output.c_str(), 1);
+							
 		/*on OSX rc<0 if remote peer is disconnected
 		  on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
 		 zero length message (rc would also ==0 in that case.
@@ -159,7 +155,6 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	char buf[BUFLEN+1];
 	string output;			//get rid of the carriage returns
 	waveBufferInfo *wbi = NULL;
-	char timestamp[101];
 	long size = 0;
 	fd_set tempset;
 	struct timeval timeout;
@@ -206,10 +201,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 		rc = send(socketToWrite, buf, GetHandleSize(p->message), 0);
 		if(rc > 0){
 			//if there is a logfile then append and save
-			if(pinstance->getWaveBufferInfo(socketToWrite)->logFile){
-				GetTimeStamp(timestamp);
-				(*wbi->logFile) << timestamp << "\tSEND:\t" << socketToWrite << "\t" << output.c_str() << endl;
-			}
+			wbi->log_msg(output.c_str(), 1);
 			
 			goto done;
 			/*on OSX rc<0 if remote peer is disconnected

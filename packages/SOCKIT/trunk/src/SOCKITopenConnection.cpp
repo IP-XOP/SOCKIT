@@ -10,7 +10,7 @@ RegisterSOCKITopenconnection(void)
 	char* runtimeStrVarList;
 	
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
-	cmdTemplate = "SOCKITopenconnection/NOID/TIME=number/LOG=string/Q[=number]/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
+	cmdTemplate = "SOCKITopenconnection/NOID/TIME=number/LOG=name/Q[=number]/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
 	runtimeNumVarList = "V_flag";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITopenconnectionRuntimeParams), (void*)ExecuteSOCKITopenconnection, 0);
@@ -81,10 +81,9 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		}
 	}
 	
-	if(p->LOGFlagEncountered && p->LOGFlagName){
-		memset(fnamepath, 0, sizeof(fnamepath));
-		if(err = GetCStringFromHandle(p->LOGFlagName, fnamepath, MAX_PATH_LEN))
-			goto done;
+	if(p->LOGFlagEncountered && p->LOGFlagParamsSet){
+		if(err = GetPathInfo2(p->LOGFlagName, fnamepath))
+		   goto done;
 		//get native filesystem filepath
 		if (err = GetNativePath(fnamepath, nativepath))
 			goto done;
@@ -94,8 +93,11 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		//see if its a MAC path by seeing if there is the Mac delimiter : in there
 		if((isMAC = strstr(nativepath, ":")) && (err = HFSToPosixPath(nativepath, unixpath, 0)))
 			goto done;
-		if(isMAC)
+		if(isMAC){
 			strcpy(nativepath, unixpath);
+			//and append a trailing /
+			strncat(nativepath, "/", MAX_PATH_LEN - 1);
+		}
 #endif
 	}
 	
@@ -256,8 +258,10 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum > 0){
 		if(strlen(nativepath) > 0)
-			memcpy(bufferInfo->logFileName, nativepath, sizeof(char) * strlen(nativepath));
+			memcpy(bufferInfo->logFilePath, nativepath, sizeof(char) * strlen(nativepath));
 
+		bufferInfo->sockNum = sockNum;
+		
 		if(err = pinstance->addWorker(sockNum, *bufferInfo))
 			goto done;
 		
@@ -438,6 +442,7 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum > 0){
+		bufferInfo->sockNum = sockNum;
 		if(err = pinstance->addWorker(sockNum, *bufferInfo)){
 			err = SOCKET_ALLOC_FAILED;
 			goto done;
