@@ -196,7 +196,7 @@ int waveBufferInfo::log_msg(const char *msg, int isSend){
 	
 	if(!logFile && strlen(logFilePath)){		
 		GetTheTime(&year, &month, &day, &hour, &minute, &second);	
-		snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%d-%d-%d-%d_T%02d%02d%02d.txt", sockNum, year, month, day, hour, minute, second);
+		snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%d-%d-%dT%02d%02d%02d_%d.txt", year, month, day, hour, minute, second, sockNum);
 		
 		memset(fullfilepath, 0, MAX_PATH_LEN + 1);
 		strncpy(fullfilepath, logFilePath, MAX_PATH_LEN);
@@ -229,7 +229,7 @@ int waveBufferInfo::log_msg(const char *msg, int isSend){
 		if(fsize > 52428800){
 			logFile->close();
 			GetTheTime(&year, &month, &day, &hour, &minute, &second);	
-			snprintf(filename, MAX_PATH_LEN * sizeof(char), "LOG%d-%d-%d-%d_T%02d%02d%02d.txt", sockNum, year, month, day, hour, minute, second);
+			snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%d-%d-%dT%02d%02d%02d_%d.txt", year, month, day, hour, minute, second, sockNum);
 			
 			memset(fullfilepath, 0, MAX_PATH_LEN + 1);
 			strncpy(fullfilepath, logFilePath, MAX_PATH_LEN);
