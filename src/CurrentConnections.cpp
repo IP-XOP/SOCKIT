@@ -194,7 +194,7 @@ int waveBufferInfo::log_msg(const char *msg, int isSend){
 	
 	long year, month, day, hour, minute, second;
 	
-	if(!logFile && strlen(logFilePath)){
+	if(!logFile && strlen(logFilePath)){		
 		GetTheTime(&year, &month, &day, &hour, &minute, &second);	
 		snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%d-%d-%d-%d_T%02d%02d%02d.txt", sockNum, year, month, day, hour, minute, second);
 		
@@ -221,7 +221,9 @@ int waveBufferInfo::log_msg(const char *msg, int isSend){
 	
 	
 	if(strlen(logFilePath) && logFile && logFile->is_open() && strlen(msg) > 0){
-		char timestamp[101];
+		time_t theTime;
+		theTime = time(NULL);
+
 		//time to open a new file, max log file size is 50Mb?
 		fsize = logFile->tellp();
 		if(fsize > 52428800){
@@ -242,8 +244,7 @@ int waveBufferInfo::log_msg(const char *msg, int isSend){
 			}
 		}
 		
-		GetTimeStamp(timestamp);
-		*logFile << timestamp << "\t";
+		*logFile << theTime << "\t";
 		if(isSend)
 			*logFile << "SEND" << "\t";
 		if(isSend == 0)
