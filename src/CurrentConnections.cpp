@@ -488,13 +488,13 @@ done:
 	return err;
 }
 
-int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned char *writebuffer, unsigned long szwritebuffer, bool useProcessor){
+int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned char *writebuffer, size_t szwritebuffer, bool useProcessor){
 	int err = 0;
 	
 	int numDimensions = 2; 
 	CountInt dimensionSizes[MAX_DIMENSIONS+1]; 
 	CountInt indices[MAX_DIMENSIONS];
-	long originalInsertPoint;
+	CountInt originalInsertPoint;
 	
 	Handle wavDataH = NULL;
 	
@@ -505,7 +505,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	
 	vector<string> tokens;
 	vector<string>::iterator tokens_iter;
-	unsigned long szTotalTokens;
+	size_t szTotalTokens;
 	unsigned long token_length;
 	unsigned long numTokens;
 	
@@ -542,7 +542,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		tokens.push_back(string((const char*) writebuffer, szwritebuffer));
 		szTotalTokens = szwritebuffer;
 	}
-	numTokens = tokens.size();
+	numTokens = (unsigned long) tokens.size();
 	
 	//redimension the text wave to put the tokens in, and put them in.
 	// Clear all dimensions sizes to avoid undefined values. 
@@ -618,7 +618,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	
 	for(ii = 0 ; ii < dimensionSizes[0] + 1; ii++, pTempL++){
 		//the offsets to each of the old data points AFTER the insert point increases by a constant amount
-		*pTempL += szTotalTokens;
+		*pTempL += (long) szTotalTokens;
 	}
 				  
 	//insert the data, fill out the END offsets for the new data and copy in the timestamps.
@@ -627,9 +627,9 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	pTempC = *wavDataH + pTableOffset[originalInsertPoint];
 
 	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, pTempL++, pTempL2++){
-		token_length = (*tokens_iter).length();
+		token_length = (unsigned long) (*tokens_iter).length();
 		//insert the data
-		memcpy(pTempC, (*tokens_iter).data() , token_length);
+		memcpy(pTempC, (*tokens_iter).data() , (size_t)token_length);
 		pTempC += token_length;
 		
 		//offset to the END each of the new data points		
@@ -704,7 +704,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		CountInt numtoDelete = dimensionSizes[0] - BUFFER_TO_KEEP;
 		unsigned long szOffSetsRequired = (BUFFER_TO_KEEP * 2 + 1) * sizeof(long);	
 		vector<unsigned long> offsets;
-		unsigned long off2col;
+		CountInt off2col;
 		
 		if(err = GetTextWaveData(wav, 2, &wavDataH))
 			goto done;

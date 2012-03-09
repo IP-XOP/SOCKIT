@@ -2,7 +2,7 @@
 #include "StringTokenizer.h"
 
 
-void Tokenize(const unsigned char* STR, unsigned long szStr, vector<string> &tokens, unsigned long *szTotalTokens, const char* DELIMITERS, int szDELIMITERS)
+void Tokenize(const unsigned char* STR, size_t szStr, vector<string> &tokens, size_t *szTotalTokens, const char* DELIMITERS, int szDELIMITERS)
 {
     // Skip delimiters at beginning.
 	string str((const char*)STR, szStr);
@@ -36,7 +36,7 @@ typedef struct keyValuePairs {
 int keyValues(const char* STR, keyValuePairs &kvp, vector<string> &tokens, const char *valDelim,const char* pairDelim)
 {
 	int err = 0;
-	int ii = 0;
+	unsigned int ii = 0;
     // Skip delimiters at beginning.
 	string str(STR);
 	string valDelimStr(valDelim);
