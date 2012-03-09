@@ -58,7 +58,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	memset(report, 0, sizeof(char) * (MAX_MSG_LEN + 1));
 	
 	if(p->TIMEFlagEncountered){
-		timeout.tv_sec = floor(p->TIMEFlagNumber);
+		timeout.tv_sec = (long) floor(p->TIMEFlagNumber);
 		timeout.tv_usec =  (long)((p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000);
 	} else {
 		timeout.tv_sec = 10;
@@ -331,7 +331,7 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	
 	waveBufferInfo *bufferInfo = new waveBufferInfo();
 		
-	timeout.tv_sec = floor(p->timeout);
+	timeout.tv_sec = (long) floor(p->timeout);
 	timeout.tv_usec =  (long)((p->timeout-(double)floor(p->timeout))*1000000);
 	
 	bufferInfo->NOIDLES = true;

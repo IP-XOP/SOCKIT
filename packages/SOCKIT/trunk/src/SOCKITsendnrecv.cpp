@@ -60,7 +60,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		timeoutVal = 1;
 	}
 	
-	timeout.tv_sec = floor(timeoutVal);
+	timeout.tv_sec = (long) floor(timeoutVal);
 	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
     
 	if(p->NBYTFlagEncountered){
@@ -180,7 +180,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	//now get an immediate reply
 	
 	FD_ZERO(&tempset);
-	timeout.tv_sec = floor(timeoutVal);
+	timeout.tv_sec = (long) floor(timeoutVal);
 	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	FD_SET(sockNum,&tempset);
 	res = select(sockNum+1,&tempset,0,0,&timeout);
@@ -223,7 +223,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				//res = 0;
 			} else {
 				FD_ZERO(&tempset);
-				timeout.tv_sec = floor(timeoutVal);
+				timeout.tv_sec = (long) floor(timeoutVal);
 				timeout.tv_usec =  (long)((timeoutVal - (double)floor(timeoutVal))*1000000);
 				FD_SET(sockNum, &tempset);
 				res = select(sockNum + 1, &tempset, 0, 0, &timeout);
@@ -245,8 +245,8 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	if(p->NBYTFlagEncountered && NBYTES_to_recv > -1){
 		//send excess bytes back to the buffer
-		string excessData = NULL;
-		if(chunk.length() - NBYTES_to_recv > 0){
+		string excessData;
+		if((long)chunk.length() - NBYTES_to_recv > 0){
 			excessData = chunk.substr(NBYTES_to_recv);
 			wbi->readBuffer.append(excessData);
 		}
@@ -337,7 +337,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 		timeoutVal = 1.;
 	}
 	
-	timeout.tv_sec = floor(timeoutVal);
+	timeout.tv_sec = (long) floor(timeoutVal);
 	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	
 	memset(buf, 0, sizeof(buf));
@@ -392,7 +392,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	//now get an immediate reply
 	
 	FD_ZERO(&tempset);
-	timeout.tv_sec = floor(timeoutVal);
+	timeout.tv_sec = (long) floor(timeoutVal);
 	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	FD_SET(sockNum, &tempset);
 	res = select(sockNum+1, &tempset, 0, 0, &timeout);
@@ -420,7 +420,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 				res = 0;
 			} else {
 				FD_ZERO(&tempset);
-				timeout.tv_sec = floor(timeoutVal);
+				timeout.tv_sec = (long) floor(timeoutVal);
 				timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 				FD_SET(sockNum, &tempset);
 				res = select(sockNum + 1, &tempset, 0, 0, &timeout);
