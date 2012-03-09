@@ -701,7 +701,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	//lets delete some points
 	if(dimensionSizes[0] > BUFFER_WAVE_LEN){
 		//have to deletepoints
-		unsigned long numtoDelete = dimensionSizes[0] - BUFFER_TO_KEEP;
+		CountInt numtoDelete = dimensionSizes[0] - BUFFER_TO_KEEP;
 		unsigned long szOffSetsRequired = (BUFFER_TO_KEEP * 2 + 1) * sizeof(long);	
 		vector<unsigned long> offsets;
 		unsigned long off2col;
