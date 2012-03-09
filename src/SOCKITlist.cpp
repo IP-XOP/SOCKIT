@@ -20,7 +20,7 @@ int ExecuteSOCKITlist(SOCKITlistRuntimeParamsPtr p){
 	vector<SOCKET> openSockets;
 	waveHndl waveH;
 	char waveName[MAX_OBJ_NAME+1];
-	long dimensionSizes[MAX_DIMENSIONS+1];
+	CountInt dimensionSizes[MAX_DIMENSIONS+1];
 	long *data;
 	
 	strncpy(waveName, "W_Sockitlist", MAX_OBJ_NAME);
