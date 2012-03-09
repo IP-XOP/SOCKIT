@@ -15,7 +15,6 @@
 #include "stringutils.h"
 #endif
 
-
 double roundDouble(double val);
 void *readerThread(void*);
 int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, long *second);
@@ -252,3 +251,9 @@ class CurrentConnections{
 	std::map<SOCKET, waveBufferInfo> bufferWaves;	//socket descriptor, wave buffer, containing the recv messages.
 
 	};
+
+	extern CurrentConnections *pinstance;
+extern pthread_t *readThread;
+extern pthread_mutex_t readThreadMutex;
+extern bool SHOULD_IDLE_SKIP;
+

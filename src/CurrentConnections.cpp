@@ -17,8 +17,8 @@
 using namespace std;
 
 
-CurrentConnections* pinstance=0;
-pthread_t *readThread=0;
+CurrentConnections *pinstance=NULL;
+pthread_t *readThread=NULL;
 pthread_mutex_t readThreadMutex = PTHREAD_MUTEX_INITIALIZER;
 bool SHOULD_IDLE_SKIP = false;
 

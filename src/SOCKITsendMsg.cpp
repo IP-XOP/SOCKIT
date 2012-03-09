@@ -42,10 +42,10 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	memset(buf,0,sizeof(buf));
 	
 	if(p->TIMEFlagEncountered){
-		timeout.tv_sec = floor(p->TIMEFlagNumber);
+		timeout.tv_sec = (long) floor(p->TIMEFlagNumber);
 		timeout.tv_usec =  (long)((p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000);		
 	} else {
-		timeout.tv_sec = 5.;
+		timeout.tv_sec = 5;
 		timeout.tv_usec = 0;
     }
 	
@@ -161,7 +161,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	
 	memset(buf,0,sizeof(buf));
 
-	timeout.tv_sec = 5.;
+	timeout.tv_sec = 5;
 	timeout.tv_usec = 0;
 	
 	if(!p->message){
