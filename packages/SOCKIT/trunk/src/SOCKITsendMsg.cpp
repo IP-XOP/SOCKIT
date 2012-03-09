@@ -88,7 +88,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
         goto done;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
-		rc = send(socketToWrite, buf, GetHandleSize(p->MSG), 0);
+		rc = send(socketToWrite, buf, (int) GetHandleSize(p->MSG), 0);
 		if(rc > 0){
 			snprintf(report,sizeof(report), "SOCKITmsg: wrote to socket %d\r", socketToWrite);
 			output = string(buf, GetHandleSize(p->MSG));
@@ -198,7 +198,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
         goto done;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
-		rc = send(socketToWrite, buf, GetHandleSize(p->message), 0);
+		rc = send(socketToWrite, buf, (int) GetHandleSize(p->message), 0);
 		if(rc > 0){
 			//if there is a logfile then append and save
 			wbi->log_msg(output.c_str(), 1);

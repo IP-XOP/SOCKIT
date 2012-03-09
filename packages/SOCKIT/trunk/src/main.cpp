@@ -69,7 +69,7 @@ RegisterOperations(void)		// Register any operations with Igor.
 	return 0;
 }
 
-static long
+static XOPIORecResult
 RegisterFunction()
 {
 	int funcIndex;

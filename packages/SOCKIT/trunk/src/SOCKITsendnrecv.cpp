@@ -140,7 +140,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	}
 	if(FD_ISSET(sockNum,&tempset)){
-		rc = send(sockNum, buf, GetHandleSize(p->MSG), 0);
+		rc = send(sockNum, buf, (int) GetHandleSize(p->MSG), 0);
 		if(rc > 0){
 			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", sockNum);
 			output = string(buf,GetHandleSize(p->MSG));
@@ -205,7 +205,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				chunk.append(buf, rc);
 
 				if(fileToWrite)//write to file as well
-					written = fwrite(buf, sizeof(char),rc, (FILE *)fileToWrite);
+					written = fwrite(buf, sizeof(char),(size_t) rc, (FILE *)fileToWrite);
 			}
 			
 			if (NBYTES_to_recv > -1 && rc >= NBYTES_to_recv)
@@ -370,7 +370,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 		goto done;
 	}
 	if(FD_ISSET(sockNum, &tempset)){
-		rc = send(sockNum, buf, GetHandleSize(p->message),0);
+		rc = send(sockNum, buf, (int) GetHandleSize(p->message),0);
 		if(rc > 0){
 			//if there is a logfile then append and save
 			wbi->log_msg(buf, 1);
