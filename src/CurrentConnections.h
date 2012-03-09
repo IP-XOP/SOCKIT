@@ -11,13 +11,12 @@
 #include <iostream>
 #include <fstream>
 
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 #include "stringutils.h"
 #endif
 
 
 double roundDouble(double val);
-long doubleToLong(double val);
 void *readerThread(void*);
 int GetTheTime(long *year, long *month, long *day, long *hour, long *minute, long *second);
 void GetTimeStamp(char timestamp[101]);
@@ -86,7 +85,7 @@ class waveBufferInfo {
 */
 typedef struct SOCKITcallProcessorStruct {
 	Handle bufferWave;	/**<The bufferwave into which the message was placed*/
-	DOUBLE entryRow;	/**<The row in the bufferwave into which the message is placed*/
+	double entryRow;	/**<The row in the bufferwave into which the message is placed*/
 }SOCKITcallProcessorStruct, *SOCKITcallProcessorStructPtr;
 #pragma pack()
 

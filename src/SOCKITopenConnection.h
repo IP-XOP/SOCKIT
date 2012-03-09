@@ -75,11 +75,11 @@ static int ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p);
 
 #pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITopenconnectionFStruct {
-	DOUBLE timeout;
-	DOUBLE portNumber;
+	double timeout;
+	double portNumber;
 	Handle IPStr;
-	void* tp;
-	DOUBLE retval;
+	UserFunctionThreadInfoPtr tp;
+	double retval;
 }SOCKITopenconnectionFStruct, *SOCKITopenconnectionFStructPtr;
 #pragma pack()
 

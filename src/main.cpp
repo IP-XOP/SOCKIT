@@ -25,14 +25,6 @@ sockitopenconnection/TOK="\r\n" sock,"www.wavemetrics.com",80,buf
 sockitsendnrecv sock, "GET / \r\n"
 */
 
-#ifdef _MACINTOSH_
-HOST_IMPORT int main(IORecHandle ioRecHandle);
-#endif	
-#ifdef _WINDOWS_
-WSADATA globalWsaData;
-HOST_IMPORT void main(IORecHandle ioRecHandle);
-#endif
-
 
 static int XOPIdle(){
 //this function should go through all the sockets and see if there are any messages.
@@ -82,37 +74,37 @@ RegisterFunction()
 {
 	int funcIndex;
     
-	funcIndex = GetXOPItem(0);		/* which function invoked ? */
+	funcIndex = (int) GetXOPItem(0);		/* which function invoked ? */
 	switch (funcIndex) {
 		case 0:
-			return((long)SOCKITcloseConnection);
+			return((XOPIORecResult)SOCKITcloseConnection);
 			break;
 		case 1:
-			return((long)SOCKITisItOpen);
+			return((XOPIORecResult)SOCKITisItOpen);
 			break;
 		case 2:
-			return((long)SOCKITregisterProcessor);
+			return((XOPIORecResult)SOCKITregisterProcessor);
             break;
 		case 3:
-			return((long)SOCKITpeek);
+			return((XOPIORecResult)SOCKITpeek);
 			break;
 		case 4:
-			return((long)SOCKITsendmsgF);
+			return((XOPIORecResult)SOCKITsendmsgF);
 			break;
 		case 5:
-			return((long)SOCKITsendnrecvF);
+			return((XOPIORecResult)SOCKITsendnrecvF);
 			break;
 		case 6:
-			return((long)SOCKITopenconnectionF);
+			return((XOPIORecResult)SOCKITopenconnectionF);
 			break;
 		case 7:
-			return((long)SOCKITtotalOpened);
+			return((XOPIORecResult)SOCKITtotalOpened);
 			break;
 		case 8:
-			return((long)SOCKITcurrentOpened);
+			return((XOPIORecResult)SOCKITcurrentOpened);
 			break;			
 		case 9:
-			return((long)SOCKITinfo);
+			return((XOPIORecResult)SOCKITinfo);
 			break;
 			
 	}
@@ -128,7 +120,7 @@ RegisterFunction()
 static void
 XOPEntry(void)
 {	
-	long result = 0;
+	XOPIORecResult result = 0;
 	
 	extern CurrentConnections* pinstance;
 	extern pthread_t *readThread;
@@ -163,7 +155,7 @@ XOPEntry(void)
 			delete pinstance;
 			pinstance = NULL;
 
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 //			pthread_win32_process_detach_np();
 			WSACleanup( );
 #endif
@@ -208,12 +200,8 @@ XOPEntry(void)
 	ioRecHandle to the address to be called for future messages.
 */
 
-#ifdef _WINDOWS_
-HOST_IMPORT void main(IORecHandle ioRecHandle)
-#endif
-#ifdef _MACINTOSH_
+
 HOST_IMPORT int main(IORecHandle ioRecHandle)
-#endif
 {	
 	XOPInit(ioRecHandle);							/* do standard XOP initialization */
 	SetXOPEntry(XOPEntry);							/* set entry point for future calls */
@@ -240,14 +228,16 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 	pthread_mutex_unlock( &readThreadMutex );
 	
 	readThread = (pthread_t*)malloc(sizeof(pthread_t));
-	if(readThread == NULL)
+	if(readThread == NULL){
 		SetXOPResult(NOMEM);
+		return EXIT_FAILURE;
+	}
 	if(pthread_create( readThread, NULL, &readerThread, NULL)){
 		SetXOPResult(CANT_START_READER_THREAD);
-		goto done;
+		return EXIT_FAILURE;
 	}
 	
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	WORD wVersionRequested;
 	WSADATA wsaData;
 	//extern WSADATA globalWsaData;
@@ -255,26 +245,20 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 	if(WSAStartup(MAKEWORD(2, 2), &wsaData)){
 		WSACleanup( );				
 		SetXOPResult(NO_WINSOCK);
-		goto done;
+		return EXIT_FAILURE;
 	}
 #endif
 
 	if (igorVersion < 600){
 		SetXOPResult(IGOR_OBSOLETE);
-		goto done;
+		return EXIT_FAILURE;
 	}
 	
 	if (result = RegisterOperations()){
 		SetXOPResult(result);
-		goto done;
+		return EXIT_FAILURE;
 	}
 
-done:
-
-#ifdef _MACINTOSH_
-		return 0;
-#endif
-#ifdef _WINDOWS_
-	return;
-#endif
+	SetXOPResult(0);
+	return EXIT_SUCCESS;
 }

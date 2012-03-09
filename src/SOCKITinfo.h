@@ -9,16 +9,16 @@
 
 #pragma pack(2)
 typedef struct SOCKITtotalOpened {
-	DOUBLE retval;
+	double retval;
 }SOCKITtotalOpenedStruct, *SOCKITtotalOpenedStructPtr;
 #pragma pack()
 
 #pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITinfoStruct {
-	DOUBLE sockID;
-	void* tp;
+	double sockID;
+	UserFunctionThreadInfoPtr tp;
 	Handle retval;
-}SOCKITinfoStruct, *SOCKITinfoStructPtr;
+}SOCKITinfoStruct,*SOCKITinfoStructPtr;
 #pragma pack()
 
 

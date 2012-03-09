@@ -10,8 +10,8 @@
 #pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITprocessorStruct {
 	Handle processor;
-	DOUBLE sockNum;
-	DOUBLE retval;		
+	double sockNum;
+	double retval;		
 }SOCKITprocessorStruct, *SOCKITprocessorStructPtr;
 #pragma pack()
 

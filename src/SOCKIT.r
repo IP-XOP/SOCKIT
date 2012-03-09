@@ -9,13 +9,13 @@ resource 'vers' (1) {						/* XOP version info */
 resource 'vers' (2) {						/* Igor version info */
 	0x05, 0x00, release, 0x00, 0,			/* version bytes and country integer */
 	"5.00",
-	"(for Igor Pro 5.00 or later)"
+	"(for Igor Pro 6.00 or later)"
 };
 
 resource 'STR#' (1100) {					/* custom error messages */
 	{
 		/* [1] */
-		"iPeek requires Igor Pro 5.04 or later.",
+		"SOCKIT requires Igor Pro 6.00 or later.",
 		/* [2] */
 		"SOCKIT XOP was called to execute an unknown function.",
 		/* [3] */
@@ -149,9 +149,9 @@ resource 'XOPC' (1100) {
 		"SOCKITsendmsg",								// Name of operation.
 		XOPOp+UtilOP+compilableOp,			// Operation's category.
 		"SOCKITstringToWave",								// Name of operation.
-		XOPOp+UtilOP+compilableOp,			// Operation's category.
+		XOPOp+UtilOP+compilableOp+threadSafeOp,			// Operation's category.
 		"SOCKITwaveToString",								// Name of operation.
-		XOPOp+UtilOP+compilableOp,			// Operation's category.
+		XOPOp+UtilOP+compilableOp+threadSafeOp,			// Operation's category.
 		"SOCKITlist",								// Name of operation.
 		XOPOp+UtilOP+compilableOp,			// Operation's category.
 	}

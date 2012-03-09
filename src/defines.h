@@ -7,7 +7,7 @@
  *
  */
  
- #ifdef _MACINTOSH_
+ #ifdef MACIGOR
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -21,7 +21,7 @@
 #define SOCKET long
 #endif
 
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <Iphlpapi.h>
@@ -48,7 +48,7 @@
 #include "XOPStandardHeaders.h"
 
 
-#define REQUIRES_IGOR_500 1 + FIRST_XOP_ERR
+#define REQUIRES_IGOR_600 1 + FIRST_XOP_ERR
 #define NO_WINSOCK 2 + FIRST_XOP_ERR
 #define NO_INPUT_STRING 3 + FIRST_XOP_ERR
 #define BAD_HOST_RESOLV 4 + FIRST_XOP_ERR

@@ -23,7 +23,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 			
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	extern WSADATA globalWsaData;
 #endif
 	
@@ -144,7 +144,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	extern WSADATA globalWsaData;
 #endif
 	

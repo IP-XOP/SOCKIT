@@ -43,9 +43,9 @@ int ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParamsPtr p);
 // All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITsendmsgFStruct {
 	Handle message;
-	DOUBLE sockID;
-	void* tp;
-	DOUBLE retval;
+	double sockID;
+	UserFunctionThreadInfoPtr tp;
+	double retval;
 }SOCKITsendmsgFStruct, *SOCKITsendmsgFStructPtr;
 #pragma pack()
 

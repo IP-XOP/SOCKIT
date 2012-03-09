@@ -1,6 +1,6 @@
 #include "XOPStandardHeaders.h"
 #include "SwapEndian.h"
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 #include <winsock2.h>
 #endif
 #include <algorithm> //required for std::swap
