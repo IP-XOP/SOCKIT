@@ -9,9 +9,9 @@
 
 #pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITisItOpenStruct {
-	DOUBLE sockitQuery;
-	void* tp;
-	DOUBLE retval;
+	double sockitQuery;
+	UserFunctionThreadInfoPtr tp;
+	double retval;
 }SOCKITisItOpenStruct, *SOCKITisItOpenStructPtr;
 #pragma pack()
 

@@ -32,7 +32,7 @@ int SOCKITpeek(SOCKITpeekStructPtr p){
 		goto done;
 	}
 	
-	sockID = (SOCKET)doubleToLong(roundDouble(p->sockID));
+	sockID = (SOCKET)p->sockID;
 
 	if(pinstance->isSockitOpen(p->sockID, &sockID)){
 		if(pinstance->getWaveBufferInfo(sockID)->readBuffer.length()){
@@ -51,7 +51,7 @@ done:
 	pthread_mutex_unlock( &readThreadMutex );
 	
 	p->dest = NULL;	// Init to NULL
-	if (err != 0) {
+	if (err) {
 		if (dest != NULL)
 			DisposeHandle(dest);
 		return err;

@@ -8,7 +8,7 @@ easyHttp.c -- An XOP for curvefitting via Differential Evolution.
 1100 STR#							// Custom error messages.
 BEGIN
 /* [1] */
-		"SOCKIT requires Igor Pro 5.04 or later.\0",
+		"SOCKIT requires Igor Pro 6.00 or later.\0",
 		/* [2] */
 		"No winsock lib available.\0",
 		/* [3] */
@@ -132,9 +132,9 @@ BEGIN
 	"SOCKITsendmsg\0",
 	utilOp | XOPOp | compilableOp,
 	"SOCKITstringtoWave\0",
-	utilOp | XOPOp | compilableOp,
+	utilOp | XOPOp | compilableOp | threadSafeOp,
 	"SOCKITwaveToString\0",
-	utilOp | XOPOp | compilableOp,
+	utilOp | XOPOp | compilableOp | threadSafeOp,
 	"SOCKITlist\0",
 	utilOp | XOPOp | compilableOp,
 	// NOTE: NULL required to terminate the resource.

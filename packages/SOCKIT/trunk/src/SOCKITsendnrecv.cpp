@@ -24,7 +24,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	pthread_mutex_lock( &readThreadMutex );
 
 
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	extern WSADATA globalWsaData;
 #endif
 	
@@ -67,7 +67,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		if(IsNaN64(&p->NBYTFlagNumber) || IsINF64(&p->NBYTFlagNumber) || p->NBYTFlagNumber < 0)
 			NBYTES_to_recv = -1;
 
-		NBYTES_to_recv = doubleToLong(roundDouble(p->NBYTFlagNumber));
+		NBYTES_to_recv = (long) p->NBYTFlagNumber;
 	}
 	memset(buf,0,sizeof(buf));
 	
@@ -298,7 +298,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	pthread_mutex_lock( &readThreadMutex );
 
 
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	extern WSADATA globalWsaData;
 #endif
 

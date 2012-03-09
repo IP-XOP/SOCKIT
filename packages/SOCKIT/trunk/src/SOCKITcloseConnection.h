@@ -9,9 +9,9 @@
 
 #pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITcloseConnectionStruct {
-	DOUBLE socketToClose;
-	void* tp;
-	DOUBLE retval;
+	double socketToClose;
+	UserFunctionThreadInfoPtr tp;
+	double retval;
 }SOCKITcloseConnectionStruct, *SOCKITcloseConnectionStructPtr;
 #pragma pack()
 

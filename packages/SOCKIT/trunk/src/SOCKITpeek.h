@@ -10,8 +10,8 @@
 
 #pragma pack(2)
 typedef struct SOCKITpeekStruct {
-	DOUBLE  sockID;
-	void* tp;
+	double  sockID;
+	UserFunctionThreadInfoPtr tp;
 	Handle dest;			//the string containing the content
 }SOCKITpeekStruct, *SOCKITpeekStructPtr;
 #pragma pack(2)

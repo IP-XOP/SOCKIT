@@ -44,18 +44,11 @@ roundDouble(double val){
 	return retval;
 }
 
-long doubleToLong(double val){
-	long retval;
-	DoubleToLong(&val, &retval,1);
-	
-	return retval;
-}
-
 void *readerThread(void *){
     extern CurrentConnections* pinstance;
 	extern pthread_mutex_t readThreadMutex;
 	
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	extern WSADATA globalWsaData;
 #endif
 	
@@ -154,10 +147,10 @@ void *readerThread(void *){
  
 		pthread_mutex_unlock( &readThreadMutex );
 
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 		Sleep(10);
 #endif
-#ifdef _MACINTOSH_
+#ifdef MACIGOR
 		sleeper.tv_sec = 0;
 		sleeper.tv_usec = 10000;
 		select(0,0,0,0,&sleeper);
@@ -402,7 +395,6 @@ done:
 int CurrentConnections::isSockitOpen(double query,SOCKET *sockNum){
 	int retval=0;
 	*sockNum = (SOCKET)-1;
-	double roundedVal;
 	long intVal;
 	map<SOCKET, waveBufferInfo>::iterator iter;
 	
@@ -413,8 +405,7 @@ int CurrentConnections::isSockitOpen(double query,SOCKET *sockNum){
 	if(query<=0)
 		return 0;
 	
-	roundedVal = roundDouble(query);
-	intVal = doubleToLong(roundedVal);
+	intVal = (SOCKET) query;
 	if(intVal<0)
 		return 0;
 	
@@ -500,9 +491,9 @@ done:
 int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned char *writebuffer, unsigned long szwritebuffer, bool useProcessor){
 	int err = 0;
 	
-	long numDimensions = 2; 
-	long dimensionSizes[MAX_DIMENSIONS+1]; 
-	long indices[MAX_DIMENSIONS];
+	int numDimensions = 2; 
+	CountInt dimensionSizes[MAX_DIMENSIONS+1]; 
+	CountInt indices[MAX_DIMENSIONS];
 	long originalInsertPoint;
 	
 	Handle wavDataH = NULL;

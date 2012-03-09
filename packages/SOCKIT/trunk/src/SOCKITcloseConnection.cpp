@@ -22,7 +22,7 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 		goto done;
 	}
 	
-	socketToClose = (SOCKET)doubleToLong(roundDouble(p->socketToClose));
+	socketToClose = (SOCKET)p->socketToClose;
 
 	if(socketToClose == -1){
 		for (ii=0; ii< pinstance->getMaxSockNumber()+1 ; ii+=1){

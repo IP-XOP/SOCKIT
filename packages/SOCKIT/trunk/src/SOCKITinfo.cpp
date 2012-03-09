@@ -68,6 +68,11 @@ int SOCKITinfo(SOCKITinfoStruct *p){
 		goto done;
 	}
 	
+	if(igorVersion < 620 && !RunningInMainThread()){
+		err = NOT_IN_THREADSAFE;
+		goto done;
+	}
+	
 	//see if the socket is open, if it's not, just return a zero length string
 	if(!pinstance->isSockitOpen(p->sockID, &socknum))
 		goto done;

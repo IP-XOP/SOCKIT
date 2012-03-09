@@ -5,21 +5,30 @@
 #include "defines.h"
 
 static int
-ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
-{
+ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	int err = 0;
 	int dataType;
 	int bytesPerPoint;
-	long numElements;
+	CountInt numElements;
 	int dataFormat, isComplex;
-
-	unsigned long szString;
+	BCInt szString;
 	void *wp;
-
-	waveHndl waveH;
-	char waveName[MAX_OBJ_NAME+1];
-	long dimensionSizes[MAX_DIMENSIONS+1];
-
+	
+	waveHndl destWaveH;	// Destination wave handle
+	int destWaveRefIdentifier;	// Identifies a wave reference
+	char destWaveName[MAX_OBJ_NAME+1];
+	DataFolderHandle dfH;
+	CountInt dimensionSizes[MAX_DIMENSIONS+1];
+	int options;
+	int destWaveCreated;
+	
+	if(igorVersion < 620 && !RunningInMainThread())
+		return NOT_IN_THREADSAFE;
+	
+	destWaveH = NULL;
+	destWaveRefIdentifier = 0;
+	dfH = NULL;	// Default is current data folder	
+	strcpy(destWaveName, "W_stringToWave"); // Default dest wave name
 	memset(dimensionSizes, 0, sizeof(dimensionSizes));
 
 	int little_endian = IsLittleEndian();
@@ -42,6 +51,19 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 		}
 	}
 	
+	if(p->DESTFlagEncountered){
+		strcpy(destWaveName, p->dest.name);
+		dfH = p->dest.dfH;
+		destWaveRefIdentifier = p->DESTFlagParamsSet[0];
+	}
+	options = kOpDestWaveOverwriteOK | kOpDestWaveOverwriteExistingWave;
+	
+	if(p->FREEFlagEncountered && igorVersion < 620)
+		return IGOR_OBSOLETE;
+	if(p->FREEFlagEncountered)
+		options |= kOpDestWaveMakeFreeWave;
+
+	
 	szString = GetHandleSize(p->conv);
 	dataType = (int)(p->num);
 
@@ -50,7 +72,6 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 							   &dataFormat,
 							   &isComplex))
 		goto done;
-	
 	
 /*	switch(waveType){
 		case 2:	//NT_FP32
@@ -107,22 +128,28 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 			break;
 	}*/
 
-	numElements = szString / bytesPerPoint;
+	numElements = (CountInt)(szString / bytesPerPoint);
 	if(isComplex)
-		numElements *= 2;
+		numElements /= 2;
+	
 	
 	if(numElements * bytesPerPoint != szString){
-		err = STRING_INCORRECT_LEN_FOR_NUMTYPE;
-		goto done;
+		if(isComplex && numElements * bytesPerPoint * 2 == szString){
+			//it was complex, do nothing
+		} else {
+			err = STRING_INCORRECT_LEN_FOR_NUMTYPE;
+			goto done;
+		}
+
 	}
 	
 	dimensionSizes[0] = numElements;
-	
-	strcpy(waveName, "W_stringToWave");
-	if(err = MDMakeWave(&waveH, waveName, NULL, dimensionSizes, dataType, 1))
-		goto done;
 
-	wp = (void*) WaveData(waveH);
+	if(err = GetOperationDestWave(dfH, destWaveName, destWaveRefIdentifier,
+										options, dimensionSizes, dataType, &destWaveH, &destWaveCreated))
+		goto done;
+	
+	wp = (void*) WaveData(destWaveH);
 
 	//copy over the data.
 	memcpy(wp, *(p->conv), GetHandleSize(p->conv));
@@ -132,7 +159,10 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p)
 	if((little_endian == p->EFlagEncountered) || (!little_endian == !p->EFlagEncountered))
 		FixByteOrder(wp, bytesPerPoint, numElements);
 					
-	WaveHandleModified(waveH);
+	if (destWaveRefIdentifier)
+	   SetOperationWaveRef(destWaveH, destWaveRefIdentifier);
+	
+	WaveHandleModified(destWaveH);
 
 done:
 
@@ -147,9 +177,9 @@ RegisterSOCKITstringtoWave(void)
 	char* runtimeStrVarList;
 
 	// NOTE: If you change this template, you must change the SOCKITstringtoWaveRuntimeParams structure as well.
-	cmdTemplate = "SOCKITstringtoWave/E number:num,string:conv";
+	cmdTemplate = "SOCKITstringtoWave/E/DEST=DataFolderAndName:{dest,real}/FREE number:num,string:conv";
 	runtimeNumVarList = "";
 	runtimeStrVarList = "";
-	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITstringtoWaveRuntimeParams), (void*)ExecuteSOCKITstringtoWave, 0);
+	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITstringtoWaveRuntimeParams), (void*)ExecuteSOCKITstringtoWave, kOperationIsThreadSafe);
 };
 

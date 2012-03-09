@@ -25,6 +25,8 @@ struct SOCKITwaveToStringRuntimeParams {
 	// These are postamble fields that Igor sets.
 	int calledFromFunction;					// 1 if called from a user function, 0 otherwise.
 	int calledFromMacro;					// 1 if called from a macro, 0 otherwise.
+	UserFunctionThreadInfoPtr tp;
+	
 };
 typedef struct SOCKITwaveToStringRuntimeParams SOCKITwaveToStringRuntimeParams;
 typedef struct SOCKITwaveToStringRuntimeParams* SOCKITwaveToStringRuntimeParamsPtr;

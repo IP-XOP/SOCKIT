@@ -25,7 +25,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 	
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	extern WSADATA globalWsaData;
 #endif
 	
@@ -89,7 +89,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			goto done;
 		
 		
-#ifdef _MACINTOSH_
+#ifdef MACIGOR
 		//see if its a MAC path by seeing if there is the Mac delimiter : in there
 		if((isMAC = strstr(nativepath, ":")) && (err = HFSToPosixPath(nativepath, unixpath, 0)))
 			goto done;
@@ -179,7 +179,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	FD_SET(sockNum, &tempset);
 	
 	/* Connect to server */
-#ifdef _MACINTOSH_
+#ifdef MACIGOR
 	fdflags = fcntl(sockNum, F_GETFL, 0);
 	fdflags |= O_NONBLOCK;
 	fcntl(sockNum, F_SETFL, fdflags);
@@ -191,7 +191,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	setsockopt(sockNum, SOL_SOCKET, SO_NOSIGPIPE, (void *)&ignoreSIGPIPE, sizeof(int));
 #endif
 	
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	fdflags = 1;
 	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
 		XOPNotice("SOCKITerr: IOCTL failed \r");
@@ -219,13 +219,13 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	}
 
 //reset to blocking
-#ifdef _MACINTOSH_
+#ifdef MACIGOR
 	fdflags = fcntl(sockNum, F_GETFL, 0);
 	fdflags &= ~(O_NONBLOCK);
 	res = fcntl(sockNum, F_SETFL, fdflags);
 #endif
 	
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	fdflags = 0;
 	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
 		XOPNotice("SOCKITerr: IOCTL failed \r");
@@ -312,7 +312,7 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	
 	p->retval=-1;
 	
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	extern WSADATA globalWsaData;
 #endif
 	
@@ -371,7 +371,7 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	FD_SET(sockNum, &tempset);
 	
 	/* Connect to server */
-#ifdef _MACINTOSH_
+#ifdef MACIGOR
 	fdflags = fcntl(sockNum, F_GETFL, 0);
 	fdflags |= O_NONBLOCK;
 	fcntl(sockNum, F_SETFL, fdflags);
@@ -383,7 +383,7 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	setsockopt(sockNum, SOL_SOCKET, SO_NOSIGPIPE, (void *)&ignoreSIGPIPE, sizeof(int));
 #endif
 	
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	fdflags = 1;
 	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags))
 		goto done;
@@ -403,13 +403,13 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	}
 	
 	//reset to blocking
-#ifdef _MACINTOSH_
+#ifdef MACIGOR
 	fdflags = fcntl(sockNum, F_GETFL, 0);
 	fdflags &= ~(O_NONBLOCK);
 	res = fcntl(sockNum, F_SETFL, fdflags);
 #endif
 	
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 	fdflags = 0;
 	if(err2 = ioctlsocket(sockNum, FIONBIO, &fdflags)){
 		XOPNotice("SOCKITerr: IOCTL failed \r");

@@ -58,11 +58,11 @@ static int ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParamsPtr p);
 
 #pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITsendnrecvFStruct {
-	DOUBLE TIME;
-	DOUBLE SMAL;
+	double TIME;
+	double SMAL;
 	Handle message;
-	DOUBLE sockID;
-	void* tp;
+	double sockID;
+	UserFunctionThreadInfoPtr tp;
 	Handle retval;
 }SOCKITsendnrecvFStruct, *SOCKITsendnrecvFStructPtr;
 #pragma pack()

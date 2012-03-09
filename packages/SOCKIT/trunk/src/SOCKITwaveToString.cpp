@@ -8,7 +8,7 @@
 #include <sstream>
 
 #define NUMCHARS 50
-#ifdef _WINDOWS_
+#ifdef WINIGOR
 #define snprintf sprintf_s
 #endif
 
@@ -20,12 +20,15 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	int err = 0;
 	int dataType;
 	int bytesPerPoint, dataFormat, isComplex;
-	unsigned long szString;
-	long numElements;
+	size_t szString;
+	CountInt numElements;
 	void *wp;
 	Handle textDataP = NULL;
 	
 	string chunk;
+	
+	if(igorVersion < 620 && !RunningInMainThread())
+		return NOT_IN_THREADSAFE;
 	
 	// Main parameters.
 	if (p->wavEncountered) {
@@ -67,7 +70,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 			string output;
 			listsep = string(*(p->TXTFlagStrH), GetHandleSize(p->TXTFlagStrH));
 
-			for(long ii = 0 ; ii < numElements ; ii++){
+			for(CountInt ii = 0 ; ii < numElements ; ii++){
 				output.append(*textDataP + pTableOffset[ii], pTableOffset[ii + 1] - pTableOffset[ii]);
 				output.append(listsep);
 			}
@@ -114,7 +117,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 			
 		} else {
 			//TXT flag makes a text representation of the wave
-			long ii;
+			CountInt ii;
 			stringstream oss;
 			string listsep = string(" ");
 			if(p->TXTFlagParamsSet[0] && p->TXTFlagStrH)
@@ -176,5 +179,5 @@ RegisterSOCKITwaveToString(void)
 	cmdTemplate = "SOCKITwaveToString/E/TXT[=string] wave:wav, varname:str";
 	runtimeNumVarList = "";
 	runtimeStrVarList = "";
-	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITwaveToStringRuntimeParams), (void*)ExecuteSOCKITwaveToString, 0);
+	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITwaveToStringRuntimeParams), (void*)ExecuteSOCKITwaveToString, kOperationIsThreadSafe);
 }
