@@ -358,14 +358,26 @@ int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo){
 
 int CurrentConnections::checkIfWaveInUseAsBuf(waveHndl wav){
 	int inUse = 0;
-	int ii;
+//	int ii;
+	
+	vector<SOCKET> openSockets;
+	vector<SOCKET>::iterator iter;
+	
+	if(bufferWaves.empty())
+		return 0;
+	
+	getListOfOpenSockets(openSockets);
+	
+    for( iter = openSockets.begin(); iter != openSockets.end(); iter++ )
+		if(bufferWaves[*iter].bufferWave == wav)
+			return 1;
 		
-	for (ii=0; ii< maxSockNumber+1 ; ii+=1){
-		if (FD_ISSET(ii, &(readSet))) { 
-			if(bufferWaves[ii].bufferWave == wav)
-				return 1;
-		} 
-	}
+//	for (ii=0; ii< maxSockNumber+1 ; ii+=1){
+//		if (FD_ISSET(ii, &(readSet))) { 
+//			if(bufferWaves[ii].bufferWave == wav)
+//				return 1;
+//		} 
+//	}
 	
 	return inUse;
 }
