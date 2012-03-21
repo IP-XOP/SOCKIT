@@ -263,6 +263,7 @@ CurrentConnections::CurrentConnections(){
 	quitReadThreadFlag = false;
 	bufferWaves.clear();
 	totalSocketsOpened = 0;
+	usingProcessor = false;
 };
 
 CurrentConnections::~CurrentConnections(){
@@ -673,11 +674,14 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	if(useProcessor && strlen(wbi->processor)){
 		MemClear(indices, sizeof(indices)); 
 		indices[1] = 0;
-
+				
 		for(ii = originalInsertPoint ; ii < numTokens + originalInsertPoint ; ii++){
 			if(checkProcessor(sockNum,  &fi)){
 				XOPNotice("SOCKIT error: processor must be f(textWave,variable)\r");
 			} else {
+				//say that we are calling the processor
+				usingProcessor = true;
+
 				callProcessor.entryRow = ii;
 				callProcessor.bufferWave = wav;
 				if(err = CallFunction(&fi, &callProcessor, &result))
@@ -761,6 +765,9 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	}
 	
 done:
+	//we are no longer calling the processor
+	usingProcessor = false;
+	
 	if(err){
 		snprintf(report, sizeof(char) * MAX_MSG_LEN, "Oh dear - ERROR NUMBER IS %d: ERRNO is: %d", err, errno);
 		XOPNotice(report);
