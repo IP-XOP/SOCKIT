@@ -408,7 +408,7 @@ done:
 int CurrentConnections::isSockitOpen(double query,SOCKET *sockNum){
 	int retval=0;
 	*sockNum = (SOCKET)-1;
-	long intVal;
+	SOCKET intVal;
 	map<SOCKET, waveBufferInfo>::iterator iter;
 	
 	if(IsNaN64(&query))
