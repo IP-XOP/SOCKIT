@@ -175,6 +175,11 @@ class CurrentConnections{
 	void quitReadThread();
 	
 	/**
+	 says if you are currently using the processor
+	 */
+	bool usingProcessor;
+	
+	/**
 	*Get the flag status to see if you want to quit the reader thread.
 	*/		
 	bool quitReadThreadStatus();
@@ -251,7 +256,7 @@ class CurrentConnections{
 
 	};
 
-	extern CurrentConnections *pinstance;
+extern CurrentConnections *pinstance;
 extern pthread_t *readThread;
 extern pthread_mutex_t readThreadMutex;
 extern bool SHOULD_IDLE_SKIP;

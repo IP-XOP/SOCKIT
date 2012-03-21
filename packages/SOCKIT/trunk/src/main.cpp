@@ -164,14 +164,21 @@ XOPEntry(void)
 			//if we're going to tell it to write to buffer, then you can't get rid of the buffer.
 			wav = (waveHndl) GetXOPItem(0);
 			
-			if(!pthread_mutex_trylock( &readThreadMutex )){
+			//it's conceivable that you could be in the processor and try to kill a buffer wave
+			//the processor is ultimately called from the IDLE function, which is secured with a mutex.
+			//thus, it's safe to do this check, as it can't change state.
+
+			if(pinstance->usingProcessor){
 				if(pinstance->checkIfWaveInUseAsBuf(wav))
 					result = WAVE_IN_USE;
-				pthread_mutex_unlock( &readThreadMutex );
 			} else {
-				result = WAVE_IN_USE;
-			}
-	
+				pthread_mutex_lock( &readThreadMutex );
+				if(pinstance->checkIfWaveInUseAsBuf(wav))
+					result = WAVE_IN_USE;
+				
+				pthread_mutex_unlock( &readThreadMutex );
+			} 
+			
 			break;
 		case FUNCADDRS:
 			if(pinstance)
