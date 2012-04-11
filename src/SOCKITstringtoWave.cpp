@@ -3,6 +3,7 @@
 #include "SOCKITstringtoWave.h"
 #include "SwapEndian.h"
 #include "defines.h"
+#include "StringTokenizer.h"
 
 static int
 ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
@@ -21,6 +22,10 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	CountInt dimensionSizes[MAX_DIMENSIONS+1];
 	int options;
 	int destWaveCreated;
+	
+	size_t szTotalTokens;
+	vector<string> tokens;
+	vector<string>::iterator tokens_iter;
 	
 	if(igorVersion < 620 && !RunningInMainThread())
 		return NOT_IN_THREADSAFE;
@@ -67,12 +72,34 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	szString = GetHandleSize(p->conv);
 	dataType = (int)(p->num);
 
-	if(err = NumTypeToNumBytesAndFormat(dataType, 
-							   &bytesPerPoint,
-							   &dataFormat,
-							   &isComplex))
-		goto done;
-	
+	/* you want to put a string into a textwave, this is going to be done via a tokenizer*/
+	if(dataType == 0){
+		dataType = TEXT_WAVE_TYPE;
+		/* now tokenize */
+		Tokenize((const unsigned char *) *(p->conv), GetHandleSize(p->conv), tokens, &szTotalTokens, " ", 1);
+		numElements = tokens.size();
+		
+	} else {
+		if(err = NumTypeToNumBytesAndFormat(dataType, 
+								   &bytesPerPoint,
+								   &dataFormat,
+								   &isComplex))
+			goto done;
+
+		numElements = (CountInt)(szString / bytesPerPoint);
+		if(isComplex)
+			numElements /= 2;
+
+		if(numElements * bytesPerPoint != szString){
+			if(isComplex && numElements * bytesPerPoint * 2 == szString){
+				//it was complex, do nothing
+			} else {
+				err = STRING_INCORRECT_LEN_FOR_NUMTYPE;
+				goto done;
+			}
+			
+		}		
+	}
 /*	switch(waveType){
 		case 2:	//NT_FP32
 			bytesPerPoint = 4;
@@ -128,20 +155,6 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 			break;
 	}*/
 
-	numElements = (CountInt)(szString / bytesPerPoint);
-	if(isComplex)
-		numElements /= 2;
-	
-	
-	if(numElements * bytesPerPoint != szString){
-		if(isComplex && numElements * bytesPerPoint * 2 == szString){
-			//it was complex, do nothing
-		} else {
-			err = STRING_INCORRECT_LEN_FOR_NUMTYPE;
-			goto done;
-		}
-
-	}
 	
 	dimensionSizes[0] = numElements;
 
@@ -149,16 +162,20 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 										options, dimensionSizes, dataType, &destWaveH, &destWaveCreated))
 		goto done;
 	
-	wp = (void*) WaveData(destWaveH);
+	if(dataType == 0){
+		
+	} else {
+		wp = (void*) WaveData(destWaveH);
 
-	//copy over the data.
-	memcpy(wp, *(p->conv), GetHandleSize(p->conv));
-	
-	//E says you expect the data to be big Endian
-	//need to byte swap
-	if((little_endian == p->EFlagEncountered) || (!little_endian == !p->EFlagEncountered))
-		FixByteOrder(wp, bytesPerPoint, numElements);
-					
+		//copy over the data.
+		memcpy(wp, *(p->conv), GetHandleSize(p->conv));
+		
+		//E says you expect the data to be big Endian
+		//need to byte swap
+		if((little_endian == p->EFlagEncountered) || (!little_endian == !p->EFlagEncountered))
+			FixByteOrder(wp, bytesPerPoint, numElements);
+	}
+
 	if (destWaveRefIdentifier)
 	   SetOperationWaveRef(destWaveH, destWaveRefIdentifier);
 	
