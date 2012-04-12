@@ -511,8 +511,8 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	
 	Handle wavDataH = NULL;
 	
-	long *pTableOffset;
-	long *pTempL, *pTempL2;
+	IndexInt *pTableOffset;
+	IndexInt *pTempL, *pTempL2;
 	char *pTempC, *pTempC2;
 	long sizemove = 0;
 	
@@ -619,7 +619,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	//**
 	//in IGOR32 the offsets are 32bit.  In IGOR64 they are 64 bit
 	//**
-	pTableOffset = (long*)*wavDataH;
+	pTableOffset = (PSInt*) *wavDataH;
 				  
 	//move the existing data after the point you are about to insert into.
 	sizemove = pTableOffset[2 * originalInsertPoint + numTokens] - pTableOffset[originalInsertPoint + numTokens];

@@ -17,6 +17,11 @@ struct SOCKITstringtoWaveRuntimeParams {
 	int FREEFlagEncountered;
 	// There are no fields for this group because it has no parameters.
 	
+	// Parameters for /TOK flag group.
+	int TOKFlagEncountered;
+	Handle TOKFlagStrH;
+	int TOKFlagParamsSet[1];
+	
 	// Main parameters.
 	
 	// Parameters for simple main group #0.

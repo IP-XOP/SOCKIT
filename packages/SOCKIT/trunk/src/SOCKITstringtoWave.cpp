@@ -26,6 +26,11 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	size_t szTotalTokens;
 	vector<string> tokens;
 	vector<string>::iterator tokens_iter;
+	Handle textDataH = NULL;
+	char* delim = NULL;
+	char *defaultdelimiter = ";";
+	size_t delimeterSize = 1;
+	
 	
 	if(igorVersion < 620 && !RunningInMainThread())
 		return NOT_IN_THREADSAFE;
@@ -75,10 +80,18 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	/* you want to put a string into a textwave, this is going to be done via a tokenizer*/
 	if(dataType == 0){
 		dataType = TEXT_WAVE_TYPE;
-		/* now tokenize */
-		Tokenize((const unsigned char *) *(p->conv), GetHandleSize(p->conv), tokens, &szTotalTokens, " ", 1);
-		numElements = tokens.size();
 		
+		if(p->TOKFlagEncountered && p->TOKFlagStrH){
+			delim = *(p->TOKFlagStrH);
+			delimeterSize = GetHandleSize(p->TOKFlagStrH);
+		} else {
+			delim = defaultdelimiter;
+			delimeterSize = 1;
+		}
+				   
+		/* now tokenize */
+		Tokenize((const unsigned char *) *(p->conv), GetHandleSize(p->conv), tokens, &szTotalTokens, delim, delimeterSize);
+		numElements = tokens.size();
 	} else {
 		if(err = NumTypeToNumBytesAndFormat(dataType, 
 								   &bytesPerPoint,
@@ -162,7 +175,38 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 										options, dimensionSizes, dataType, &destWaveH, &destWaveCreated))
 		goto done;
 	
+	if(numElements == 0)
+		goto done;
+	
 	if(dataType == 0){
+		IndexInt *pTableOffset;
+		char *pTextData;
+		CountInt ii;
+		BCInt tokenlength;
+		
+		if(err = GetTextWaveData(destWaveH, 2, &textDataH))
+			goto done;
+		
+		//resize the handle
+		SetHandleSize(textDataH, szTotalTokens);
+		if(err = MemError())
+			goto done;
+		
+		//point to table of offsets
+		pTableOffset = (PSInt*)*textDataH;					// Pointer to table of offsets if mode==1 or mode==2
+		//pointer to start of data
+		pTextData = *textDataH + (numElements + 1) * sizeof(PSInt);
+		
+		//now set the offsets
+		for(tokens_iter = tokens.begin(), ii = 0 ; tokens_iter != tokens.end() ; tokens_iter++, ii++){
+			tokenlength = (*tokens_iter).length();
+			pTableOffset[ii + 1] = pTableOffset[ii] + tokenlength;
+			memcpy(pTextData, (*tokens_iter).data(), tokenlength);
+			pTextData += tokenlength;
+		}
+		
+		if(err = SetTextWaveData(destWaveH, 2, textDataH))
+			goto done;
 		
 	} else {
 		wp = (void*) WaveData(destWaveH);
@@ -182,7 +226,9 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	WaveHandleModified(destWaveH);
 
 done:
-
+	if(textDataH)
+		DisposeHandle(textDataH);
+	
 	return err;
 }
 
@@ -194,7 +240,7 @@ RegisterSOCKITstringtoWave(void)
 	char* runtimeStrVarList;
 
 	// NOTE: If you change this template, you must change the SOCKITstringtoWaveRuntimeParams structure as well.
-	cmdTemplate = "SOCKITstringtoWave/E/DEST=DataFolderAndName:{dest,real}/FREE number:num,string:conv";
+	cmdTemplate = "SOCKITstringtoWave/E/DEST=DataFolderAndName:{dest,real}/FREE/TOK=string number:num,string:conv";
 	runtimeNumVarList = "";
 	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITstringtoWaveRuntimeParams), (void*)ExecuteSOCKITstringtoWave, kOperationIsThreadSafe);
