@@ -113,7 +113,7 @@ void *readerThread(void *){
 						timeout.tv_sec = 0;
 						timeout.tv_usec =  0;
 						FD_SET(*iter, &tempset2);
-						res = select((*iter) + 1, &tempset2, 0, 0, &timeout);
+						res = select((int)(*iter) + 1, &tempset2, 0, 0, &timeout);
 						
 					} while (res > 0 && rc > 0 && wbi->toClose == false);					
 				}
@@ -514,7 +514,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	IndexInt *pTableOffset;
 	IndexInt *pTempL, *pTempL2;
 	char *pTempC, *pTempC2;
-	long sizemove = 0;
+	IndexInt sizemove = 0;
 	
 	vector<string> tokens;
 	vector<string>::iterator tokens_iter;
@@ -719,7 +719,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		//have to deletepoints
 		CountInt numtoDelete = dimensionSizes[0] - BUFFER_TO_KEEP;
 		unsigned long szOffSetsRequired = (BUFFER_TO_KEEP * 2 + 1) * sizeof(long);	
-		vector<unsigned long> offsets;
+		vector<IndexInt> offsets;
 		CountInt off2col;
 		
 		if(err = GetTextWaveData(wav, 2, &wavDataH))
@@ -727,7 +727,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		
 		
 		//original table offset
-		pTableOffset = (long*)*wavDataH;
+		pTableOffset = (PSInt*)*wavDataH;
 		pTempC = *wavDataH + pTableOffset[0];
 
 		//work out the offsets to the data we want to keep		
