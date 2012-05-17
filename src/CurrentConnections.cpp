@@ -694,74 +694,13 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	
 	if (err = MDGetWaveDimensions(wav, &numDimensions, dimensionSizes))
 		goto done;
-
-//	if(dimensionSizes[0] > BUFFER_WAVE_LEN){	
-//		//have to deletepoints
-//		if(err = GetWavesDataFolder(wav, &dfH))
-//			goto done;
-//		
-//		if(err = GetDataFolderNameOrPath(dfH, 1, pathName))
-//			goto done;
-//
-//		WaveName(wav, waveName);
-//		snprintf(cmd, sizeof(char) * MAXCMDLEN , "Deletepoints 0, %d, %s%s", dimensionSizes[0] - 2700, pathName,waveName);
-//		
-//		if(err = XOPSilentCommand(cmd)){
-//			err = 9;
-//			goto done;
-//		}
-//	}
-
  	
 	
 	//lets delete some points
 	if(dimensionSizes[0] > BUFFER_WAVE_LEN){
-		//have to deletepoints
-		CountInt numtoDelete = dimensionSizes[0] - BUFFER_TO_KEEP;
-		unsigned long szOffSetsRequired = (BUFFER_TO_KEEP * 2 + 1) * sizeof(long);	
-		vector<IndexInt> offsets;
-		CountInt off2col;
-		
-		if(err = GetTextWaveData(wav, 2, &wavDataH))
-			goto done;
-		
-		
-		//original table offset
-		pTableOffset = (PSInt*)*wavDataH;
-		pTempC = *wavDataH + pTableOffset[0];
-
-		//work out the offsets to the data we want to keep		
-		pTempC = *wavDataH + pTableOffset[numtoDelete];
-		pTempC2 = *wavDataH + pTableOffset[numtoDelete + dimensionSizes[0]];
-		
-		//do the offsets for the shortenedfirst col
-		offsets.push_back(szOffSetsRequired);
-		for(ii = 0 ; ii < BUFFER_TO_KEEP ; ii++)
-			offsets.push_back(pTableOffset[numtoDelete + ii + 1] - pTableOffset[numtoDelete + ii] + offsets[ii]);
-		
-		//offsets for the second col
-		off2col = dimensionSizes[0] + numtoDelete;
-		for(ii = 0 ; ii < BUFFER_TO_KEEP ; ii++)
-			offsets.push_back(pTableOffset[off2col + ii + 1] - pTableOffset[off2col + ii] + offsets[BUFFER_TO_KEEP + ii]);
-
-		//copy the offsets in.
-		memcpy(pTableOffset, &(offsets[0]), sizeof(long) * offsets.size());
-		
-		//now move the first and second blocks.
-		memmove(*wavDataH + pTableOffset[0], pTempC, pTableOffset[BUFFER_TO_KEEP] - pTableOffset[0]);
-		memmove(*wavDataH + pTableOffset[BUFFER_TO_KEEP], pTempC2, pTableOffset[(2 * BUFFER_TO_KEEP)] - pTableOffset[BUFFER_TO_KEEP]);
-		
-		SetHandleSize(wavDataH, szOffSetsRequired + pTableOffset[(2 * BUFFER_TO_KEEP)] - pTableOffset[0]);
-		if(err = MemError())
-			goto done;
-		
 		dimensionSizes[0] = BUFFER_TO_KEEP;
-		dimensionSizes[1] = 2;
-		if(err = MDChangeWave(wav, -1, dimensionSizes))
+ 		if(err = MDChangeWave2(wav, -1, dimensionSizes, 0))
 			goto done;
-		if(err = SetTextWaveData(wav, 2, wavDataH))
-			goto done;
-		WaveHandleModified(wav);
 	}
 	
 done:
