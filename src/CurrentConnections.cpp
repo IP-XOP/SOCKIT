@@ -513,10 +513,11 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	
 	IndexInt *pTableOffset;
 	IndexInt *pTempL, *pTempL2;
-	char *pTempC, *pTempC2;
+	char *pTempC;
 	IndexInt sizemove = 0;
 	
 	vector<string> tokens;
+	vector<PSInt> tokenSizes;
 	vector<string>::iterator tokens_iter;
 	size_t szTotalTokens;
 	unsigned long token_length;
@@ -550,7 +551,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	}
 
 	if(bufferWaves[sockNum].sztokenizer)
-		Tokenize(writebuffer, szwritebuffer, tokens, &szTotalTokens, bufferWaves[sockNum].tokenizer,bufferWaves[sockNum].sztokenizer);
+		Tokenize(writebuffer, szwritebuffer, tokens, tokenSizes, &szTotalTokens, bufferWaves[sockNum].tokenizer,bufferWaves[sockNum].sztokenizer);
 	else {
 		tokens.push_back(string((const char*) writebuffer, szwritebuffer));
 		szTotalTokens = szwritebuffer;

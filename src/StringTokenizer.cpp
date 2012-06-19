@@ -2,7 +2,7 @@
 #include "StringTokenizer.h"
 
 
-void Tokenize(const unsigned char* STR, size_t szStr, vector<string> &tokens, size_t *szTotalTokens, const char* DELIMITERS, int szDELIMITERS)
+void Tokenize(const unsigned char* STR, size_t szStr, vector<string> &tokens, vector<PSInt> &tokenSizes, size_t *szTotalTokens, const char* DELIMITERS, int szDELIMITERS)
 {
     // Skip delimiters at beginning.
 	string str((const char*)STR, szStr);
@@ -10,6 +10,9 @@ void Tokenize(const unsigned char* STR, size_t szStr, vector<string> &tokens, si
 	string delimiters(DELIMITERS,szDELIMITERS);		//WARNING, DELIMITERS ISNT NULL TERMINATED
 		
 	*szTotalTokens = 0;
+	
+	tokens.clear();
+	tokenSizes.clear();
 	
 	string::size_type lastPos = str.find_first_not_of(delimiters, 0);
 	// Find first "non-delimiter".
@@ -20,6 +23,7 @@ void Tokenize(const unsigned char* STR, size_t szStr, vector<string> &tokens, si
 		temp = str.substr(lastPos, pos - lastPos);
 		// Found a token, add it to the vector.
 		tokens.push_back(temp);
+		tokenSizes.push_back(temp.length());
 		*szTotalTokens += temp.length();
 		// Skip delimiters.  Note the "not_of"
 		lastPos = str.find_first_not_of(delimiters, pos);
