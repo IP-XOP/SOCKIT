@@ -4,6 +4,10 @@
 #include "SwapEndian.h"
 #include "defines.h"
 #include "StringTokenizer.h"
+#include <sstream>
+#include <iterator>
+
+using namespace std;
 
 static int
 ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
@@ -25,7 +29,9 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	
 	size_t szTotalTokens;
 	vector<string> tokens;
+	vector<PSInt> tokenSizes;
 	vector<string>::iterator tokens_iter;
+	vector<PSInt>::iterator tokenSizes_iter;
 	Handle textDataH = NULL;
 	char* delim = NULL;
 	char *defaultdelimiter = ";";
@@ -90,7 +96,7 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 		}
 				   
 		/* now tokenize */
-		Tokenize((const unsigned char *) *(p->conv), GetHandleSize(p->conv), tokens, &szTotalTokens, delim, delimeterSize);
+		Tokenize((const unsigned char *) *(p->conv), GetHandleSize(p->conv), tokens, tokenSizes, &szTotalTokens, delim, delimeterSize);
 		numElements = tokens.size();
 	} else {
 		if(err = NumTypeToNumBytesAndFormat(dataType, 
@@ -182,13 +188,13 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 		IndexInt *pTableOffset;
 		char *pTextData;
 		CountInt ii;
-		BCInt tokenlength;
+		stringstream ss;
 		
 		if(err = GetTextWaveData(destWaveH, 2, &textDataH))
 			goto done;
 		
 		//resize the handle
-		SetHandleSize(textDataH, szTotalTokens);
+		SetHandleSize(textDataH, szTotalTokens + (numElements + 1) * sizeof(PSInt));
 		if(err = MemError())
 			goto done;
 		
@@ -196,14 +202,14 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 		pTableOffset = (PSInt*)*textDataH;					// Pointer to table of offsets if mode==1 or mode==2
 		//pointer to start of data
 		pTextData = *textDataH + (numElements + 1) * sizeof(PSInt);
+
+		std::copy(tokens.begin(), tokens.end(), ostream_iterator<string>(ss));
 		
+		memcpy(pTextData, ss.str().data(), szTotalTokens);
 		//now set the offsets
-		for(tokens_iter = tokens.begin(), ii = 0 ; tokens_iter != tokens.end() ; tokens_iter++, ii++){
-			tokenlength = (*tokens_iter).length();
-			pTableOffset[ii + 1] = pTableOffset[ii] + tokenlength;
-			memcpy(pTextData, (*tokens_iter).data(), tokenlength);
-			pTextData += tokenlength;
-		}
+		for(tokenSizes_iter = tokenSizes.begin(), ii = 0 ; tokenSizes_iter != tokenSizes.end() ; tokens_iter++, ii++)
+			pTableOffset[ii + 1] = pTableOffset[ii] + *tokenSizes_iter;
+
 		
 		if(err = SetTextWaveData(destWaveH, 2, textDataH))
 			goto done;
