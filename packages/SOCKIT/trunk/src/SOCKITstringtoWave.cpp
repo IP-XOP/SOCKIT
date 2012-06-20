@@ -4,8 +4,7 @@
 #include "SwapEndian.h"
 #include "defines.h"
 #include "StringTokenizer.h"
-#include <sstream>
-#include <iterator>
+#include "TextWaveAccess.h"
 
 using namespace std;
 
@@ -30,7 +29,6 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	size_t szTotalTokens;
 	vector<string> tokens;
 	vector<PSInt> tokenSizes;
-	vector<string>::iterator tokens_iter;
 	vector<PSInt>::iterator tokenSizes_iter;
 	Handle textDataH = NULL;
 	char* delim = NULL;
@@ -185,35 +183,8 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 		goto done;
 	
 	if(dataType == 0){
-		IndexInt *pTableOffset;
-		char *pTextData;
-		CountInt ii;
-		stringstream ss;
-		
-		if(err = GetTextWaveData(destWaveH, 2, &textDataH))
+		if(err = textWaveAccess(&destWaveH, tokens, tokenSizes, szTotalTokens))
 			goto done;
-		
-		//resize the handle
-		SetHandleSize(textDataH, szTotalTokens + (numElements + 1) * sizeof(PSInt));
-		if(err = MemError())
-			goto done;
-		
-		//point to table of offsets
-		pTableOffset = (PSInt*)*textDataH;					// Pointer to table of offsets if mode==1 or mode==2
-		//pointer to start of data
-		pTextData = *textDataH + (numElements + 1) * sizeof(PSInt);
-
-		std::copy(tokens.begin(), tokens.end(), ostream_iterator<string>(ss));
-		
-		memcpy(pTextData, ss.str().data(), szTotalTokens);
-		//now set the offsets
-		for(tokenSizes_iter = tokenSizes.begin(), ii = 0 ; tokenSizes_iter != tokenSizes.end() ; tokens_iter++, ii++)
-			pTableOffset[ii + 1] = pTableOffset[ii] + *tokenSizes_iter;
-
-		
-		if(err = SetTextWaveData(destWaveH, 2, textDataH))
-			goto done;
-		
 	} else {
 		wp = (void*) WaveData(destWaveH);
 
