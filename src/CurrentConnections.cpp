@@ -13,6 +13,9 @@
 #include <vector>
 #include <string.h>
 #include <ctime>
+#include <sstream>
+#include <iterator>
+
 
 using namespace std;
 
@@ -519,6 +522,8 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	vector<string> tokens;
 	vector<PSInt> tokenSizes;
 	vector<string>::iterator tokens_iter;
+	stringstream ss;
+
 	size_t szTotalTokens;
 	unsigned long token_length;
 	unsigned long numTokens;
@@ -630,22 +635,22 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	//fill out the offsets for the data you shifted, this is _all_ the second column
 	pTempL = pTableOffset + originalInsertPoint + numTokens;
 	
-	for(ii = 0 ; ii < dimensionSizes[0] + 1; ii++, pTempL++){
+	for(ii = 0 ; ii < dimensionSizes[0] + 1; ii++, pTempL++)
 		//the offsets to each of the old data points AFTER the insert point increases by a constant amount
 		*pTempL += (long) szTotalTokens;
-	}
 				  
 	//insert the data, fill out the END offsets for the new data and copy in the timestamps.
 	pTempL = pTableOffset + originalInsertPoint;
 	pTempL2 = pTableOffset + (2 * originalInsertPoint + numTokens);
 	pTempC = *wavDataH + pTableOffset[originalInsertPoint];
 
+	//join all the tokens in a single string stream.
+	//and then insert them into the text wave
+	std::copy(tokens.begin(), tokens.end(), ostream_iterator<string>(ss));
+	memcpy(pTempC, ss.str().data(), (size_t) szTotalTokens);
+	
 	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, pTempL++, pTempL2++){
 		token_length = (unsigned long) (*tokens_iter).length();
-		//insert the data
-		memcpy(pTempC, (*tokens_iter).data() , (size_t)token_length);
-		pTempC += token_length;
-		
 		//offset to the END each of the new data points		
 		*(pTempL + 1) = (*pTempL) + token_length;
 		
