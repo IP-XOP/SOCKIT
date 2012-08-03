@@ -100,8 +100,8 @@ int SOCKITinfo(SOCKITinfoStruct *p){
 	chunk.append(report, strlen(report));
 	
 	//append the bufferwave info
-	if(wbi->bufferWave){
-		if(err = GetWavesDataFolder(wbi->bufferWave, &dfh))
+	if(wbi->bufferWaveRef){
+		if(err = GetWavesDataFolder(wbi->bufferWaveRef, &dfh))
 			goto done;
 		
 		if(err = GetDataFolderNameOrPath(dfh, 1, datafoldername))
@@ -110,7 +110,7 @@ int SOCKITinfo(SOCKITinfoStruct *p){
 		snprintf(report, szReport, "BUFFERWAVE-%s", datafoldername);
 		chunk.append(report, strlen(report));
 		
-		WaveName(wbi->bufferWave, bufwavename);
+		WaveName(wbi->bufferWaveRef, bufwavename);
 		snprintf(report, szReport, "%s;", bufwavename);
 		chunk.append(report, strlen(report));
 	}
