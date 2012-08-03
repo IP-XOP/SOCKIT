@@ -137,7 +137,6 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			err = EXPECTED_TEXT_WAVE;
 			goto done;
 		}
-		bufferInfo->bufferWave = p->BUFWaveH;
 	}
 	
 	if(p->IPEncountered){
@@ -262,7 +261,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 
 		bufferInfo->sockNum = sockNum;
 		
-		if(err = pinstance->addWorker(sockNum, *bufferInfo))
+		if(err = pinstance->addWorker(sockNum, *bufferInfo, p->BUFWaveH))
 			goto done;
 		
 		if (p->PROCFlagEncountered) {
@@ -443,7 +442,7 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	//socket succeeded in connecting, add to the map containing all the open connections, connect a processor
 	if(sockNum > 0){
 		bufferInfo->sockNum = sockNum;
-		if(err = pinstance->addWorker(sockNum, *bufferInfo)){
+		if(err = pinstance->addWorker(sockNum, *bufferInfo, NULL)){
 			err = SOCKET_ALLOC_FAILED;
 			goto done;
 		}

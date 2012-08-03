@@ -27,7 +27,7 @@ void GetTimeStamp(char timestamp[101]);
 
 class waveBufferInfo {
 	public:
-	waveHndl bufferWave;				/**<stores output from the socket. */ 
+	waveHndl bufferWaveRef;				/**<stores output from the socket. */ 
 	bool toPrint;						/**<if set to true then incoming messages from the socket are printed in the history area.*/
 	char processor[MAX_OBJ_NAME+1];		/**<the name of an IGOR function that is notified when messages are received*/
 	char tokenizer[31];					/**<the output from the socket is tokenized using the characters in this array*/
@@ -46,7 +46,7 @@ class waveBufferInfo {
 	waveBufferInfo(){
 		sockNum = 0;
 		memset(port, 0, sizeof(char) * (PORTLEN + 1));
-		bufferWave = NULL;
+		bufferWaveRef = NULL;
 		toPrint = true;
 		memset(processor, 0 , sizeof(char) * (MAX_OBJ_NAME + 1));
 		memset(tokenizer,0, sizeof(char) * 31);
@@ -60,7 +60,11 @@ class waveBufferInfo {
 	};
 	
 	~waveBufferInfo(){
-		bufferWave = NULL;
+		if(bufferWaveRef){
+			ReleaseWave(&bufferWaveRef);
+			bufferWaveRef = NULL;
+		}
+		
 		readBuffer.clear();
 		if(logFile){
 			if(logFile->is_open())
@@ -134,9 +138,10 @@ class CurrentConnections{
 	*Adds an open socket to the CurrentConnections object.
 	*@param sockNum The socket descriptor that has just been opened.
 	*@param bufferInfo Information on what to do with incoming messages.
+	*@param bufWaveH The text wave designated to act as a buffer for the incoming messages.
 	*@see waveBufferInfo
 	*/	
-	int addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo);
+	int addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo, waveHndl bufWaveH);
 
 	/**
 	*Reports to IGOR whether the wave is in use.  IGOR sends the OBJINUSE message to the XOP.  Here we check

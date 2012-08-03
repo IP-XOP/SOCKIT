@@ -161,6 +161,7 @@ XOPEntry(void)
 #endif
 			break;
 		case OBJINUSE:
+/*	SHOULDNT BE NEEDED ANY MORE, we are now using HoldWave to increment the reference count.
 			//if we're going to tell it to write to buffer, then you can't get rid of the buffer.
 			wav = (waveHndl) GetXOPItem(0);
 			
@@ -178,7 +179,7 @@ XOPEntry(void)
 				
 				pthread_mutex_unlock( &readThreadMutex );
 			} 
-			
+*/			
 			break;
 		case FUNCADDRS:
 			if(pinstance)

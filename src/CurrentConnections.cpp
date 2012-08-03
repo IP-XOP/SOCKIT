@@ -339,7 +339,7 @@ int CurrentConnections::closeWorker(SOCKET sockNum){
 	return err;
 }
 
-int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo){
+int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo, waveHndl bufWavH){
 	int err = 0;
 	waveBufferInfo *wbi;
 	
@@ -352,6 +352,8 @@ int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo){
 	wbi = getWaveBufferInfo(sockNum);
 	
 	totalSocketsOpened += 1;
+	if(bufWavH)
+		HoldWave(bufWavH, &wbi->bufferWaveRef);
 	
 	wbi->log_msg("OPEN", -2);
 	
@@ -373,7 +375,7 @@ int CurrentConnections::checkIfWaveInUseAsBuf(waveHndl wav){
 	getListOfOpenSockets(openSockets);
 	
     for( iter = openSockets.begin(); iter != openSockets.end(); iter++ )
-		if(bufferWaves[*iter].bufferWave == wav)
+		if(bufferWaves[*iter].bufferWaveRef == wav)
 			return 1;
 		
 //	for (ii=0; ii< maxSockNumber+1 ; ii+=1){
@@ -548,7 +550,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 		goto done;
 	}
 	
-	wav = wbi->bufferWave;
+	wav = wbi->bufferWaveRef;
 	
 	if(!wav){
 		err = NO_WAVE_BUFFER_INFO;
