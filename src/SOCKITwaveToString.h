@@ -12,7 +12,6 @@ struct SOCKITwaveToStringRuntimeParams {
 	
 	// Main parameters.
 
-	// Parameters for BUF keyword group.
 	int wavEncountered;
 	waveHndl wavWaveH;
 	int wavParamsSet[1];	// Parameters for simple main group #0.
