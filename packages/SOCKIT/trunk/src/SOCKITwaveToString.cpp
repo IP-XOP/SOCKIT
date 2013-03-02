@@ -37,7 +37,10 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 			err = EXPECTED_NUMERIC_WAVE;
 			goto done;
 		}
-	}
+	} else {
+        err = EXPECTED_WAVE_REF;
+        goto done;
+    }
 	
 	if (p->strEncountered) {
 		if (p->strParamsSet[0]) {
@@ -51,6 +54,10 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 			}
 		}
 	}
+    if(!p->wavWaveH){
+        err = EXPECTED_WAVE_REF;
+        goto done;
+    }
 
 	numElements = WavePoints(p->wavWaveH);
 	dataType = WaveType(p->wavWaveH);
