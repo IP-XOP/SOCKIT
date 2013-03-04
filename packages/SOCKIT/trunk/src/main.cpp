@@ -126,7 +126,7 @@ XOPEntry(void)
 	extern pthread_t *readThread;
 	extern pthread_mutex_t readThreadMutex;
 	
-	waveHndl wav;
+//	waveHndl wav;
 	int _message = GetXOPMessage();
 
 	switch (_message) {
