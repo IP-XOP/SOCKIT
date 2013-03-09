@@ -3,6 +3,7 @@
 #include "SOCKITstringtoWave.h"
 #include "SwapEndian.h"
 #include "defines.h"
+#include <sstream>
 #include "StringTokenizer.h"
 #include "TextWaveAccess.h"
 
@@ -28,13 +29,12 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	
 	size_t szTotalTokens;
 	vector<string> tokens;
+    vector<string>::iterator token_iter;
 	vector<PSInt> tokenSizes;
-	vector<PSInt>::iterator tokenSizes_iter;
-	Handle textDataH = NULL;
+    
 	char* delim = NULL;
 	char *defaultdelimiter = ";";
-	size_t delimeterSize = 1;
-	
+	size_t delimeterSize = 1;	
 	
 	if(igorVersion < 620 && !RunningInMainThread())
 		return NOT_IN_THREADSAFE;
@@ -81,42 +81,50 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	szString = GetHandleSize(p->conv);
 	dataType = (int)(p->num);
 
-	/* you want to put a string into a textwave, this is going to be done via a tokenizer*/
-	if(dataType == 0){
-		dataType = TEXT_WAVE_TYPE;
-		
-		if(p->TOKFlagEncountered && p->TOKFlagStrH){
-			delim = *(p->TOKFlagStrH);
-			delimeterSize = GetHandleSize(p->TOKFlagStrH);
-		} else {
-			delim = defaultdelimiter;
-			delimeterSize = 1;
-		}
-				   
-		/* now tokenize */
-		Tokenize((const unsigned char *) *(p->conv), GetHandleSize(p->conv), tokens, tokenSizes, &szTotalTokens, delim, delimeterSize);
-		numElements = tokens.size();
-	} else {
-		if(err = NumTypeToNumBytesAndFormat(dataType, 
-								   &bytesPerPoint,
-								   &dataFormat,
-								   &isComplex))
-			goto done;
+    if(p->TOKFlagEncountered || dataType == 0){
+        if(p->TOKFlagStrH){
+            delim = *(p->TOKFlagStrH);
+            delimeterSize = GetHandleSize(p->TOKFlagStrH);
+        } else {
+            delim = defaultdelimiter;
+            delimeterSize = 1;
+        }
+        /* now tokenize */
+        Tokenize((const unsigned char *) *(p->conv), GetHandleSize(p->conv), tokens, tokenSizes, &szTotalTokens, delim, delimeterSize);
+        numElements = tokens.size();
+    }
+    
+    switch(dataType){
+        case 0:
+            dataType = TEXT_WAVE_TYPE;
+            break;
+        default:
+            if(err = NumTypeToNumBytesAndFormat(dataType,
+                                                &bytesPerPoint,
+                                                &dataFormat,
+                                                &isComplex))
+                goto done;
+            
+            if(p->TOKFlagEncountered){
+                
+            } else {
+                numElements = (CountInt)(szString / bytesPerPoint);
+                if(numElements * bytesPerPoint != szString){
+                    if(isComplex && numElements * bytesPerPoint * 2 == szString){
+                        //it was complex, do nothing
+                    } else {
+                        err = STRING_INCORRECT_LEN_FOR_NUMTYPE;
+                        goto done;
+                    }
+                }
 
-		numElements = (CountInt)(szString / bytesPerPoint);
-		if(isComplex)
-			numElements /= 2;
-
-		if(numElements * bytesPerPoint != szString){
-			if(isComplex && numElements * bytesPerPoint * 2 == szString){
-				//it was complex, do nothing
-			} else {
-				err = STRING_INCORRECT_LEN_FOR_NUMTYPE;
-				goto done;
-			}
-			
-		}		
-	}
+            }
+            if(isComplex)
+                numElements /= 2;
+            
+            break;
+    }
+    
 /*	switch(waveType){
 		case 2:	//NT_FP32
 			bytesPerPoint = 4;
@@ -171,7 +179,6 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 			goto done;
 			break;
 	}*/
-
 	
 	dimensionSizes[0] = numElements;
 
@@ -182,20 +189,43 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	if(numElements == 0)
 		goto done;
 	
-	if(dataType == 0){
-		if(err = textWaveAccess(&destWaveH, tokens, tokenSizes, szTotalTokens))
-			goto done;
-	} else {
-		wp = (void*) WaveData(destWaveH);
-
-		//copy over the data.
-		memcpy(wp, *(p->conv), GetHandleSize(p->conv));
-		
-		//E says you expect the data to be big Endian
-		//need to byte swap
-		if((little_endian == p->EFlagEncountered) || (!little_endian == !p->EFlagEncountered))
-			FixByteOrder(wp, bytesPerPoint, numElements);
-	}
+    switch(dataType){
+        case TEXT_WAVE_TYPE:
+            if(err = textWaveAccess(&destWaveH, tokens, tokenSizes, szTotalTokens))
+                goto done;
+            break;
+        default:
+            wp = (void*) WaveData(destWaveH);
+            
+            if(!p->TOKFlagEncountered){
+                //copy over the data, straight
+                memcpy(wp, *(p->conv), GetHandleSize(p->conv));
+                
+                //E says you expect the data to be big Endian
+                //need to byte swap
+                if((little_endian == p->EFlagEncountered) || (!little_endian == !p->EFlagEncountered))
+                    FixByteOrder(wp, bytesPerPoint, numElements);
+            } else {
+                /*you tokenized input and you want it to be put into a numeric wave.
+                this is intended for e.g. csv strings 0, 1.0, 2.0, etc, to be put into
+                a numeric wave. 
+                 However, it's possible that the tokens don't make sense for numerical data types. 
+                 e.g. input was binary string. THe tokenization will still take place, but the output data
+                 will look stupid.
+                */
+                vector<double> tokensAsDbl;
+                double tokenAsDbl;
+                
+                for(token_iter = tokens.begin() ; token_iter != tokens.end() ; token_iter++){
+                    tokenAsDbl = strtod((*token_iter).c_str(), NULL);
+                    tokensAsDbl.push_back(tokenAsDbl);
+                }
+                //now put double array into wave.
+                if(err = MDStoreDPDataInNumericWave(destWaveH, &tokensAsDbl[0]))
+                    goto done;
+                
+            }
+    }
 
 	if (destWaveRefIdentifier)
 	   SetOperationWaveRef(destWaveH, destWaveRefIdentifier);
@@ -203,9 +233,6 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	WaveHandleModified(destWaveH);
 
 done:
-	if(textDataH)
-		DisposeHandle(textDataH);
-	
 	return err;
 }
 
