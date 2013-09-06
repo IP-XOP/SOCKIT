@@ -15,6 +15,14 @@
 #include <ctime>
 #include <sstream>
 #include <iterator>
+#include "TextWaveAccess.h"
+
+//#include <stdio.h>
+//#include <fcntl.h>
+//#include <stdlib.h>
+//#include <errno.h>
+
+
 
 
 using namespace std;
@@ -108,7 +116,7 @@ void *readerThread(void *){
 						charsread += rc;
 							
 						if (rc <= 0) {
-							wbi->toClose = true;
+                            wbi->toClose = true;
 						} else if(rc > 0)
 							wbi->readBuffer.append(buf, rc);
 
@@ -516,18 +524,12 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	
 	Handle wavDataH = NULL;
 	
-	IndexInt *pTableOffset;
-	IndexInt *pTempL, *pTempL2;
-	char *pTempC;
-	IndexInt sizemove = 0;
-	
-	vector<string> tokens;
+	vector<string> tokens, existingTokens;
 	vector<PSInt> tokenSizes;
-	vector<string>::iterator tokens_iter;
+	vector<string>::iterator tokens_iter, existingTokens_iter;
 	stringstream ss;
 
 	size_t szTotalTokens;
-	unsigned long token_length;
 	unsigned long numTokens;
 	
 	unsigned long ii;
@@ -574,107 +576,40 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	GetTimeStamp(timestamp);
 	
 	if (err = MDGetWaveDimensions(wav, &numDimensions, dimensionSizes)) 
-		goto done; 
+		goto done;
+    
+    if(dimensionSizes[1] != 2){
+        dimensionSizes[1] = 2;
+        dimensionSizes[2] = 0;
+        if(err = MDChangeWave(wav, -1, dimensionSizes))
+            goto done;
+    }
 	
 	originalInsertPoint = dimensionSizes[0];
-	
 	indices[0] = originalInsertPoint;
-	
+    
+    //lets get the existing wavedata into a string vector
+    if((err = textWaveToTokens(&wav, existingTokens)))
+       goto done;
+    
+    //insert the new tokens into the existing tokens, at the end of the first column
+    existingTokens.reserve(existingTokens.size() + numTokens * 2);
+    existingTokens_iter = existingTokens.begin() + originalInsertPoint;
+    existingTokens.insert(existingTokens_iter, tokens.begin(), tokens.end());
+  
+    //now append the time stamp numtokens times
+    for(ii = 0 ; ii < numTokens ; ii++)
+        existingTokens.push_back(timestamp);
+
 	dimensionSizes[0] += numTokens;
 	dimensionSizes[1] = 2;
-	
 	if(err = MDChangeWave(wav, -1, dimensionSizes))
 		goto done;
-	
-
-//	ii=0;
-//	wavDataH = NewHandle(0);
-//	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, ii++){
-//		token_length = (*tokens_iter).length();
-//		hs3+=token_length;
-//		indices[1] = 0;
-//		if(err = PtrAndHand((*tokens_iter).data(), wavDataH, token_length))
-//			goto done;
-//		//insert the data
-//		if(err = MDSetTextWavePointValue(wav, indices, wavDataH))
-//			goto done;
-//		
-//		SetHandleSize(wavDataH, 0);
-//		PutCStringInHandle(timestamp, wavDataH);
-//		indices[1] = 1;
-//		if(err = MDSetTextWavePointValue(wav, indices, wavDataH))
-//			goto done;
-//		indices[0] += 1;
-//		SetHandleSize(wavDataH,0);
-//		
-//	}
-//	
-//	DisposeHandle(wavDataH);
-//	WaveHandleModified(wav);
-//	
-	//experimental work for inserting the tokens
-	//grab the wave data
-	if(err = GetTextWaveData(wav, 2, &wavDataH))
-		goto done;
-		
-	//now stick all the tokens in
-	//resize the handle first
-	//have to add on the size of data you want to add, as well as the timestamp times the number of tokens.
-	SetHandleSize(wavDataH, GetHandleSize(wavDataH) + szTotalTokens + (strlen(timestamp) * sizeof(char) * numTokens));
-	if(err = MemError())
-		goto done;
-	
-	//**
-	//in IGOR32 the offsets are 32bit.  In IGOR64 they are 64 bit
-	//**
-	pTableOffset = (PSInt*) *wavDataH;
-				  
-	//move the existing data after the point you are about to insert into.
-	sizemove = pTableOffset[2 * originalInsertPoint + numTokens] - pTableOffset[originalInsertPoint + numTokens];
-	if(sizemove)
-		memmove(*wavDataH + pTableOffset[originalInsertPoint + numTokens] + szTotalTokens, *wavDataH + pTableOffset[originalInsertPoint + numTokens], sizemove);
-	
-	//fill out the offsets for the data you shifted, this is _all_ the second column
-	pTempL = pTableOffset + originalInsertPoint + numTokens;
-	
-	for(ii = 0 ; ii < dimensionSizes[0] + 1; ii++, pTempL++)
-		//the offsets to each of the old data points AFTER the insert point increases by a constant amount
-		*pTempL += (long) szTotalTokens;
-				  
-	//insert the data, fill out the END offsets for the new data and copy in the timestamps.
-	pTempL = pTableOffset + originalInsertPoint;
-	pTempL2 = pTableOffset + (2 * originalInsertPoint + numTokens);
-	pTempC = *wavDataH + pTableOffset[originalInsertPoint];
-
-	//join all the tokens in a single string stream.
-	//and then insert them into the text wave
-	std::copy(tokens.begin(), tokens.end(), ostream_iterator<string>(ss));
-	memcpy(pTempC, ss.str().data(), (size_t) szTotalTokens);
-	
-	for(tokens_iter = tokens.begin() ; tokens_iter != tokens.end() ; tokens_iter++, pTempL++, pTempL2++){
-		token_length = (unsigned long) (*tokens_iter).length();
-		//offset to the END each of the new data points		
-		*(pTempL + 1) = (*pTempL) + token_length;
-		
-		//and the offsets for the timestamp
-		*(pTempL2 + 1) = *pTempL2 + (strlen(timestamp) * sizeof(char)); 
-		
-		//copy in the timestamp
-		memcpy(*wavDataH + (*pTempL2), timestamp, strlen(timestamp));		
-		
-		//if there is a logfile then append to it
-		wbi->log_msg((*tokens_iter).c_str(), 0);
-		
-	}
-
-	if(err = SetTextWaveData(wav, 2, wavDataH))
-		goto done;
-	
-	if(wavDataH){
-		DisposeHandle(wavDataH);
-		wavDataH = NULL;
-	}
-	
+    
+    //now put the existing tokens back into the textwave
+    if(err = textWaveAccess(&wav, existingTokens))
+        goto done;
+    
 	//make the wave as being modified
 	WaveHandleModified(wav);
 	
@@ -702,13 +637,20 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	
 	if (err = MDGetWaveDimensions(wav, &numDimensions, dimensionSizes))
 		goto done;
- 	
-	
-	//lets delete some points
+    
 	if(dimensionSizes[0] > BUFFER_WAVE_LEN){
+        //lets delete some points
+        textWaveToTokens(&wav, existingTokens);
+        //delete tokens from 2nd column of wave
+        existingTokens.erase(existingTokens.begin() + dimensionSizes[0], existingTokens.begin() + (2 * dimensionSizes[0] - BUFFER_TO_KEEP));
+        //delete tokens from 1st column of wave
+        existingTokens.erase(existingTokens.begin(), existingTokens.begin() + dimensionSizes[0] - BUFFER_TO_KEEP);
+        
 		dimensionSizes[0] = BUFFER_TO_KEEP;
  		if(err = MDChangeWave2(wav, -1, dimensionSizes, 0))
 			goto done;
+        if(err = textWaveAccess(&wav, existingTokens))
+            goto done;
 	}
 	
 done:

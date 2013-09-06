@@ -191,7 +191,7 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	
     switch(dataType){
         case TEXT_WAVE_TYPE:
-            if(err = textWaveAccess(&destWaveH, tokens, tokenSizes, szTotalTokens))
+            if(err = textWaveAccess(&destWaveH, tokens))
                 goto done;
             break;
         default:
