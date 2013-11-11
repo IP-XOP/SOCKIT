@@ -64,13 +64,13 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	
 	if(dataType == TEXT_WAVE_TYPE){
 		//IT'S A TEXT WAVE
-		long *pTableOffset;
+		IndexInt *pTableOffset;
 		char *pTextDataStart, *pTextDataEnd;
 
 		if(err = GetTextWaveData(p->wavWaveH, 2, &textDataP))
 			goto done;
 
-		pTableOffset = (long*)*textDataP;					// Pointer to table of offsets for mode==2
+		pTableOffset = (IndexInt*)*textDataP;					// Pointer to table of offsets for mode==2
 		
 		if(p->TXTFlagEncountered && p->TXTFlagParamsSet[0] && p->TXTFlagStrH){
 			string listsep;
