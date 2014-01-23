@@ -22,6 +22,6 @@ int textWaveAccess(waveHndl *textWaveH, vector<string> &tokens);
 
 
 /*
- put textwave contents into a string vector
+ gets textwave contents into a string vector
  */
-int textWaveToTokens(waveHndl *textWaveH, vector<string> &tokens);
+int textWaveToTokens(waveHndl textWaveH, vector<string> &tokens);

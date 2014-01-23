@@ -116,6 +116,35 @@ RegisterFunction()
 	This is the entry point from the host application to the XOP for all messages after the
 	INIT message.
 */
+int cleanup(){
+    extern CurrentConnections* pinstance;
+	extern pthread_t *readThread;
+	extern pthread_mutex_t readThreadMutex;
+    if(readThread){
+        pthread_mutex_lock( &readThreadMutex );
+        pinstance->quitReadThread();
+        pthread_mutex_unlock( &readThreadMutex );
+        
+        int res=0;
+        pthread_join(*readThread, (void**)res);
+        free(readThread);
+        readThread = NULL;
+    }
+    
+    //don't unlock the mutex again or it is possible threadsafe functions
+    //can start working.
+    pthread_mutex_lock( &readThreadMutex );
+    pinstance->resetCurrentConnections();
+    if(pinstance){
+        delete pinstance;
+        pinstance = NULL;
+    }
+
+#ifdef WINIGOR
+    WSACleanup( );
+#endif
+    return 0;
+}
 
 static void
 XOPEntry(void)
@@ -123,7 +152,6 @@ XOPEntry(void)
 	XOPIORecResult result = 0;
 	
 	extern CurrentConnections* pinstance;
-	extern pthread_t *readThread;
 	extern pthread_mutex_t readThreadMutex;
 	
 //	waveHndl wav;
@@ -136,29 +164,7 @@ XOPEntry(void)
 			pthread_mutex_unlock( &readThreadMutex );
 			break;
 		case CLEANUP:
-			if(readThread){
-				pthread_mutex_lock( &readThreadMutex );
-//				pthread_cancel(*readThread);
-				pinstance->quitReadThread();
-				pthread_mutex_unlock( &readThreadMutex );
-
-				int res=0;
-				pthread_join(*readThread, (void**)res);
-			}
-			if(readThread)
-				free(readThread);
-			
-			//don't unlock the mutex again or it is possible threadsafe functions
-			//can start working.
-			pthread_mutex_lock( &readThreadMutex );
-			pinstance->resetCurrentConnections();
-			delete pinstance;
-			pinstance = NULL;
-
-#ifdef WINIGOR
-//			pthread_win32_process_detach_np();
-			WSACleanup( );
-#endif
+            cleanup();
 			break;
 		case OBJINUSE:
 /*	SHOULDNT BE NEEDED ANY MORE, we are now using HoldWave to increment the reference count.
@@ -237,10 +243,12 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 	
 	readThread = (pthread_t*)malloc(sizeof(pthread_t));
 	if(readThread == NULL){
+        cleanup();
 		SetXOPResult(NOMEM);
 		return EXIT_FAILURE;
 	}
 	if(pthread_create( readThread, NULL, &readerThread, NULL)){
+        cleanup();
 		SetXOPResult(CANT_START_READER_THREAD);
 		return EXIT_FAILURE;
 	}
@@ -258,11 +266,13 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 #endif
 
 	if (igorVersion < 600){
+        cleanup();
 		SetXOPResult(IGOR_OBSOLETE);
 		return EXIT_FAILURE;
 	}
 	
 	if (result = RegisterOperations()){
+        cleanup();
 		SetXOPResult(result);
 		return EXIT_FAILURE;
 	}
