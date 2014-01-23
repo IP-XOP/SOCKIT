@@ -589,7 +589,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	indices[0] = originalInsertPoint;
     
     //lets get the existing wavedata into a string vector
-    if((err = textWaveToTokens(&wav, existingTokens)))
+    if((err = textWaveToTokens(wav, existingTokens)))
        goto done;
     
     //insert the new tokens into the existing tokens, at the end of the first column
@@ -640,7 +640,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
     
 	if(dimensionSizes[0] > BUFFER_WAVE_LEN){
         //lets delete some points
-        textWaveToTokens(&wav, existingTokens);
+        textWaveToTokens(wav, existingTokens);
         //delete tokens from 2nd column of wave
         existingTokens.erase(existingTokens.begin() + dimensionSizes[0], existingTokens.begin() + (2 * dimensionSizes[0] - BUFFER_TO_KEEP));
         //delete tokens from 1st column of wave

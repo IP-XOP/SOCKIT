@@ -77,7 +77,7 @@ done:
 	return err;
 }
 
-int textWaveToTokens(waveHndl *textWaveH, vector<string> &tokens){
+int textWaveToTokens(waveHndl textWaveH, vector<string> &tokens){
 	int err = 0;
     Handle textDataH = NULL;
 	IndexInt *pTableOffset;
@@ -90,16 +90,16 @@ int textWaveToTokens(waveHndl *textWaveH, vector<string> &tokens){
 		err = NOWAV;
 		goto done;
 	}
-	if(WaveType(*textWaveH)){
+	if(WaveType(textWaveH)){
 		err = EXPECTED_TEXT_WAVE;
 		goto done;
 	}
 
-    numpnts = WavePoints(*textWaveH);
+    numpnts = WavePoints(textWaveH);
     tokens.clear();
     tokens.reserve(numpnts);
 
-	if(err = GetTextWaveData(*textWaveH, 2, &textDataH))
+	if(err = GetTextWaveData(textWaveH, 2, &textDataH))
 		goto done;
 		
 	//point to table of offsets
