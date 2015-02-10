@@ -41,12 +41,11 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
     SOCKET sockNum = -1;
 	int res = 0;
 	waveBufferInfo *wbi = NULL;
-	char buf[BUFLEN+1];
-	char report[MAX_MSG_LEN+1];
+	char report[MAX_MSG_LEN + 1];
 	string output;
-	long size = 0;
 	bool needToClose = false;
 	long NBYTES_to_recv = -1;
+    char buf[BUFLEN + 1];
 			
 	fd_set tempset;
 	FD_ZERO(&tempset);
@@ -69,7 +68,6 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 
 		NBYTES_to_recv = (long) p->NBYTFlagNumber;
 	}
-	memset(buf,0,sizeof(buf));
 	
 	if (p->MSGEncountered) {
 		// Parameter: p->MSG (test for NULL handle before using)
@@ -77,14 +75,6 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			err = OH_EXPECTED_STRING;
 			goto done;
 		}
-		size = GetHandleSize(p->MSG);
-		if(size>BUFLEN){
-			err2 = 1;
-			XOPNotice("SOCKIT err: message is longer than buffer\r");
-			goto done;
-		}
-		if(err = GetCStringFromHandle(p->MSG, buf, sizeof(buf)))
-			goto done;
 	} else {
 		err = OH_EXPECTED_STRING;
 		goto done;
@@ -123,11 +113,11 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			err = OH_EXPECTED_STRING;
 			goto done;
 		}
-		if(err = GetCStringFromHandle(p->FILEFlagStrH,fileName,MAX_PATH_LEN))
+		if(err = GetCStringFromHandle(p->FILEFlagStrH, fileName, MAX_PATH_LEN))
 			goto done;
-		if(err = GetNativePath(fileName,fileNameToWrite))
+		if(err = GetNativePath(fileName, fileNameToWrite))
 			goto done;
-		if(err = XOPOpenFile(fileNameToWrite,1,&fileToWrite))
+		if(err = XOPOpenFile(fileNameToWrite, 1, &fileToWrite))
 			goto done;
 	}
 	
@@ -140,12 +130,12 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	}
 	if(FD_ISSET(sockNum,&tempset)){
-		rc = send(sockNum, buf, (int) GetHandleSize(p->MSG), 0);
+		rc = send(sockNum, *(p->MSG), (int) GetHandleSize(p->MSG), 0);
 		if(rc > 0){
-			snprintf(report,sizeof(report),"SOCKITmsg: wrote to socket %d\r", sockNum);
-			output = string(buf,GetHandleSize(p->MSG));
+			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %d\r", sockNum);
+			output = string(*(p->MSG), GetHandleSize(p->MSG));
 			
-			find_and_replace(output, "\n","\r");
+			find_and_replace(output, "\n", "\r");
 			
 			if(wbi->toPrint == true){
 				XOPNotice(report);
@@ -183,9 +173,9 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	timeout.tv_sec = (long) floor(timeoutVal);
 	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	FD_SET(sockNum,&tempset);
-	res = select(sockNum+1,&tempset,0,0,&timeout);
+	res = select(sockNum + 1, &tempset, 0, 0, &timeout);
 	
-	memset(buf,0,sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 	
 	if ((res > 0) && FD_ISSET(sockNum, &tempset)) { 
 	           
@@ -196,7 +186,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			
 			//if the recv fails then the manpage indicates that rc <= 0, because we are using blocking sockets.
 			if (rc <= 0) {
-				snprintf(report,sizeof(report),"SOCKIT err: socket descriptor %d, disconnection???\r", sockNum );
+				snprintf(report, sizeof(report), "SOCKIT err: socket descriptor %d, disconnection???\r", sockNum );
 				if(wbi->toPrint == true)
 					XOPNotice(report);
 				needToClose = true;
@@ -205,7 +195,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				chunk.append(buf, rc);
 
 				if(fileToWrite)//write to file as well
-					written = fwrite(buf, sizeof(char),(size_t) rc, (FILE *)fileToWrite);
+					written = fwrite(buf, sizeof(char), (size_t) rc, (FILE *)fileToWrite);
 			}
 			
 			if (NBYTES_to_recv > -1 && rc >= NBYTES_to_recv)
@@ -231,7 +221,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		}while(res > 0);
 		
 	} else if(res == -1) {
-		snprintf(report,sizeof(report),"SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
+		snprintf(report, sizeof(report), "SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
 		if(wbi->toPrint == true)
 			XOPNotice(report);
 		// Closed connection or error 
@@ -314,9 +304,8 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
     SOCKET sockNum = -1;
 	int res = 0;
 	
-	char buf[BUFLEN+1];
+	char buf[BUFLEN + 1];
 	string output;
-	long size = 0;
 	waveBufferInfo *wbi = NULL;
 		
 	fd_set tempset;
@@ -347,14 +336,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 		err = OH_EXPECTED_STRING;
 		goto done;
 	}
-	size = GetHandleSize(p->message);
-	if(size > BUFLEN){
-		err2 = 1;
-		goto done;
-	}
-	if(err = GetCStringFromHandle(p->message, buf, sizeof(buf)))
-		goto done;
-		
+
 	if(!pinstance->isSockitOpen(p->sockID,&sockNum)){
 		err2 = SOCKET_NOT_CONNECTED;
 		goto done;
@@ -370,7 +352,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 		goto done;
 	}
 	if(FD_ISSET(sockNum, &tempset)){
-		rc = send(sockNum, buf, (int) GetHandleSize(p->message),0);
+		rc = send(sockNum, *(p->message), (int) GetHandleSize(p->message),0);
 		if(rc > 0){
 			//if there is a logfile then append and save
 			wbi->log_msg(buf, 1);
@@ -393,7 +375,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	
 	FD_ZERO(&tempset);
 	timeout.tv_sec = (long) floor(timeoutVal);
-	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
+	timeout.tv_usec =  (long)((timeoutVal - (double) floor(timeoutVal)) * 1000000);
 	FD_SET(sockNum, &tempset);
 	res = select(sockNum+1, &tempset, 0, 0, &timeout);
 	
