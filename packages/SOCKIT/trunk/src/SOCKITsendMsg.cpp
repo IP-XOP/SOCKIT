@@ -31,16 +31,13 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
     SOCKET socketToWrite = -1;
 	int res = 0;
     
-	char buf[BUFLEN+1];
 	char report[MAX_MSG_LEN+1];
 	string output;			//get rid of the carriage returns
 	waveBufferInfo *wbi = NULL;
 	long size = 0;
 	fd_set tempset;
 	struct timeval timeout;
-	
-	memset(buf,0,sizeof(buf));
-	
+		
 	if(p->TIMEFlagEncountered){
 		timeout.tv_sec = (long) floor(p->TIMEFlagNumber);
 		timeout.tv_usec =  (long)((p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000);		
@@ -52,24 +49,20 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	if(!p->MSGEncountered){
 		err = OH_EXPECTED_STRING;
 		goto done;
-	} else {
-		size = GetHandleSize(p->MSG);
-		if(size>BUFLEN){
-			err2 = 1;
-			XOPNotice("SOCKIT err: message is longer than buffer\r");
-			goto done;
-		}
-		if(err = GetCStringFromHandle(p->MSG, buf, sizeof(buf)))
-			goto done;
 	}
-	
+    
+    if(!p->MSG){
+        err = OH_EXPECTED_STRING;
+        goto done;
+    }
+    
 	if(!p->IDEncountered){
 		err = OH_EXPECTED_NUMBER;
 		goto done;
 	}
 	
-	if(!pinstance->isSockitOpen(p->ID,&socketToWrite)){
-		snprintf(report,sizeof(report),"SOCKIT err: socket not connected %ld\r", socketToWrite);
+	if(!pinstance->isSockitOpen(p->ID, &socketToWrite)){
+		snprintf(report, sizeof(report), "SOCKIT err: socket not connected %ld\r", socketToWrite);
 		XOPNotice(report);
 		err2 = 1;
 		goto done;
@@ -80,7 +73,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	FD_ZERO(&tempset);
 	FD_SET(socketToWrite, &tempset);
 	
-	res = select(socketToWrite+1, 0, &tempset, 0, &timeout);
+	res = select(socketToWrite + 1, 0, &tempset, 0, &timeout);
 	if(res == -1){
 		if(wbi->toPrint == true)
 			XOPNotice ("SOCKIT err: select returned -1");
@@ -88,10 +81,10 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
         goto done;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
-		rc = send(socketToWrite, buf, (int) GetHandleSize(p->MSG), 0);
+		rc = send(socketToWrite, *(p->MSG), (int) GetHandleSize(p->MSG), 0);
 		if(rc > 0){
-			snprintf(report,sizeof(report), "SOCKITmsg: wrote to socket %d\r", socketToWrite);
-			output = string(buf, GetHandleSize(p->MSG));
+			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %d\r", socketToWrite);
+			output = string(*(p->MSG), GetHandleSize(p->MSG));
 			find_and_replace(output, "\n", "\r");
 			
 			if(wbi->toPrint == true){
@@ -152,30 +145,19 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
     SOCKET socketToWrite = -1;
 	int res = 0;
     
-	char buf[BUFLEN+1];
 	string output;			//get rid of the carriage returns
 	waveBufferInfo *wbi = NULL;
 	long size = 0;
 	fd_set tempset;
 	struct timeval timeout;
 	
-	memset(buf,0,sizeof(buf));
-
 	timeout.tv_sec = 5;
 	timeout.tv_usec = 0;
 	
 	if(!p->message){
 		err = OH_EXPECTED_STRING;
 		goto done;
-	} else {
-		size = GetHandleSize(p->message);
-		if(size>BUFLEN){
-			err2 = 1;
-			goto done;
-		}
-		if(err = GetCStringFromHandle(p->message, buf, sizeof(buf)))
-			goto done;
-	}
+	} 
 	
 	if(!p->sockID){
 		err = OH_EXPECTED_NUMBER;
@@ -192,13 +174,13 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	FD_ZERO(&tempset);
 	FD_SET(socketToWrite, &tempset);
 	
-	res = select(socketToWrite+1, 0, &tempset, 0, &timeout);
+	res = select(socketToWrite + 1, 0, &tempset, 0, &timeout);
 	if(res == -1){
 		err2 = 1;
         goto done;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
-		rc = send(socketToWrite, buf, (int) GetHandleSize(p->message), 0);
+		rc = send(socketToWrite, *p->message, (int) GetHandleSize(p->message), 0);
 		if(rc > 0){
 			//if there is a logfile then append and save
 			wbi->log_msg(output.c_str(), 1);
