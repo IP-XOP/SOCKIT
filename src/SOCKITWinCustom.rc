@@ -1,5 +1,4 @@
 /*
-easyHttp.c -- An XOP for curvefitting via Differential Evolution.
 @copyright: Andrew Nelson and the Australian Nuclear Science and Technology Organisation 2007.
 */
 
@@ -8,7 +7,7 @@ easyHttp.c -- An XOP for curvefitting via Differential Evolution.
 1100 STR#							// Custom error messages.
 BEGIN
 /* [1] */
-		"SOCKIT requires Igor Pro 6.00 or later.\0",
+		"SOCKIT requires Igor Pro 7.00 or later.\0",
 		/* [2] */
 		"No winsock lib available.\0",
 		/* [3] */
@@ -26,7 +25,7 @@ BEGIN
 		/* [9] */
 		"Socket not connected to anything.\0",
 		/* [10] */
-		"Processor function not compiled, or not available.\0", 
+		"Processor function not compiled, or not available.\0",
 		/* [11] */
 		"Problem writing to file.\0",
 		/* [12] */
@@ -53,7 +52,7 @@ BEGIN
 	"\0"							// NOTE: NULL required to terminate the resource.
 END
 
-1100 XOPI							// XOPI - Describes general XOP properties to IGOR. 
+1100 XOPI							// XOPI - Describes general XOP properties to IGOR.
 BEGIN
 	XOP_VERSION,					// Version number of host XOP system.
 	DEV_SYS_CODE,					// Code for development system used to make XOP
@@ -64,7 +63,7 @@ END
 
 
 1100 XOPF							// Describes functions added by XOP to IGOR.
-BEGIN			
+BEGIN
 		"SOCKITcloseConnection\0",
 		F_IO | F_THREADSAFE | F_EXTERNAL,
 		NT_FP64,
@@ -77,24 +76,24 @@ BEGIN
 		      0,
 		"SOCKITregisterProcessor\0",							/* function name */
 		F_IO | F_EXTERNAL,					/* function category (string) */
-		NT_FP64,						/* return value type */			
+		NT_FP64,						/* return value type */
 			NT_FP64,						/* socket number */
 			HSTRING_TYPE,					/* processor */
 			0,
 		"SOCKITpeek\0",							/* function name */
 		F_IO | F_THREADSAFE | F_EXTERNAL,					/* function category (string) */
-		HSTRING_TYPE,						/* return value type */			
+		HSTRING_TYPE,						/* return value type */
 			NT_FP64,						/* socket number */
 			0,
 		"SOCKITsendmsgF\0",							/* function name */
 		F_IO | F_THREADSAFE | F_EXTERNAL,					/* function category (string) */
-		NT_FP64,						/* return value type */			
+		NT_FP64,						/* return value type */
 			NT_FP64,						/* socket number */
 			HSTRING_TYPE,
 			0,
 		"SOCKITsendnrecvF\0",							/* function name */
 		F_IO | F_THREADSAFE | F_EXTERNAL,					/* function category (string) */
-		HSTRING_TYPE,						/* return value type */			
+		HSTRING_TYPE,						/* return value type */
 			NT_FP64,						/* socket number */
 			HSTRING_TYPE,
 			NT_FP64,
@@ -102,18 +101,18 @@ BEGIN
 			0,
 		"SOCKITopenconnectionF\0",							/* function name */
 		F_IO | F_THREADSAFE | F_EXTERNAL,					/* function category (string) */
-		NT_FP64,						/* return value type */			
+		NT_FP64,						/* return value type */
 			HSTRING_TYPE,
 			NT_FP64,
 			NT_FP64,
 			0,
 		"SOCKITtotalOpened\0",							/* function name */
 		F_IO | F_EXTERNAL,					/* function category (string) */
-		NT_FP64,						/* return value type */			
+		NT_FP64,						/* return value type */
 			0,
 		"SOCKITcurrentOpened\0",							/* function name */
 		F_IO | F_EXTERNAL,					/* function category (string) */
-		NT_FP64,						/* return value type */			
+		NT_FP64,						/* return value type */
 			0,
 		"SOCKITinfo\0",							/* function name */
 		F_IO | F_EXTERNAL | F_THREADSAFE,					/* function category (string) */
@@ -138,5 +137,5 @@ BEGIN
 	"SOCKITlist\0",
 	utilOp | XOPOp | compilableOp,
 	// NOTE: NULL required to terminate the resource.
-    "\0"							
+    "\0"
 END
