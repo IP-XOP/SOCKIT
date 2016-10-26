@@ -25,6 +25,11 @@ sockitopenconnection/TOK="\r\n" sock,"www.wavemetrics.com",80,buf
 sockitsendnrecv sock, "GET / \r\n"
 */
 
+//extern CurrentConnections *pinstance;
+//extern pthread_t *readThread;
+//extern pthread_mutex_t readThreadMutex;
+//extern bool SHOULD_IDLE_SKIP;
+
 
 static int XOPIdle(){
 //this function should go through all the sockets and see if there are any messages.
@@ -33,9 +38,9 @@ static int XOPIdle(){
 //check if any have closed, check if there are messages to receive.
 	int err = 0;
 	
-	extern CurrentConnections* pinstance;
-	extern pthread_mutex_t readThreadMutex;
-	extern bool SHOULD_IDLE_SKIP;
+//	extern CurrentConnections* pinstance;
+//	extern pthread_mutex_t readThreadMutex;
+//	extern bool SHOULD_IDLE_SKIP;
 	
 	if(SHOULD_IDLE_SKIP)
 		return 0;
@@ -117,9 +122,9 @@ RegisterFunction()
 	INIT message.
 */
 int cleanup(){
-    extern CurrentConnections* pinstance;
-	extern pthread_t *readThread;
-	extern pthread_mutex_t readThreadMutex;
+//    extern CurrentConnections* pinstance;
+//	extern pthread_t *readThread;
+//	extern pthread_mutex_t readThreadMutex;
     if(readThread){
         pthread_mutex_lock( &readThreadMutex );
         pinstance->quitReadThread();
@@ -151,8 +156,8 @@ XOPEntry(void)
 {	
 	XOPIORecResult result = 0;
 	
-	extern CurrentConnections* pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections* pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	
 //	waveHndl wav;
 	int _message = GetXOPMessage();
@@ -215,7 +220,7 @@ XOPEntry(void)
 */
 
 
-HOST_IMPORT int main(IORecHandle ioRecHandle)
+HOST_IMPORT int XOPMain(IORecHandle ioRecHandle)
 {	
 	XOPInit(ioRecHandle);							/* do standard XOP initialization */
 	SetXOPEntry(XOPEntry);							/* set entry point for future calls */
@@ -227,9 +232,9 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 //		pthread_win32_process_attach_np();
 //	#endif
 
-	extern pthread_t *readThread;
-	extern CurrentConnections *pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	pthread_t *readThread;
+//	CurrentConnections *pinstance;
+//	pthread_mutex_t readThreadMutex;
 
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);
@@ -265,7 +270,7 @@ HOST_IMPORT int main(IORecHandle ioRecHandle)
 	}
 #endif
 
-	if (igorVersion < 600){
+	if (igorVersion < 700){
         cleanup();
 		SetXOPResult(IGOR_OBSOLETE);
 		return EXIT_FAILURE;

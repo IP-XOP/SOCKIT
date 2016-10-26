@@ -27,9 +27,8 @@
 
 using namespace std;
 
-
-CurrentConnections *pinstance=NULL;
-pthread_t *readThread=NULL;
+CurrentConnections *pinstance = NULL;
+pthread_t *readThread = NULL;
 pthread_mutex_t readThreadMutex = PTHREAD_MUTEX_INITIALIZER;
 bool SHOULD_IDLE_SKIP = false;
 
@@ -56,8 +55,8 @@ roundDouble(double val){
 }
 
 void *readerThread(void *){
-    extern CurrentConnections* pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//    extern CurrentConnections* pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	
 #ifdef WINIGOR
 	extern WSADATA globalWsaData;
@@ -262,7 +261,7 @@ done:
 
 
 void CurrentConnections::Instance(){
-	extern CurrentConnections* pinstance;
+//	extern CurrentConnections* pinstance;
 	
 	if(pinstance == 0)
 		pinstance = new CurrentConnections(); // create sole instance
@@ -360,9 +359,11 @@ int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo, wa
 	wbi = getWaveBufferInfo(sockNum);
 	
 	totalSocketsOpened += 1;
-	if(bufWavH)
-		HoldWave(bufWavH, &wbi->bufferWaveRef);
-	
+    if(bufWavH){
+		if(err = HoldWave(bufWavH))
+            goto done;
+        wbi->bufferWaveRef = bufWavH;
+    }
 	wbi->log_msg("OPEN", -2);
 	
 	done:
@@ -462,7 +463,7 @@ int CurrentConnections::checkProcessor(SOCKET sockNum, FunctionInfo *fip){
 		goto done;
 	}
 	
-	if(err = GetFunctionInfo(processor,fip))
+	if(err = GetFunctionInfo(processor, fip))
 		err = PROCESSOR_NOT_AVAILABLE;
 	
 	if(err = CheckFunctionForm(fip, 2, requiredParameterTypes, &badParam, NT_FP64))

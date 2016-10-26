@@ -21,8 +21,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 {
 	int err = 0, err2 = 0;
 	
-	extern CurrentConnections* pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections* pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 	
 #ifdef WINIGOR
@@ -305,8 +305,8 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 {
 	int err = 0, err2 = 0;
 	
-	extern CurrentConnections* pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections* pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 	
 	p->retval=-1;

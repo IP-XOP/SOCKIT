@@ -19,8 +19,8 @@ int
 ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	int err = 0, err2 = 0;
 	
-	extern CurrentConnections *pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections *pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 			
 #ifdef WINIGOR
@@ -133,8 +133,8 @@ int
 SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	int err = 0, err2 = 0;
 	
-	extern CurrentConnections *pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections *pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 
 #ifdef WINIGOR

@@ -19,8 +19,8 @@ int
 ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	int err = 0, err2=0;
 	
-	extern CurrentConnections *pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections *pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 
 
@@ -282,8 +282,8 @@ int
 SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	int err = 0, err2=0;
 	
-	extern CurrentConnections *pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections *pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	extern bool SHOULD_IDLE_SKIP;
 	pthread_mutex_lock( &readThreadMutex );
 
