@@ -7,15 +7,15 @@ resource 'vers' (1) {						/* XOP version info */
 };
 
 resource 'vers' (2) {						/* Igor version info */
-	0x05, 0x00, release, 0x00, 0,			/* version bytes and country integer */
-	"5.00",
+	0x07, 0x00, release, 0x00, 0,			/* version bytes and country integer */
+	"7.00",
 	"(for Igor Pro 6.00 or later)"
 };
 
 resource 'STR#' (1100) {					/* custom error messages */
 	{
 		/* [1] */
-		"SOCKIT requires Igor Pro 6.00 or later.",
+		"SOCKIT requires Igor Pro 7.00 or later.",
 		/* [2] */
 		"SOCKIT XOP was called to execute an unknown function.",
 		/* [3] */
