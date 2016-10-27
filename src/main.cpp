@@ -25,7 +25,7 @@ sockitopenconnection/TOK="\r\n" sock,"www.wavemetrics.com",80,buf
 sockitsendnrecv sock, "GET / \r\n"
 */
 
-s
+
 static int XOPIdle(){
 //this function should go through all the sockets and see if there are any messages.
 //close off any that don't reply
