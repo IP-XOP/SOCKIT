@@ -25,22 +25,13 @@ sockitopenconnection/TOK="\r\n" sock,"www.wavemetrics.com",80,buf
 sockitsendnrecv sock, "GET / \r\n"
 */
 
-//extern CurrentConnections *pinstance;
-//extern pthread_t *readThread;
-//extern pthread_mutex_t readThreadMutex;
-//extern bool SHOULD_IDLE_SKIP;
-
-
+s
 static int XOPIdle(){
 //this function should go through all the sockets and see if there are any messages.
 //close off any that don't reply
 
 //check if any have closed, check if there are messages to receive.
 	int err = 0;
-	
-//	extern CurrentConnections* pinstance;
-//	extern pthread_mutex_t readThreadMutex;
-//	extern bool SHOULD_IDLE_SKIP;
 	
 	if(SHOULD_IDLE_SKIP)
 		return 0;
@@ -49,7 +40,6 @@ static int XOPIdle(){
 
 	err = pinstance->checkRecvData();
 	
-done:
 	pthread_mutex_unlock( &readThreadMutex);
 	return err;
 }
@@ -122,9 +112,7 @@ RegisterFunction()
 	INIT message.
 */
 int cleanup(){
-//    extern CurrentConnections* pinstance;
-//	extern pthread_t *readThread;
-//	extern pthread_mutex_t readThreadMutex;
+
     if(readThread){
         pthread_mutex_lock( &readThreadMutex );
         pinstance->quitReadThread();
@@ -136,8 +124,8 @@ int cleanup(){
         readThread = NULL;
     }
     
-    //don't unlock the mutex again or it is possible threadsafe functions
-    //can start working.
+    // don't unlock the mutex again or it is possible threadsafe functions
+    // can start working.
     pthread_mutex_lock( &readThreadMutex );
     pinstance->resetCurrentConnections();
     if(pinstance){
@@ -156,10 +144,6 @@ XOPEntry(void)
 {	
 	XOPIORecResult result = 0;
 	
-//	extern CurrentConnections* pinstance;
-//	extern pthread_mutex_t readThreadMutex;
-	
-//	waveHndl wav;
 	int _message = GetXOPMessage();
 
 	switch (_message) {
@@ -231,10 +215,6 @@ HOST_IMPORT int XOPMain(IORecHandle ioRecHandle)
 //	#ifdef _WINDOWS_
 //		pthread_win32_process_attach_np();
 //	#endif
-
-//	pthread_t *readThread;
-//	CurrentConnections *pinstance;
-//	pthread_mutex_t readThreadMutex;
 
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);

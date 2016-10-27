@@ -69,7 +69,9 @@ void *readerThread(void *){
 	char buf[BUFLEN];
 	
 	fd_set tempset, tempset2;
+#ifdef MACIGOR
 	struct timeval sleeper;
+#endif
 	vector<SOCKET> openSockets;
 	vector<SOCKET>::iterator iter;
 	waveBufferInfo *wbi;
@@ -96,7 +98,7 @@ void *readerThread(void *){
 		maxSockNum = pinstance->getMaxSockNumber();
 		memcpy(&tempset, pinstance->getReadSet(), sizeof(fd_set));
 		
-		res = select(maxSockNum+1, &tempset, 0, 0, &timeout);
+		res = select((int) maxSockNum+1, &tempset, 0, 0, &timeout);
 		if(res > 0){
 			pinstance->getListOfOpenSockets(openSockets);
 			for(iter = openSockets.begin() ; iter != openSockets.end() ; iter++) {
@@ -533,7 +535,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	size_t szTotalTokens;
 	unsigned long numTokens;
 	
-	unsigned long ii;
+	CountInt ii;
 	
 	char report[MAX_MSG_LEN+1];
 	

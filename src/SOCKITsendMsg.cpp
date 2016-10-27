@@ -73,7 +73,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	FD_ZERO(&tempset);
 	FD_SET(socketToWrite, &tempset);
 	
-	res = select(socketToWrite + 1, 0, &tempset, 0, &timeout);
+	res = select((int) socketToWrite + 1, 0, &tempset, 0, &timeout);
 	if(res == -1){
 		if(wbi->toPrint == true)
 			XOPNotice ("SOCKIT err: select returned -1");
@@ -174,7 +174,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	FD_ZERO(&tempset);
 	FD_SET(socketToWrite, &tempset);
 	
-	res = select(socketToWrite + 1, 0, &tempset, 0, &timeout);
+	res = select((int) socketToWrite + 1, 0, &tempset, 0, &timeout);
 	if(res == -1){
 		err2 = 1;
         goto done;

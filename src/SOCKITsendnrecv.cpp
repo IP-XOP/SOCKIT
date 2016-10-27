@@ -123,7 +123,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	//send the message second;	
 	FD_SET(sockNum,&tempset);
-	res = select(sockNum+1, 0, &tempset, 0, &timeout);				
+	res = select((int) sockNum+1, 0, &tempset, 0, &timeout);				
 	if(res == -1){
 		XOPNotice ("SOCKIT err: select returned timeout\r");
 		err2=1;
@@ -173,7 +173,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	timeout.tv_sec = (long) floor(timeoutVal);
 	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	FD_SET(sockNum,&tempset);
-	res = select(sockNum + 1, &tempset, 0, 0, &timeout);
+	res = select((int) sockNum + 1, &tempset, 0, 0, &timeout);
 	
 	memset(buf, 0, sizeof(buf));
 	
@@ -209,7 +209,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 				timeout.tv_sec = 0;
 				timeout.tv_usec = 10;
 				FD_SET(sockNum, &tempset);
-				res = select(sockNum + 1, &tempset, 0, 0, &timeout);
+				res = select((int) sockNum + 1, &tempset, 0, 0, &timeout);
 				//res = 0;
 			} else {
 				FD_ZERO(&tempset);
@@ -346,7 +346,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	
 	//send the message
 	FD_SET(sockNum,&tempset);
-	res = select(sockNum+1, 0, &tempset, 0, &timeout);				
+	res = select((int) sockNum+1, 0, &tempset, 0, &timeout);				
 	if(res == -1){
 		err2=1;
 		goto done;
@@ -377,7 +377,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	timeout.tv_sec = (long) floor(timeoutVal);
 	timeout.tv_usec =  (long)((timeoutVal - (double) floor(timeoutVal)) * 1000000);
 	FD_SET(sockNum, &tempset);
-	res = select(sockNum+1, &tempset, 0, 0, &timeout);
+	res = select((int) sockNum+1, &tempset, 0, 0, &timeout);
 	
 	memset(buf, 0, sizeof(buf));
 	
@@ -405,7 +405,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 				timeout.tv_sec = (long) floor(timeoutVal);
 				timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
 				FD_SET(sockNum, &tempset);
-				res = select(sockNum + 1, &tempset, 0, 0, &timeout);
+				res = select((int) sockNum + 1, &tempset, 0, 0, &timeout);
 			}
 		} while(res > 0);
 		

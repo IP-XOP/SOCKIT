@@ -13,14 +13,10 @@
 //return how many sockets have been opened historically
 int SOCKITtotalOpened(SOCKITtotalOpenedStruct *p){
 	int	err = 0;
-//	extern CurrentConnections *pinstance;
-//	extern pthread_mutex_t readThreadMutex;
 		
 	pthread_mutex_lock( &readThreadMutex );
 	
 	p->retval = pinstance->getTotalSocketsOpened();
-	
-done:
 	
 	pthread_mutex_unlock( &readThreadMutex );
 	return err;
@@ -30,14 +26,10 @@ done:
 int SOCKITcurrentOpened(SOCKITtotalOpenedStruct *p){
 	int	err = 0;
     
-//	extern CurrentConnections *pinstance;
-//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 	
 	p->retval = pinstance->getCurrentSocketsOpened();
-	
-done:
-	
+		
 	pthread_mutex_unlock( &readThreadMutex );
 	return err;
 };
@@ -53,8 +45,6 @@ int SOCKITinfo(SOCKITinfoStruct *p){
 	char bufwavename[MAX_OBJ_NAME + 1];
 	DataFolderHandle dfh;
 	
-//	extern CurrentConnections *pinstance;
-//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 	SOCKET socknum;
 	waveBufferInfo *wbi;
