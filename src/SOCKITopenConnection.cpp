@@ -21,8 +21,6 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 {
 	int err = 0, err2 = 0;
 	
-//	extern CurrentConnections* pinstance;
-//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 	
 #ifdef WINIGOR
@@ -126,8 +124,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		BCInt tocopy;
 		tocopy = GetHandleSize(p->TOKFlagStrH) > 30 ? 30 : GetHandleSize(p->TOKFlagStrH);
 		memcpy(bufferInfo->tokenizer, *(p->TOKFlagStrH), tocopy);
-		//we don't use strlen because we're interested in 0x00
-		//that would normally terminate a string.
+		// we don't use strlen because we're interested in 0x00
+		// that would normally terminate a string.
 		bufferInfo->sztokenizer = (int) GetHandleSize(p->TOKFlagStrH);		
 	}
 	
