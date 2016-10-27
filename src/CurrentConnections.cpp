@@ -27,9 +27,8 @@
 
 using namespace std;
 
-
-CurrentConnections *pinstance=NULL;
-pthread_t *readThread=NULL;
+CurrentConnections *pinstance = NULL;
+pthread_t *readThread = NULL;
 pthread_mutex_t readThreadMutex = PTHREAD_MUTEX_INITIALIZER;
 bool SHOULD_IDLE_SKIP = false;
 
@@ -56,8 +55,8 @@ roundDouble(double val){
 }
 
 void *readerThread(void *){
-    extern CurrentConnections* pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//    extern CurrentConnections* pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	
 #ifdef WINIGOR
 	extern WSADATA globalWsaData;
@@ -70,7 +69,9 @@ void *readerThread(void *){
 	char buf[BUFLEN];
 	
 	fd_set tempset, tempset2;
+#ifdef MACIGOR
 	struct timeval sleeper;
+#endif
 	vector<SOCKET> openSockets;
 	vector<SOCKET>::iterator iter;
 	waveBufferInfo *wbi;
@@ -97,7 +98,7 @@ void *readerThread(void *){
 		maxSockNum = pinstance->getMaxSockNumber();
 		memcpy(&tempset, pinstance->getReadSet(), sizeof(fd_set));
 		
-		res = select(maxSockNum+1, &tempset, 0, 0, &timeout);
+		res = select((int) maxSockNum+1, &tempset, 0, 0, &timeout);
 		if(res > 0){
 			pinstance->getListOfOpenSockets(openSockets);
 			for(iter = openSockets.begin() ; iter != openSockets.end() ; iter++) {
@@ -262,7 +263,7 @@ done:
 
 
 void CurrentConnections::Instance(){
-	extern CurrentConnections* pinstance;
+//	extern CurrentConnections* pinstance;
 	
 	if(pinstance == 0)
 		pinstance = new CurrentConnections(); // create sole instance
@@ -360,9 +361,11 @@ int CurrentConnections::addWorker(SOCKET sockNum, waveBufferInfo &bufferInfo, wa
 	wbi = getWaveBufferInfo(sockNum);
 	
 	totalSocketsOpened += 1;
-	if(bufWavH)
-		HoldWave(bufWavH, &wbi->bufferWaveRef);
-	
+    if(bufWavH){
+		if(err = HoldWave(bufWavH))
+            goto done;
+        wbi->bufferWaveRef = bufWavH;
+    }
 	wbi->log_msg("OPEN", -2);
 	
 	done:
@@ -462,7 +465,7 @@ int CurrentConnections::checkProcessor(SOCKET sockNum, FunctionInfo *fip){
 		goto done;
 	}
 	
-	if(err = GetFunctionInfo(processor,fip))
+	if(err = GetFunctionInfo(processor, fip))
 		err = PROCESSOR_NOT_AVAILABLE;
 	
 	if(err = CheckFunctionForm(fip, 2, requiredParameterTypes, &badParam, NT_FP64))
@@ -532,7 +535,7 @@ int CurrentConnections::outputBufferDataToWave(SOCKET sockNum, const unsigned ch
 	size_t szTotalTokens;
 	unsigned long numTokens;
 	
-	unsigned long ii;
+	CountInt ii;
 	
 	char report[MAX_MSG_LEN+1];
 	

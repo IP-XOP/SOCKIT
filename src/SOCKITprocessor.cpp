@@ -5,8 +5,8 @@ int SOCKITregisterProcessor(SOCKITprocessorStruct *p){
 	int err = 0;
 	char processor[MAX_OBJ_NAME+1];
 	
-	extern CurrentConnections *pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections *pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 	
 	SOCKET sockNum;

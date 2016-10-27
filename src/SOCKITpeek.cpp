@@ -16,9 +16,9 @@ int SOCKITpeek(SOCKITpeekStructPtr p){
 	
 	Handle dest;
 	SOCKET sockID = 0;
-	extern CurrentConnections *pinstance;
-
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections *pinstance;
+//
+//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 		
 	dest = NewHandle(0);

@@ -19,8 +19,8 @@ int
 ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	int err = 0, err2 = 0;
 	
-	extern CurrentConnections *pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections *pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 			
 #ifdef WINIGOR
@@ -73,7 +73,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	FD_ZERO(&tempset);
 	FD_SET(socketToWrite, &tempset);
 	
-	res = select(socketToWrite + 1, 0, &tempset, 0, &timeout);
+	res = select((int) socketToWrite + 1, 0, &tempset, 0, &timeout);
 	if(res == -1){
 		if(wbi->toPrint == true)
 			XOPNotice ("SOCKIT err: select returned -1");
@@ -133,8 +133,8 @@ int
 SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	int err = 0, err2 = 0;
 	
-	extern CurrentConnections *pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections *pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 
 #ifdef WINIGOR
@@ -174,7 +174,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	FD_ZERO(&tempset);
 	FD_SET(socketToWrite, &tempset);
 	
-	res = select(socketToWrite + 1, 0, &tempset, 0, &timeout);
+	res = select((int) socketToWrite + 1, 0, &tempset, 0, &timeout);
 	if(res == -1){
 		err2 = 1;
         goto done;

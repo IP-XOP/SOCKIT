@@ -14,8 +14,8 @@
 int ExecuteSOCKITlist(SOCKITlistRuntimeParamsPtr p){
 	int err = 0;
 
-	extern CurrentConnections* pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections* pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 	vector<SOCKET> openSockets;
 	waveHndl waveH;

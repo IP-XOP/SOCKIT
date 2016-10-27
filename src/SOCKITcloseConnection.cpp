@@ -6,8 +6,8 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 	
 	SOCKET socketToClose = 0;
 	
-	extern CurrentConnections *pinstance;
-	extern pthread_mutex_t readThreadMutex;			
+//	extern CurrentConnections *pinstance;
+//	extern pthread_mutex_t readThreadMutex;			
 	
 	SOCKET ii;
     p->retval = 0;

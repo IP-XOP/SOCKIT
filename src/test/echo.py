@@ -24,7 +24,7 @@ class EchoServer(asyncore.dispatcher):
             pass
         else:
             sock, addr = pair
-            print 'Incoming connection from %s' % repr(addr)
+            print('Incoming connection from %s' % repr(addr))
             handler = EchoHandler(sock)
 
 server = EchoServer('localhost', 9001)

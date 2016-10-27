@@ -87,7 +87,7 @@ class waveBufferInfo {
 *The structure definition for calling the IGOR processor function.
 */
 typedef struct SOCKITcallProcessorStruct {
-	Handle bufferWave;	/**<The bufferwave into which the message was placed*/
+	waveHndl bufferWave;	/**<The bufferwave into which the message was placed*/
 	double entryRow;	/**<The row in the bufferwave into which the message is placed*/
 }SOCKITcallProcessorStruct, *SOCKITcallProcessorStructPtr;
 #pragma pack()

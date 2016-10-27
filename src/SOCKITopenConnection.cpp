@@ -21,8 +21,6 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 {
 	int err = 0, err2 = 0;
 	
-	extern CurrentConnections* pinstance;
-	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 	
 #ifdef WINIGOR
@@ -126,8 +124,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		BCInt tocopy;
 		tocopy = GetHandleSize(p->TOKFlagStrH) > 30 ? 30 : GetHandleSize(p->TOKFlagStrH);
 		memcpy(bufferInfo->tokenizer, *(p->TOKFlagStrH), tocopy);
-		//we don't use strlen because we're interested in 0x00
-		//that would normally terminate a string.
+		// we don't use strlen because we're interested in 0x00
+		// that would normally terminate a string.
 		bufferInfo->sztokenizer = (int) GetHandleSize(p->TOKFlagStrH);		
 	}
 	
@@ -198,10 +196,10 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	}
 #endif
 
-	rc = connect(sockNum, servinfo->ai_addr, servinfo->ai_addrlen);
+	rc = connect(sockNum, servinfo->ai_addr, (int)servinfo->ai_addrlen);
 	//rc returns -1, with EINPROGRESS, because we set the socket to blocking.  Therefore you 
 	//have to test if the socket is writable with select
-	res = select(sockNum + 1, 0, &tempset,0, &timeout);
+	res = select((int) sockNum + 1, 0, &tempset,0, &timeout);
 	
 	if(res > 0 && FD_ISSET(sockNum, &tempset)){
 		if(!p->QFlagEncountered){
@@ -285,7 +283,7 @@ done:
 	FD_ZERO(&tempset);
 	if(!err && sockNum>0 && !err2){
 		err = SetOperationNumVar("V_flag", 0);
-		err = StoreNumericDataUsingVarName(p->IDVarName, sockNum,0);
+		err = StoreNumericDataUsingVarName(p->IDVarName, (double) sockNum, 0);
 	} else {
 		err = SetOperationNumVar("V_flag",1);
 		err = StoreNumericDataUsingVarName(p->IDVarName, -1, 0);
@@ -305,8 +303,8 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 {
 	int err = 0, err2 = 0;
 	
-	extern CurrentConnections* pinstance;
-	extern pthread_mutex_t readThreadMutex;
+//	extern CurrentConnections* pinstance;
+//	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 	
 	p->retval=-1;
@@ -388,10 +386,10 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 		goto done;
 #endif
 	
-	rc = connect(sockNum, servinfo->ai_addr, servinfo->ai_addrlen);
+	rc = connect(sockNum, servinfo->ai_addr, (int) servinfo->ai_addrlen);
 	//rc returns -1, with EINPROGRESS, because we set the socket to blocking.  Therefore you 
 	//have to test if the socket is writable with select
-	res = select(sockNum + 1, 0, &tempset,0, &timeout);
+	res = select((int) sockNum + 1, 0, &tempset,0, &timeout);
 	
 	if(res > 0 && FD_ISSET(sockNum, &tempset)){
 	} else {
@@ -454,7 +452,7 @@ done:
 	
 	FD_ZERO(&tempset);
 	if(!err && sockNum > 0 && !err2){
-		p->retval = sockNum;
+		p->retval = (double) sockNum;
 	} else {
 		p->retval = -1;
 	}
