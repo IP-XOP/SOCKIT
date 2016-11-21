@@ -147,10 +147,16 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 						oss << ((short*)wp)[ii] << listsep;
 						break;
 					case NT_I32:
-						oss << ((long*)wp)[ii] << listsep;
+						oss << ((SInt32*)wp)[ii] << listsep;
 						break;
-					case (NT_UNSIGNED|NT_I32):
-						oss << ((unsigned long*)wp)[ii]<< listsep;
+                    case NT_I64:
+                        oss << ((SInt64*)wp)[ii] << listsep;
+                        break;
+                    case (NT_UNSIGNED|NT_I64):
+                        oss << ((UInt64*)wp)[ii]<< listsep;
+                        break;
+                    case (NT_UNSIGNED|NT_I32):
+						oss << ((UInt32*)wp)[ii]<< listsep;
 						break;
 					case (NT_UNSIGNED|NT_I16):
 						oss << ((unsigned short*)wp)[ii]<< listsep;
