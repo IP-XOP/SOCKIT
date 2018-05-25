@@ -27,9 +27,6 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	
 	string chunk;
 	
-	if(igorVersion < 620 && !RunningInMainThread())
-		return NOT_IN_THREADSAFE;
-	
 	// Main parameters.
 	if (p->wavEncountered) {
 		// Parameter: p->wav (test for NULL handle before using)
@@ -75,7 +72,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 		if(p->TXTFlagEncountered && p->TXTFlagParamsSet[0] && p->TXTFlagStrH){
 			string listsep;
 			string output;
-			listsep = string(*(p->TXTFlagStrH), GetHandleSize(p->TXTFlagStrH));
+			listsep = string(*(p->TXTFlagStrH), WMGetHandleSize(p->TXTFlagStrH));
 
 			for(CountInt ii = 0 ; ii < numElements ; ii++){
 				output.append(*textDataP + pTableOffset[ii], pTableOffset[ii + 1] - pTableOffset[ii]);
@@ -128,7 +125,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 			stringstream oss;
 			string listsep = string(" ");
 			if(p->TXTFlagParamsSet[0] && p->TXTFlagStrH)
-				listsep = string(*(p->TXTFlagStrH), GetHandleSize(p->TXTFlagStrH));
+				listsep = string(*(p->TXTFlagStrH), WMGetHandleSize(p->TXTFlagStrH));
 			
 			wp = (void*) WaveData(p->wavWaveH);
 			
@@ -176,7 +173,7 @@ ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 	}
 done:
 	if (textDataP)
-		DisposeHandle(textDataP);
+		WMDisposeHandle(textDataP);
 	
 	return err;
 }
@@ -184,9 +181,9 @@ done:
 int
 RegisterSOCKITwaveToString(void)
 {
-	char* cmdTemplate;
-	char* runtimeNumVarList;
-	char* runtimeStrVarList;
+	const char* cmdTemplate;
+	const char* runtimeNumVarList;
+	const char* runtimeStrVarList;
 	
 	// NOTE: If you change this template, you must change the SOCKITwaveToStringRuntimeParams structure as well.
 	cmdTemplate = "SOCKITwaveToString/E/TXT[=string] wave:wav, varname:str";

@@ -6,7 +6,7 @@
 //get info on specific socket
 //close socket. (close all sockets
 #include "CurrentConnections.h"
-#include "SOCKITsendmsg.h"
+#include "SOCKITsendMsg.h"
 #include "SOCKITopenConnection.h"
 #include "SOCKITprocessor.h"
 #include "SOCKITcloseConnection.h"
@@ -118,8 +118,7 @@ int cleanup(){
         pinstance->quitReadThread();
         pthread_mutex_unlock( &readThreadMutex );
         
-        int res=0;
-        pthread_join(*readThread, (void**)res);
+        pthread_join(*readThread, NULL);
         free(readThread);
         readThread = NULL;
     }

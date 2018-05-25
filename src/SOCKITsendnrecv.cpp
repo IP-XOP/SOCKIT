@@ -4,14 +4,11 @@
 int
 RegisterSOCKITsendnrecv(void)
 {
-	char* cmdTemplate;
-	char* runtimeNumVarList;
-	char* runtimeStrVarList;
+	const char* cmdTemplate = "SOCKITsendnrecv/FILE=string/TIME=number/NBYT=number/SMAL number:ID,string:MSG [,varname:ret]";
+	const char* runtimeNumVarList = "V_Flag";
+	const char* runtimeStrVarList = "S_tcp";
 	
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
-	cmdTemplate = "SOCKITsendnrecv/FILE=string/TIME=number/NBYT=number/SMAL number:ID,string:MSG [,varname:ret]";
-	runtimeNumVarList = "V_Flag";
-	runtimeStrVarList = "S_tcp";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITsendnrecvRuntimeParams), (void*)ExecuteSOCKITsendnrecv, 0);
 }
 
@@ -130,10 +127,10 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	}
 	if(FD_ISSET(sockNum,&tempset)){
-		rc = send(sockNum, *(p->MSG), (int) GetHandleSize(p->MSG), 0);
+		rc = send(sockNum, *(p->MSG), (int) WMGetHandleSize(p->MSG), 0);
 		if(rc > 0){
-			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %d\r", sockNum);
-			output = string(*(p->MSG), GetHandleSize(p->MSG));
+			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %ld\r", sockNum);
+			output = string(*(p->MSG), WMGetHandleSize(p->MSG));
 			
 			find_and_replace(output, "\n", "\r");
 			
@@ -149,9 +146,9 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		 on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
 		 zero length message (rc would also ==0 in that case.
 		*/
-		} else if (rc < 0 || (rc == 0 && GetHandleSize(p->MSG) > 0)) {
+		} else if (rc < 0 || (rc == 0 && WMGetHandleSize(p->MSG) > 0)) {
 			if(wbi->toPrint == true){
-				snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", sockNum );
+				snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %ld, disconnecting\r", sockNum );
 				XOPNotice(report);
 			}
 			// Closed connection or error 
@@ -160,7 +157,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			goto done;
 		}
 	} else {
-		snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", sockNum);
+		snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %ld\r", sockNum);
 		if(wbi->toPrint == true)
 			XOPNotice(report);
 		err2=1;
@@ -186,7 +183,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			
 			//if the recv fails then the manpage indicates that rc <= 0, because we are using blocking sockets.
 			if (rc <= 0) {
-				snprintf(report, sizeof(report), "SOCKIT err: socket descriptor %d, disconnection???\r", sockNum );
+				snprintf(report, sizeof(report), "SOCKIT err: socket descriptor %ld, disconnection???\r", sockNum );
 				if(wbi->toPrint == true)
 					XOPNotice(report);
 				needToClose = true;
@@ -221,7 +218,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		}while(res > 0);
 		
 	} else if(res == -1) {
-		snprintf(report, sizeof(report), "SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
+		snprintf(report, sizeof(report), "SOCKIT err: timeout while reading socket descriptor %ld, disconnecting\r", sockNum );
 		if(wbi->toPrint == true)
 			XOPNotice(report);
 		// Closed connection or error 
@@ -314,8 +311,8 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	double timeoutVal=1.;
 	struct timeval timeout;
 	
-	retval = NewHandle(0);
-	if(retval==NULL){
+	retval = WMNewHandle(0);
+	if(retval == NULL){
 		err = NOMEM;
 		goto done;
 	}
@@ -352,7 +349,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 		goto done;
 	}
 	if(FD_ISSET(sockNum, &tempset)){
-		rc = send(sockNum, *(p->message), (int) GetHandleSize(p->message),0);
+		rc = send(sockNum, *(p->message), (int) WMGetHandleSize(p->message),0);
 		if(rc > 0){
 			//if there is a logfile then append and save
 			wbi->log_msg(buf, 1);
@@ -360,7 +357,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 			 on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
 			 zero length message (rc would also ==0 in that case.
 			 */
-		} else if (rc < 0 || (rc == 0 && GetHandleSize(p->message) > 0)) {
+		} else if (rc < 0 || (rc == 0 && WMGetHandleSize(p->message) > 0)) {
 			// Closed connection or error 
 			pinstance->closeWorker(sockNum);
 			err2=1;
@@ -423,7 +420,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	
 done:
 	if(err == 0 && err2 == 0 && chunk.length())
-		err = PtrAndHand((void*)chunk.data(), retval, chunk.length());
+		err = WMPtrAndHand((void*)chunk.data(), retval, chunk.length());
 	
 	p->retval = NULL;
 	
@@ -433,7 +430,7 @@ done:
 	FD_ZERO(&tempset);
 	
 	if(p->message)
-		DisposeHandle(p->message);
+		WMDisposeHandle(p->message);
 	
 	SHOULD_IDLE_SKIP = false;
 	

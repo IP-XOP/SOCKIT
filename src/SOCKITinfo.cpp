@@ -51,14 +51,9 @@ int SOCKITinfo(SOCKITinfoStruct *p){
 	
 	p->retval = NULL;
 
-	result = NewHandle(0);
+	result = WMNewHandle(0);
 	if(!result){
 		err = NOMEM;
-		goto done;
-	}
-	
-	if(igorVersion < 620 && !RunningInMainThread()){
-		err = NOT_IN_THREADSAFE;
 		goto done;
 	}
 	
@@ -69,7 +64,7 @@ int SOCKITinfo(SOCKITinfoStruct *p){
 	wbi = pinstance->getWaveBufferInfo(socknum);
 	
 	//put in the socket number.
-	snprintf(report, szReport, "ID-%d;", socknum);
+	snprintf(report, szReport, "ID-%ld;", socknum);
 	chunk.append(report, strlen(report));
 	
 	//put in the IP address.
@@ -81,7 +76,7 @@ int SOCKITinfo(SOCKITinfoStruct *p){
 	chunk.append(report, strlen(report));
 	
 	//put in the memory size
-	snprintf(report, szReport, "MEMSIZE-%d;", wbi->readBuffer.length());
+	snprintf(report, szReport, "MEMSIZE-%ld;", (long) wbi->readBuffer.length());
 	chunk.append(report, strlen(report));
 	
 	//put in the processor name(if any).

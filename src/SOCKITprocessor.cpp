@@ -32,7 +32,7 @@ int SOCKITregisterProcessor(SOCKITprocessorStruct *p){
 	
 done:
 	if(p->processor)
-		DisposeHandle(p->processor);
+		WMDisposeHandle(p->processor);
     if(err)
         p->retval = -1;
 	pthread_mutex_unlock( &readThreadMutex );

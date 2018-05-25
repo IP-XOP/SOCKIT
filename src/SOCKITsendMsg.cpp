@@ -1,17 +1,14 @@
 #include "CurrentConnections.h"
-#include "SOCKITsendmsg.h"
+#include "SOCKITsendMsg.h"
 
 int
 RegisterSOCKITsendmsg(void)
 {
-	char* cmdTemplate;
-	char* runtimeNumVarList;
-	char* runtimeStrVarList;
+	const char* cmdTemplate = "SOCKITsendmsg/TIME=number number:ID,string:MSG";
+	const char* runtimeNumVarList = "V_Flag";
+	const char* runtimeStrVarList = "";
 	
 	// NOTE: If you change this template, you must change the SOCKITsendmsgRuntimeParams structure as well.
-	cmdTemplate = "SOCKITsendmsg/TIME=number number:ID,string:MSG";
-	runtimeNumVarList = "V_Flag";
-	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITsendmsgRuntimeParams), (void*)ExecuteSOCKITsendmsg, 0);
 }
 
@@ -34,7 +31,6 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	char report[MAX_MSG_LEN+1];
 	string output;			//get rid of the carriage returns
 	waveBufferInfo *wbi = NULL;
-	long size = 0;
 	fd_set tempset;
 	struct timeval timeout;
 		
@@ -81,10 +77,10 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
         goto done;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
-		rc = send(socketToWrite, *(p->MSG), (int) GetHandleSize(p->MSG), 0);
+		rc = send(socketToWrite, *(p->MSG), (int) WMGetHandleSize(p->MSG), 0);
 		if(rc > 0){
-			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %d\r", socketToWrite);
-			output = string(*(p->MSG), GetHandleSize(p->MSG));
+			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %ld\r", socketToWrite);
+			output = string(*(p->MSG), WMGetHandleSize(p->MSG));
 			find_and_replace(output, "\n", "\r");
 			
 			if(wbi->toPrint == true){
@@ -99,15 +95,15 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 		  on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
 		 zero length message (rc would also ==0 in that case.
 		 */
-		} else if (rc < 0 || (rc == 0 && GetHandleSize(p->MSG) > 0)) {// Closed connection or error
-			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", socketToWrite );
+		} else if (rc < 0 || (rc == 0 && WMGetHandleSize(p->MSG) > 0)) {// Closed connection or error
+			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %ld, disconnecting\r", socketToWrite );
 			if(wbi->toPrint == true)
 				XOPNotice(report);
 			pinstance->closeWorker(socketToWrite);
 			err2 = 1;
 		}
 	} else {
-			snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", socketToWrite);
+			snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %ld\r", socketToWrite);
 			if(wbi->toPrint == true)
 				XOPNotice(report);
 		err2 = 1;
@@ -147,7 +143,6 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
     
 	string output;			//get rid of the carriage returns
 	waveBufferInfo *wbi = NULL;
-	long size = 0;
 	fd_set tempset;
 	struct timeval timeout;
 	
@@ -180,7 +175,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
         goto done;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
-		rc = send(socketToWrite, *p->message, (int) GetHandleSize(p->message), 0);
+		rc = send(socketToWrite, *p->message, (int) WMGetHandleSize(p->message), 0);
 		if(rc > 0){
 			//if there is a logfile then append and save
 			wbi->log_msg(output.c_str(), 1);
@@ -190,7 +185,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 			 on windows rc <= 0 if remote peer disconnects.  But we want to make sure that it wasn't because we tried a
 			 zero length message (rc would also ==0 in that case.
 			 */
-		} else if (rc < 0 || (rc == 0 && GetHandleSize(p->message) > 0)) {
+		} else if (rc < 0 || (rc == 0 && WMGetHandleSize(p->message) > 0)) {
 			pinstance->closeWorker(socketToWrite);
 			err2 = 1;
 		}
@@ -210,7 +205,7 @@ done:
 	FD_ZERO(&tempset);
 	
 	if(p->message)
-		DisposeHandle(p->message);
+		WMDisposeHandle(p->message);
 					
 	pthread_mutex_unlock( &readThreadMutex );
 

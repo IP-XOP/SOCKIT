@@ -21,7 +21,7 @@ int SOCKITpeek(SOCKITpeekStructPtr p){
 //	extern pthread_mutex_t readThreadMutex;
 	pthread_mutex_lock( &readThreadMutex );
 		
-	dest = NewHandle(0);
+	dest = WMNewHandle(0);
 	if(dest == NULL){
 		err = NOMEM;
 		goto done;
@@ -36,7 +36,7 @@ int SOCKITpeek(SOCKITpeekStructPtr p){
 
 	if(pinstance->isSockitOpen(p->sockID, &sockID)){
 		if(pinstance->getWaveBufferInfo(sockID)->readBuffer.length()){
-			if(err = PtrAndHand((void*)pinstance->getWaveBufferInfo(sockID)->readBuffer.data(), dest, pinstance->getWaveBufferInfo(sockID)->readBuffer.length())){
+			if(err = WMPtrAndHand((void*)pinstance->getWaveBufferInfo(sockID)->readBuffer.data(), dest, pinstance->getWaveBufferInfo(sockID)->readBuffer.length())){
 				dest = NULL;
 				goto done;
 			}
@@ -53,7 +53,7 @@ done:
 	p->dest = NULL;	// Init to NULL
 	if (err) {
 		if (dest != NULL)
-			DisposeHandle(dest);
+			WMDisposeHandle(dest);
 		return err;
 	}
 	p->dest = dest;

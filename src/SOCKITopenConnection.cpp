@@ -1,18 +1,15 @@
 #include "CurrentConnections.h"
-#include "SOCKITopenconnection.h"
+#include "SOCKITopenConnection.h"
 #include "errno.h"
 
 int
 RegisterSOCKITopenconnection(void)
 {
-	char* cmdTemplate;
-	char* runtimeNumVarList;
-	char* runtimeStrVarList;
+    const char* cmdTemplate = "SOCKITopenconnection/NOID/TIME=number/LOG=name/Q[=number]/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
+	const char* runtimeNumVarList = "V_flag";
+	const char* runtimeStrVarList = "";
 	
 	// NOTE: If you change this template, you must change the SOCKITopenconnectionRuntimeParams structure as well.
-	cmdTemplate = "SOCKITopenconnection/NOID/TIME=number/LOG=name/Q[=number]/Tok=string/proc=name varname:ID,string:IP,number:PORT,wave:BUF";
-	runtimeNumVarList = "V_flag";
-	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITopenconnectionRuntimeParams), (void*)ExecuteSOCKITopenconnection, 0);
 }
 
@@ -122,11 +119,11 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 			goto done;
 		}
 		BCInt tocopy;
-		tocopy = GetHandleSize(p->TOKFlagStrH) > 30 ? 30 : GetHandleSize(p->TOKFlagStrH);
+		tocopy = WMGetHandleSize(p->TOKFlagStrH) > 30 ? 30 : WMGetHandleSize(p->TOKFlagStrH);
 		memcpy(bufferInfo->tokenizer, *(p->TOKFlagStrH), tocopy);
 		// we don't use strlen because we're interested in 0x00
 		// that would normally terminate a string.
-		bufferInfo->sztokenizer = (int) GetHandleSize(p->TOKFlagStrH);		
+		bufferInfo->sztokenizer = (int) WMGetHandleSize(p->TOKFlagStrH);
 	}
 	
 	if (p->BUFEncountered) {
@@ -156,8 +153,8 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
-	snprintf(port, PORTLEN, "%d", (long)p->PORTNumber);
-	snprintf(bufferInfo->port, PORTLEN, "%d", (long)p->PORTNumber);
+	snprintf(port, PORTLEN, "%ld", (long)p->PORTNumber);
+	snprintf(bufferInfo->port, PORTLEN, "%ld", (long)p->PORTNumber);
 	
 	if(getaddrinfo(host, port, &hints, &servinfo)){
 		err = BAD_HOST_RESOLV;
@@ -203,7 +200,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	if(res > 0 && FD_ISSET(sockNum, &tempset)){
 		if(!p->QFlagEncountered){
-				snprintf(report, sizeof(char) * MAX_MSG_LEN, "SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
+				snprintf(report, sizeof(char) * MAX_MSG_LEN, "SOCKITmsg: Connected %s as socket number %ld\r", host, sockNum );
 				XOPNotice(report);
 		}
 	} else {
@@ -351,8 +348,8 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
-	snprintf(port, 6, "%d", (long)p->portNumber);
-	snprintf(bufferInfo->port, PORTLEN, "%d", (long)p->portNumber);
+	snprintf(port, 6, "%ld", (long)p->portNumber);
+	snprintf(bufferInfo->port, PORTLEN, "%ld", (long)p->portNumber);
 
 	if(getaddrinfo(host, port, &hints, &servinfo)){
 		err = BAD_HOST_RESOLV;

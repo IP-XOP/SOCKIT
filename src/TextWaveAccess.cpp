@@ -49,8 +49,8 @@ int textWaveAccess(waveHndl *textWaveH, vector<string> &tokens){
     szTotalTokens = ss.str().length();
 	
 	//resize the handle
-	SetHandleSize(textDataH, szTotalTokens + (tokens.size() + 1) * sizeof(PSInt));
-	if(err = MemError())
+	err = WMSetHandleSize(textDataH, szTotalTokens + (tokens.size() + 1) * sizeof(PSInt));
+	if(err)
 		goto done;
 	
 	//point to table of offsets
@@ -73,7 +73,7 @@ int textWaveAccess(waveHndl *textWaveH, vector<string> &tokens){
 done:
 	
 	if(textDataH)
-		DisposeHandle(textDataH);
+		WMDisposeHandle(textDataH);
 	return err;
 }
 
@@ -114,7 +114,7 @@ int textWaveToTokens(waveHndl textWaveH, vector<string> &tokens){
 		
 done:
     if(textDataH)
-		DisposeHandle(textDataH);
+		WMDisposeHandle(textDataH);
 	return err;
 }
 

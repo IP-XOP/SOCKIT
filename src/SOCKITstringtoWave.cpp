@@ -33,12 +33,9 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	vector<PSInt> tokenSizes;
     
 	char* delim = NULL;
-	char *defaultdelimiter = ";";
+	char defaultdelimiter[] = ";";
 	size_t delimeterSize = 1;	
-	
-	if(igorVersion < 620 && !RunningInMainThread())
-		return NOT_IN_THREADSAFE;
-	
+		
 	destWaveH = NULL;
 	destWaveRefIdentifier = 0;
 	dfH = NULL;	// Default is current data folder	
@@ -72,25 +69,23 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	}
 	options = kOpDestWaveOverwriteOK | kOpDestWaveOverwriteExistingWave;
 	
-	if(p->FREEFlagEncountered && igorVersion < 620)
-		return IGOR_OBSOLETE;
 	if(p->FREEFlagEncountered)
 		options |= kOpDestWaveMakeFreeWave;
 
 	
-	szString = GetHandleSize(p->conv);
+	szString = WMGetHandleSize(p->conv);
 	dataType = (int)(p->num);
 
     if(p->TOKFlagEncountered || dataType == 0){
         if(p->TOKFlagStrH){
             delim = *(p->TOKFlagStrH);
-            delimeterSize = GetHandleSize(p->TOKFlagStrH);
+            delimeterSize = WMGetHandleSize(p->TOKFlagStrH);
         } else {
             delim = defaultdelimiter;
             delimeterSize = 1;
         }
         /* now tokenize */
-        Tokenize((const unsigned char *) *(p->conv), GetHandleSize(p->conv), tokens, tokenSizes, &szTotalTokens, delim, delimeterSize);
+        Tokenize((const unsigned char *) *(p->conv), WMGetHandleSize(p->conv), tokens, tokenSizes, &szTotalTokens, delim, delimeterSize);
         numElements = tokens.size();
     }
     
@@ -199,7 +194,7 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
             
             if(!p->TOKFlagEncountered){
                 //copy over the data, straight
-                memcpy(wp, *(p->conv), GetHandleSize(p->conv));
+                memcpy(wp, *(p->conv), WMGetHandleSize(p->conv));
                 
                 //E says you expect the data to be big Endian
                 //need to byte swap
@@ -239,14 +234,11 @@ done:
 int
 RegisterSOCKITstringtoWave(void)
 {
-	char* cmdTemplate;
-	char* runtimeNumVarList;
-	char* runtimeStrVarList;
+	const char* cmdTemplate = "SOCKITstringtoWave/E/DEST=DataFolderAndName:{dest,real}/FREE/TOK=string number:num,string:conv";
+	const char* runtimeNumVarList = "";
+	const char* runtimeStrVarList = "";
 
 	// NOTE: If you change this template, you must change the SOCKITstringtoWaveRuntimeParams structure as well.
-	cmdTemplate = "SOCKITstringtoWave/E/DEST=DataFolderAndName:{dest,real}/FREE/TOK=string number:num,string:conv";
-	runtimeNumVarList = "";
-	runtimeStrVarList = "";
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITstringtoWaveRuntimeParams), (void*)ExecuteSOCKITstringtoWave, kOperationIsThreadSafe);
 };
 
