@@ -230,7 +230,7 @@ int waveBufferInfo::log_msg(const char *msg, int isSend){
 		time_t theTime;
 		theTime = time(NULL);
 
-		//time to open a new file, max log file size is 50Mb?
+		// Time to open a new file, max log file size is 50 MB?
 		fsize = logFile->tellp();
 		if(fsize > 52428800){
 			logFile->close();
