@@ -25,7 +25,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 #endif
 	
 	int rc;
-    SOCKET sockNum = -1L;
+    SOCKET sockNum = -1;
 	int res = 0;
 	char port[PORTLEN+1];
 	int dataType = 0;
@@ -200,7 +200,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	if(res > 0 && FD_ISSET(sockNum, &tempset)){
 		if(!p->QFlagEncountered){
-				snprintf(report, sizeof(char) * MAX_MSG_LEN, "SOCKITmsg: Connected %s as socket number %ld\r", host, sockNum );
+				snprintf(report, sizeof(char) * MAX_MSG_LEN, "SOCKITmsg: Connected %s as socket number %d\r", host, sockNum );
 				XOPNotice(report);
 		}
 	} else {

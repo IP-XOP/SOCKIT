@@ -18,7 +18,7 @@
 #include <pthread.h>
 //#include "recursiveMutex.h"
 
-#define SOCKET long
+#define SOCKET int
 #endif
 
 #ifdef WINIGOR

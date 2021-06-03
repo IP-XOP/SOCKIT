@@ -201,7 +201,7 @@ int waveBufferInfo::log_msg(const char *msg, int isSend){
 	
 	if(!logFile && strlen(logFilePath)){		
 		GetTheTime(&year, &month, &day, &hour, &minute, &second);	
-		snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%ld-%ld-%ldT%02ld%02ld%02ld_%ld.txt", year, month, day, hour, minute, second, sockNum);
+		snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%ld-%ld-%ldT%02ld%02ld%02ld_%d.txt", year, month, day, hour, minute, second, sockNum);
 		
 		memset(fullfilepath, 0, MAX_PATH_LEN + 1);
 		strncpy(fullfilepath, logFilePath, MAX_PATH_LEN);
@@ -234,7 +234,7 @@ int waveBufferInfo::log_msg(const char *msg, int isSend){
 		if(fsize > 52428800){
 			logFile->close();
 			GetTheTime(&year, &month, &day, &hour, &minute, &second);	
-			snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%ld-%ld-%ldT%02ld%02ld%02ld_%ld.txt", year, month, day, hour, minute, second, sockNum);
+			snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%ld-%ld-%ldT%02ld%02ld%02ld_%d.txt", year, month, day, hour, minute, second, sockNum);
 			
 			memset(fullfilepath, 0, MAX_PATH_LEN + 1);
 			strncpy(fullfilepath, logFilePath, MAX_PATH_LEN);
@@ -494,7 +494,7 @@ int CurrentConnections::checkRecvData(){
 				goto done;
 			if(bufferWaves[*iter].toPrint == true){
 				memset(report, 0, sizeof(report));
-				snprintf(report,sizeof(report),"SOCKITmsg: Socket %ld says: \r", *iter);
+				snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", *iter);
 				XOPNotice(report);
 				
 				string output;
@@ -506,7 +506,7 @@ int CurrentConnections::checkRecvData(){
 			bufferWaves[*iter].readBuffer.clear();
 			if(bufferWaves[*iter].toClose){
 				memset(report, 0, sizeof(report));
-				snprintf(report,sizeof(report),"SOCKITmsg: closing socket %ld\r", *iter);
+				snprintf(report,sizeof(report),"SOCKITmsg: closing socket %d\r", *iter);
 				XOPNotice(report);
 				pinstance->closeWorker(*iter);
 			}

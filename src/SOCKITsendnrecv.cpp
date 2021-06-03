@@ -137,7 +137,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	if(FD_ISSET(sockNum,&tempset)){
 		rc = send(sockNum, *(p->MSG), (int) WMGetHandleSize(p->MSG), 0);
 		if(rc > 0){
-			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %ld\r", sockNum);
+			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %d\r", sockNum);
 			output = string(*(p->MSG), WMGetHandleSize(p->MSG));
 			
 			find_and_replace(output, "\n", "\r");
@@ -156,7 +156,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		*/
 		} else if (rc < 0 || (rc == 0 && WMGetHandleSize(p->MSG) > 0)) {
 			if(wbi->toPrint == true){
-				snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %ld, disconnecting\r", sockNum );
+				snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", sockNum );
 				XOPNotice(report);
 			}
 			// Closed connection or error 
@@ -165,7 +165,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			goto done;
 		}
 	} else {
-		snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %ld\r", sockNum);
+		snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", sockNum);
 		if(wbi->toPrint == true)
 			XOPNotice(report);
 		err2=1;
@@ -191,7 +191,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			
 			//if the recv fails then the manpage indicates that rc <= 0, because we are using blocking sockets.
 			if (rc <= 0) {
-				snprintf(report, sizeof(report), "SOCKIT err: socket descriptor %ld, disconnection???\r", sockNum );
+				snprintf(report, sizeof(report), "SOCKIT err: socket descriptor %d, disconnection???\r", sockNum );
 				if(wbi->toPrint == true)
 					XOPNotice(report);
 				needToClose = true;
@@ -226,7 +226,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		}while(res > 0);
 		
 	} else if(res == -1) {
-		snprintf(report, sizeof(report), "SOCKIT err: timeout while reading socket descriptor %ld, disconnecting\r", sockNum );
+		snprintf(report, sizeof(report), "SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
 		if(wbi->toPrint == true)
 			XOPNotice(report);
 		// Closed connection or error 

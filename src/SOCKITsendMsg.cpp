@@ -66,7 +66,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	}
 	
 	if(!pinstance->isSockitOpen(p->ID, &socketToWrite)){
-		snprintf(report, sizeof(report), "SOCKIT err: socket not connected %ld\r", socketToWrite);
+		snprintf(report, sizeof(report), "SOCKIT err: socket not connected %d\r", socketToWrite);
 		XOPNotice(report);
 		err2 = 1;
 		goto done;
@@ -87,7 +87,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	if(FD_ISSET(socketToWrite,&tempset)){
 		rc = send(socketToWrite, *(p->MSG), (int) WMGetHandleSize(p->MSG), 0);
 		if(rc > 0){
-			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %ld\r", socketToWrite);
+			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %d\r", socketToWrite);
 			output = string(*(p->MSG), WMGetHandleSize(p->MSG));
 			find_and_replace(output, "\n", "\r");
 			
@@ -104,14 +104,14 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 		 zero length message (rc would also ==0 in that case.
 		 */
 		} else if (rc < 0 || (rc == 0 && WMGetHandleSize(p->MSG) > 0)) {// Closed connection or error
-			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %ld, disconnecting\r", socketToWrite );
+			snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", socketToWrite );
 			if(wbi->toPrint == true)
 				XOPNotice(report);
 			pinstance->closeWorker(socketToWrite);
 			err2 = 1;
 		}
 	} else {
-			snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %ld\r", socketToWrite);
+			snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", socketToWrite);
 			if(wbi->toPrint == true)
 				XOPNotice(report);
 		err2 = 1;
