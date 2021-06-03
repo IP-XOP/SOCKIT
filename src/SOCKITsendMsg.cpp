@@ -162,7 +162,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 		goto done;
 	} 
 	
-	if(!p->sockID){
+	if(p->sockID == 0){
 		err = OH_EXPECTED_NUMBER;
 		goto done;
 	}

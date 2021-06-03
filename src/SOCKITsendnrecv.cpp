@@ -297,7 +297,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	extern WSADATA globalWsaData;
 #endif
 
-	if(!p->SMAL)
+	if(p->SMAL == 0)
 		SHOULD_IDLE_SKIP = true;
 	
 	string chunk;	
@@ -325,7 +325,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 		goto done;
 	}
 	
-	if(p->TIME){
+	if(p->TIME != 0.0){
 		timeoutVal = fabs(p->TIME);
 	} else {
 		timeoutVal = 1.;
@@ -403,7 +403,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 			} //else if (rc == 0)
 			//	break;
 			
-			if(p->SMAL){
+			if(p->SMAL == 0){
 				res = 0;
 			} else {
 				FD_ZERO(&tempset);

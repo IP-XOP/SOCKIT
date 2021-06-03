@@ -27,7 +27,7 @@ SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 	pthread_mutex_lock( &readThreadMutex );
 
 	
-	if(!p->socketToClose){
+	if(p->socketToClose == 0){
 		err = OH_EXPECTED_NUMBER;
 		goto done;
 	}
