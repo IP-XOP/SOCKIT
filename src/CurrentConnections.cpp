@@ -64,7 +64,8 @@ void *readerThread(void *){
 	
 	SOCKET maxSockNum;
 	
-	int rc = 0, res = 0, iterations=0;
+    long rc = 0;
+    int res = 0, iterations=0;
 	long charsread = 0;		
 	char buf[BUFLEN];
 	

@@ -54,7 +54,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 	
 	if(p->TIMEFlagEncountered){
 		timeout.tv_sec = (long) floor(p->TIMEFlagNumber);
-		timeout.tv_usec =  (long)((p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000);
+		timeout.tv_usec = (int)((p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000);
 	} else {
 		timeout.tv_sec = 10;
 		timeout.tv_usec = 0;
@@ -326,7 +326,7 @@ SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 	waveBufferInfo *bufferInfo = new waveBufferInfo();
 		
 	timeout.tv_sec = (long) floor(p->timeout);
-	timeout.tv_usec =  (long)((p->timeout-(double)floor(p->timeout))*1000000);
+	timeout.tv_usec = (int)((p->timeout-(double)floor(p->timeout))*1000000);
 	
 	bufferInfo->NOIDLES = true;
 	bufferInfo->toPrint = false;

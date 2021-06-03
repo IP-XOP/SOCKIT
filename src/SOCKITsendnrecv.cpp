@@ -38,9 +38,9 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	XOP_FILE_REF fileToWrite = NULL;
 	char fileName[MAX_PATH_LEN+1];
 	char fileNameToWrite[MAX_PATH_LEN+1];
-	int written;
+	long written;
 	
-    int rc = 0;
+    long rc = 0;
 	long charsread = 0;
 	
     SOCKET sockNum = -1;
@@ -65,7 +65,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	}
 	
 	timeout.tv_sec = (long) floor(timeoutVal);
-	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
+	timeout.tv_usec = (int)((timeoutVal-(double)floor(timeoutVal))*1000000);
     
 	if(p->NBYTFlagEncountered){
 		if(IsNaN64(&p->NBYTFlagNumber) || IsINF64(&p->NBYTFlagNumber) || p->NBYTFlagNumber < 0)
@@ -135,7 +135,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	}
 	if(FD_ISSET(sockNum,&tempset)){
-		rc = send(sockNum, *(p->MSG), (int) WMGetHandleSize(p->MSG), 0);
+		rc = send(sockNum, *(p->MSG), (long) WMGetHandleSize(p->MSG), 0);
 		if(rc > 0){
 			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %d\r", sockNum);
 			output = string(*(p->MSG), WMGetHandleSize(p->MSG));
@@ -176,7 +176,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	FD_ZERO(&tempset);
 	timeout.tv_sec = (long) floor(timeoutVal);
-	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
+	timeout.tv_usec = (int)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	FD_SET(sockNum,&tempset);
 	res = select((int) sockNum + 1, &tempset, 0, 0, &timeout);
 	
@@ -219,7 +219,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			} else {
 				FD_ZERO(&tempset);
 				timeout.tv_sec = (long) floor(timeoutVal);
-				timeout.tv_usec =  (long)((timeoutVal - (double)floor(timeoutVal))*1000000);
+				timeout.tv_usec = (int)((timeoutVal - (double)floor(timeoutVal))*1000000);
 				FD_SET(sockNum, &tempset);
 				res = select(sockNum + 1, &tempset, 0, 0, &timeout);
 			}
@@ -303,7 +303,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	string chunk;	
 	Handle retval;
 	
-    int rc = 0;
+    long rc = 0;
 	long charsread = 0;
 	
     SOCKET sockNum = -1;
@@ -332,7 +332,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	}
 	
 	timeout.tv_sec = (long) floor(timeoutVal);
-	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
+	timeout.tv_usec = (int)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	
 	memset(buf, 0, sizeof(buf));
 	
@@ -357,7 +357,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 		goto done;
 	}
 	if(FD_ISSET(sockNum, &tempset)){
-		rc = send(sockNum, *(p->message), (int) WMGetHandleSize(p->message),0);
+		rc = send(sockNum, *(p->message), (long) WMGetHandleSize(p->message),0);
 		if(rc > 0){
 			//if there is a logfile then append and save
 			wbi->log_msg(buf, 1);
@@ -380,7 +380,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	
 	FD_ZERO(&tempset);
 	timeout.tv_sec = (long) floor(timeoutVal);
-	timeout.tv_usec =  (long)((timeoutVal - (double) floor(timeoutVal)) * 1000000);
+	timeout.tv_usec = (int)((timeoutVal - (double) floor(timeoutVal)) * 1000000);
 	FD_SET(sockNum, &tempset);
 	res = select((int) sockNum+1, &tempset, 0, 0, &timeout);
 	
@@ -408,7 +408,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 			} else {
 				FD_ZERO(&tempset);
 				timeout.tv_sec = (long) floor(timeoutVal);
-				timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
+				timeout.tv_usec = (int)((timeoutVal-(double)floor(timeoutVal))*1000000);
 				FD_SET(sockNum, &tempset);
 				res = select((int) sockNum + 1, &tempset, 0, 0, &timeout);
 			}

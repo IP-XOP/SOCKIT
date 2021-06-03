@@ -93,7 +93,7 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
             delimeterSize = 1;
         }
         /* now tokenize */
-        Tokenize((const unsigned char *) *(p->conv), WMGetHandleSize(p->conv), tokens, tokenSizes, &szTotalTokens, delim, delimeterSize);
+        Tokenize((const unsigned char *) *(p->conv), (long)WMGetHandleSize(p->conv), tokens, tokenSizes, &szTotalTokens, delim, delimeterSize);
         numElements = tokens.size();
     }
     

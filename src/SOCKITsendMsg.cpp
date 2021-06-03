@@ -32,7 +32,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	extern WSADATA globalWsaData;
 #endif
 	
-    int rc = 0;
+    long rc = 0;
     SOCKET socketToWrite = -1;
 	int res = 0;
     
@@ -44,7 +44,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 		
 	if(p->TIMEFlagEncountered){
 		timeout.tv_sec = (long) floor(p->TIMEFlagNumber);
-		timeout.tv_usec =  (long)((p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000);		
+		timeout.tv_usec = (int)((p->TIMEFlagNumber-(double)floor(p->TIMEFlagNumber))*1000000);
 	} else {
 		timeout.tv_sec = 5;
 		timeout.tv_usec = 0;
@@ -85,7 +85,7 @@ ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
         goto done;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
-		rc = send(socketToWrite, *(p->MSG), (int) WMGetHandleSize(p->MSG), 0);
+		rc = send(socketToWrite, *(p->MSG), (long) WMGetHandleSize(p->MSG), 0);
 		if(rc > 0){
 			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %d\r", socketToWrite);
 			output = string(*(p->MSG), WMGetHandleSize(p->MSG));
@@ -145,7 +145,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	extern WSADATA globalWsaData;
 #endif
 	
-    int rc = 0;
+    long rc = 0;
     SOCKET socketToWrite = -1;
 	int res = 0;
     
@@ -183,7 +183,7 @@ SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
         goto done;
 	}
 	if(FD_ISSET(socketToWrite,&tempset)){
-		rc = send(socketToWrite, *p->message, (int) WMGetHandleSize(p->message), 0);
+		rc = send(socketToWrite, *p->message, (long) WMGetHandleSize(p->message), 0);
 		if(rc > 0){
 			//if there is a logfile then append and save
 			wbi->log_msg(output.c_str(), 1);
