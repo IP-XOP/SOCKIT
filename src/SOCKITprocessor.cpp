@@ -9,7 +9,8 @@
 #include "CurrentConnections.h"
 #include "SOCKITprocessor.h"
 
-int SOCKITregisterProcessor(SOCKITprocessorStruct *p){
+extern "C" int
+SOCKITregisterProcessor(SOCKITprocessorStruct *p){
 	int err = 0;
 	char processor[MAX_OBJ_NAME+1];
 	

@@ -13,7 +13,7 @@ RegisterSOCKITopenconnection(void)
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITopenconnectionRuntimeParams), (void*)ExecuteSOCKITopenconnection, 0);
 }
 
-static int
+extern "C" int
 ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 {
 	int err = 0, err2 = 0;
@@ -295,7 +295,7 @@ done:
 	return err;
 }
 
-int
+extern "C" int
 SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr p)
 {
 	int err = 0, err2 = 0;

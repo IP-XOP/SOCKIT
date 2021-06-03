@@ -20,7 +20,7 @@ RegisterSOCKITsendnrecv(void)
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITsendnrecvRuntimeParams), (void*)ExecuteSOCKITsendnrecv, 0);
 }
 
-int 
+extern "C" int
 ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	int err = 0, err2=0;
 	
@@ -283,7 +283,7 @@ done:
 	return err;
 }
 
-int 
+extern "C" int
 SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	int err = 0, err2=0;
 	

@@ -138,7 +138,7 @@ int cleanup(){
     return 0;
 }
 
-static void
+extern "C" void
 XOPEntry(void)
 {	
 	XOPIORecResult result = 0;
@@ -203,7 +203,8 @@ XOPEntry(void)
 */
 
 
-HOST_IMPORT int XOPMain(IORecHandle ioRecHandle)
+HOST_IMPORT int
+XOPMain(IORecHandle ioRecHandle)
 {	
 	XOPInit(ioRecHandle);							/* do standard XOP initialization */
 	SetXOPEntry(XOPEntry);							/* set entry point for future calls */

@@ -16,4 +16,4 @@ typedef struct SOCKITpeekStruct {
 }SOCKITpeekStruct, *SOCKITpeekStructPtr;
 #pragma pack(2)
 
-int SOCKITpeek(SOCKITpeekStructPtr p);
+extern "C" int SOCKITpeek(SOCKITpeekStructPtr p);

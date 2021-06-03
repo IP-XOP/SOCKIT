@@ -9,7 +9,8 @@
 #include "CurrentConnections.h"
 #include "SOCKITpeek.h"
 
-int SOCKITpeek(SOCKITpeekStructPtr p){
+extern "C" int
+SOCKITpeek(SOCKITpeekStructPtr p){
 	int err = 0;
 	//this function returns the entirety of the stored byte buffer for a given socket.
 	//it can be called from a threadsafe function.

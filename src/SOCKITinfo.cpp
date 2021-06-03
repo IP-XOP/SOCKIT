@@ -11,7 +11,8 @@
 #include "SOCKITinfo.h"
 
 //return how many sockets have been opened historically
-int SOCKITtotalOpened(SOCKITtotalOpenedStruct *p){
+extern "C" int
+SOCKITtotalOpened(SOCKITtotalOpenedStruct *p){
 	int	err = 0;
 		
 	pthread_mutex_lock( &readThreadMutex );
@@ -23,7 +24,8 @@ int SOCKITtotalOpened(SOCKITtotalOpenedStruct *p){
 };
 
 //return how many sockets are opened at the moment
-int SOCKITcurrentOpened(SOCKITtotalOpenedStruct *p){
+extern "C" int
+SOCKITcurrentOpened(SOCKITtotalOpenedStruct *p){
 	int	err = 0;
     
 	pthread_mutex_lock( &readThreadMutex );
@@ -35,7 +37,8 @@ int SOCKITcurrentOpened(SOCKITtotalOpenedStruct *p){
 };
 
 //return info about a current sockit
-int SOCKITinfo(SOCKITinfoStruct *p){
+extern "C" int
+SOCKITinfo(SOCKITinfoStruct *p){
 	int	err = 0;
 	string chunk;
 	Handle result = NULL;

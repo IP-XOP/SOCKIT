@@ -10,7 +10,8 @@
 #include "CurrentConnections.h"
 #include "SOCKITcloseConnection.h"
 
-int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
+extern "C" int
+SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 	int err = 0;
 	
 	SOCKET socketToClose = 0;

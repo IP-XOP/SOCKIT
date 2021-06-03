@@ -22,7 +22,7 @@
 
 using namespace std;
 
-int
+extern "C" int
 ExecuteSOCKITwaveToString(SOCKITwaveToStringRuntimeParamsPtr p)
 {
 	int err = 0;

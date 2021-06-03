@@ -15,4 +15,4 @@ typedef struct SOCKITprocessorStruct {
 }SOCKITprocessorStruct, *SOCKITprocessorStructPtr;
 #pragma pack()
 
-int SOCKITregisterProcessor(SOCKITprocessorStruct*);
+extern "C" int SOCKITregisterProcessor(SOCKITprocessorStruct*);

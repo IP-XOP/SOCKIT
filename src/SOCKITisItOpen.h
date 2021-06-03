@@ -15,5 +15,5 @@ typedef struct SOCKITisItOpenStruct {
 }SOCKITisItOpenStruct, *SOCKITisItOpenStructPtr;
 #pragma pack()
 
-int SOCKITisItOpen(SOCKITisItOpenStructPtr);
+extern "C" int SOCKITisItOpen(SOCKITisItOpenStructPtr);
 

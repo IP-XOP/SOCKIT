@@ -20,7 +20,7 @@ RegisterSOCKITsendmsg(void)
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITsendmsgRuntimeParams), (void*)ExecuteSOCKITsendmsg, 0);
 }
 
-int 
+extern "C" int
 ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParams *p){
 	int err = 0, err2 = 0;
 	
@@ -133,7 +133,7 @@ done:
 	return err;
 }
 
-int 
+extern "C" int
 SOCKITsendmsgF(SOCKITsendmsgFStruct *p){
 	int err = 0, err2 = 0;
 	

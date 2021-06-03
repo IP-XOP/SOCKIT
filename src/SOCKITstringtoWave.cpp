@@ -17,7 +17,7 @@
 
 using namespace std;
 
-static int
+extern "C" int
 ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	int err = 0;
 	int dataType;

@@ -15,4 +15,4 @@ typedef struct SOCKITcloseConnectionStruct {
 }SOCKITcloseConnectionStruct, *SOCKITcloseConnectionStructPtr;
 #pragma pack()
 
-int SOCKITcloseConnection(SOCKITcloseConnectionStructPtr);
+extern "C" int SOCKITcloseConnection(SOCKITcloseConnectionStructPtr);
