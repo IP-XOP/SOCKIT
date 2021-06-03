@@ -289,7 +289,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	
 //	extern CurrentConnections *pinstance;
 //	extern pthread_mutex_t readThreadMutex;
-	extern bool SHOULD_IDLE_SKIP;
+//	extern bool SHOULD_IDLE_SKIP;
 	pthread_mutex_lock( &readThreadMutex );
 
 

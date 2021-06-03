@@ -13,7 +13,7 @@ int
 RegisterSOCKITsendmsg(void)
 {
 	const char* cmdTemplate = "SOCKITsendmsg/TIME=number number:ID,string:MSG";
-	const char* runtimeNumVarList = "V_Flag";
+	const char* runtimeNumVarList = "V_flag";
 	const char* runtimeStrVarList = "";
 	
 	// NOTE: If you change this template, you must change the SOCKITsendmsgRuntimeParams structure as well.
