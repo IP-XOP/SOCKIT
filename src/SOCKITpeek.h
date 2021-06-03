@@ -14,6 +14,6 @@ typedef struct SOCKITpeekStruct {
 	UserFunctionThreadInfoPtr tp;
 	Handle dest;			//the string containing the content
 }SOCKITpeekStruct, *SOCKITpeekStructPtr;
-#pragma pack(2)
+#pragma pack()        // Reset structure alignment to default.
 
 extern "C" int SOCKITpeek(SOCKITpeekStructPtr p);
