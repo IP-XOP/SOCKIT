@@ -76,7 +76,7 @@ ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p)
 		}
 	}
 	
-	if(p->LOGFlagEncountered && p->LOGFlagParamsSet){
+	if(p->LOGFlagEncountered && p->LOGFlagParamsSet[0]){
 		if(err = GetPathInfo2(p->LOGFlagName, fnamepath))
 		   goto done;
 		//get native filesystem filepath
