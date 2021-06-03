@@ -1,3 +1,11 @@
+/*
+ *  SOCKITsendnrecv.cpp
+ *  SOCKIT
+ *
+ *  Created by andrew on 25/04/09.
+ *  Copyright 2009 __MyCompanyName__. All rights reserved.
+ *
+ */
 #include "CurrentConnections.h"
 #include "SOCKITsendnrecv.h"
 

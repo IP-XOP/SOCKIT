@@ -1,3 +1,11 @@
+/*
+ *  SOCKITstringtoWave.cpp
+ *  SOCKIT
+ *
+ *  Created by andrew on 25/04/09.
+ *  Copyright 2009 __MyCompanyName__. All rights reserved.
+ *
+ */
 // Operation template: SOCKITstringtoWave/B number:num,string:conv
 
 #include "SOCKITstringtoWave.h"

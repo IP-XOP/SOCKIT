@@ -1,3 +1,11 @@
+/*
+*  SwapEndian.cpp
+*  SOCKIT
+*
+*  Created by andrew on 20/06/12.
+*  Copyright 2012 __MyCompanyName__. All rights reserved.
+*
+*/
 #include "XOPStandardHeaders.h"
 #include "SwapEndian.h"
 #ifdef WINIGOR
@@ -12,7 +20,7 @@ void ByteSwap(unsigned char * b, int n)
 	while (i<j)
 	{
 		std::swap(b[i], b[j]);
-		i++, j--;
+        i++; j--;
 	}
 }
 //static long _TestEndian=1;

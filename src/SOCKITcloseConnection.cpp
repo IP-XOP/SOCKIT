@@ -1,3 +1,12 @@
+/*
+ *  SOCKITcloseConnection.cpp
+ *  SOCKIT
+ *
+ *  Created by andrew on 4/01/10.
+ *  Copyright 2010 __MyCompanyName__. All rights reserved.
+ *
+ */
+
 #include "CurrentConnections.h"
 #include "SOCKITcloseConnection.h"
 

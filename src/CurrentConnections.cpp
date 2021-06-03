@@ -1,6 +1,6 @@
 /*
  *  Connections.cpp
- *  iPeek
+ *  SOCKIT
  *
  *  Created by andrew on 17/05/08.
  *  Copyright 2008 __MyCompanyName__. All rights reserved.
