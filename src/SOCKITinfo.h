@@ -22,6 +22,6 @@ typedef struct SOCKITinfoStruct {
 #pragma pack()
 
 
-int SOCKITtotalOpened(SOCKITtotalOpenedStructPtr);
-int SOCKITcurrentOpened(SOCKITtotalOpenedStructPtr);
-int SOCKITinfo(SOCKITinfoStructPtr);
+extern "C" int SOCKITtotalOpened(SOCKITtotalOpenedStructPtr);
+extern "C" int SOCKITcurrentOpened(SOCKITtotalOpenedStructPtr);
+extern "C" int SOCKITinfo(SOCKITinfoStructPtr);

@@ -1,3 +1,11 @@
+/*
+ *  SOCKITstringtoWave.cpp
+ *  SOCKIT
+ *
+ *  Created by andrew on 25/04/09.
+ *  Copyright 2009 __MyCompanyName__. All rights reserved.
+ *
+ */
 // Operation template: SOCKITstringtoWave/B number:num,string:conv
 
 #include "SOCKITstringtoWave.h"
@@ -9,7 +17,7 @@
 
 using namespace std;
 
-static int
+extern "C" int
 ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
 	int err = 0;
 	int dataType;
@@ -85,7 +93,7 @@ ExecuteSOCKITstringtoWave(SOCKITstringtoWaveRuntimeParamsPtr p){
             delimeterSize = 1;
         }
         /* now tokenize */
-        Tokenize((const unsigned char *) *(p->conv), WMGetHandleSize(p->conv), tokens, tokenSizes, &szTotalTokens, delim, delimeterSize);
+        Tokenize((const unsigned char *) *(p->conv), (long)WMGetHandleSize(p->conv), tokens, tokenSizes, &szTotalTokens, delim, delimeterSize);
         numElements = tokens.size();
     }
     

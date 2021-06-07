@@ -1,6 +1,6 @@
 /*
  *  SOCKITopenconnection.h
- *  iPeek
+ *  SOCKIT
  *
  *  Created by andrew on 19/05/08.
  *  Copyright 2008 __MyCompanyName__. All rights reserved.
@@ -71,7 +71,7 @@ typedef struct SOCKITopenconnectionRuntimeParams* SOCKITopenconnectionRuntimePar
 #pragma pack()		// Reset structure alignment to default.
 
 int RegisterSOCKITopenconnection(void);
-static int ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p);
+extern "C" int ExecuteSOCKITopenconnection(SOCKITopenconnectionRuntimeParamsPtr p);
 
 #pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITopenconnectionFStruct {
@@ -83,4 +83,4 @@ typedef struct SOCKITopenconnectionFStruct {
 }SOCKITopenconnectionFStruct, *SOCKITopenconnectionFStructPtr;
 #pragma pack()
 
-int SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr);
+extern "C" int SOCKITopenconnectionF(SOCKITopenconnectionFStructPtr);

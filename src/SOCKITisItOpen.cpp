@@ -9,7 +9,8 @@
 #include "CurrentConnections.h"
 #include "SOCKITisItOpen.h"
 
-int SOCKITisItOpen(SOCKITisItOpenStruct *p){
+extern "C" int
+SOCKITisItOpen(SOCKITisItOpenStruct *p){
 	int	err = 0;
 	//returns the truth abouot whether the given socket is still open.
 	pthread_mutex_lock( &readThreadMutex );

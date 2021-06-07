@@ -138,14 +138,12 @@ int cleanup(){
     return 0;
 }
 
-static void
+extern "C" void
 XOPEntry(void)
 {	
 	XOPIORecResult result = 0;
 	
-	int _message = GetXOPMessage();
-
-	switch (_message) {
+	switch (GetXOPMessage()) {
 		case NEW:
 			pthread_mutex_lock( &readThreadMutex );
 			pinstance->resetCurrentConnections();            
@@ -203,13 +201,12 @@ XOPEntry(void)
 */
 
 
-HOST_IMPORT int XOPMain(IORecHandle ioRecHandle)
+HOST_IMPORT int
+XOPMain(IORecHandle ioRecHandle)
 {	
 	XOPInit(ioRecHandle);							/* do standard XOP initialization */
 	SetXOPEntry(XOPEntry);							/* set entry point for future calls */
 	SetXOPType((long)(RESIDENT | IDLES));			// Specify XOP to stick around and to receive IDLE messages.
-
-	long result = 0;
 
 //	#ifdef _WINDOWS_
 //		pthread_win32_process_attach_np();
@@ -249,18 +246,19 @@ HOST_IMPORT int XOPMain(IORecHandle ioRecHandle)
 	}
 #endif
 
-	if (igorVersion < 700){
+	if (igorVersion < 800){
         cleanup();
-		SetXOPResult(IGOR_OBSOLETE);
+		SetXOPResult(REQUIRES_IGOR_800);
 		return EXIT_FAILURE;
 	}
 	
+    XOPIORecResult result;
 	if (result = RegisterOperations()){
         cleanup();
 		SetXOPResult(result);
 		return EXIT_FAILURE;
 	}
 
-	SetXOPResult(0);
+	SetXOPResult(0l);
 	return EXIT_SUCCESS;
 }

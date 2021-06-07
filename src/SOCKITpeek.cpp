@@ -1,6 +1,6 @@
 /*
  *  SOCKITpeek.cpp
- *  iPeek
+ *  SOCKIT
  *
  *  Created by andrew on 25/04/09.
  *  Copyright 2009 __MyCompanyName__. All rights reserved.
@@ -9,7 +9,8 @@
 #include "CurrentConnections.h"
 #include "SOCKITpeek.h"
 
-int SOCKITpeek(SOCKITpeekStructPtr p){
+extern "C" int
+SOCKITpeek(SOCKITpeekStructPtr p){
 	int err = 0;
 	//this function returns the entirety of the stored byte buffer for a given socket.
 	//it can be called from a threadsafe function.
@@ -27,7 +28,7 @@ int SOCKITpeek(SOCKITpeekStructPtr p){
 		goto done;
 	}
 
-	if(!p->sockID){
+	if(p->sockID == 0){
 		err = OH_EXPECTED_NUMBER;
 		goto done;
 	}

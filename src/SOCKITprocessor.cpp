@@ -1,7 +1,16 @@
+/*
+ *  SOCKITprocessor.cpp
+ *  SOCKIT
+ *
+ *  Created by andrew on 25/04/09.
+ *  Copyright 2009 __MyCompanyName__. All rights reserved.
+ *
+ */
 #include "CurrentConnections.h"
 #include "SOCKITprocessor.h"
 
-int SOCKITregisterProcessor(SOCKITprocessorStruct *p){
+extern "C" int
+SOCKITregisterProcessor(SOCKITprocessorStruct *p){
 	int err = 0;
 	char processor[MAX_OBJ_NAME+1];
 	

@@ -1,3 +1,11 @@
+/*
+*  stringutils.cpp
+*  SOCKIT
+*
+*  Created by andrew on 20/06/12.
+*  Copyright 2012 __MyCompanyName__. All rights reserved.
+*
+*/
 #include <string.h>
 
 size_t strlcpy(char *d, const char *s, size_t bufsize)

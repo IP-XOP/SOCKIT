@@ -1,3 +1,11 @@
+/*
+ *  SOCKITsendnrecv.cpp
+ *  SOCKIT
+ *
+ *  Created by andrew on 25/04/09.
+ *  Copyright 2009 __MyCompanyName__. All rights reserved.
+ *
+ */
 #include "CurrentConnections.h"
 #include "SOCKITsendnrecv.h"
 
@@ -12,7 +20,7 @@ RegisterSOCKITsendnrecv(void)
 	return RegisterOperation(cmdTemplate, runtimeNumVarList, runtimeStrVarList, sizeof(SOCKITsendnrecvRuntimeParams), (void*)ExecuteSOCKITsendnrecv, 0);
 }
 
-int 
+extern "C" int
 ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	int err = 0, err2=0;
 	
@@ -30,9 +38,9 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	XOP_FILE_REF fileToWrite = NULL;
 	char fileName[MAX_PATH_LEN+1];
 	char fileNameToWrite[MAX_PATH_LEN+1];
-	int written;
+	long written;
 	
-    int rc = 0;
+    long rc = 0;
 	long charsread = 0;
 	
     SOCKET sockNum = -1;
@@ -57,7 +65,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	}
 	
 	timeout.tv_sec = (long) floor(timeoutVal);
-	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
+	timeout.tv_usec = (int)((timeoutVal-(double)floor(timeoutVal))*1000000);
     
 	if(p->NBYTFlagEncountered){
 		if(IsNaN64(&p->NBYTFlagNumber) || IsINF64(&p->NBYTFlagNumber) || p->NBYTFlagNumber < 0)
@@ -127,9 +135,9 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		goto done;
 	}
 	if(FD_ISSET(sockNum,&tempset)){
-		rc = send(sockNum, *(p->MSG), (int) WMGetHandleSize(p->MSG), 0);
+		rc = send(sockNum, *(p->MSG), (long) WMGetHandleSize(p->MSG), 0);
 		if(rc > 0){
-			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %ld\r", sockNum);
+			snprintf(report, sizeof(report), "SOCKITmsg: wrote to socket %d\r", sockNum);
 			output = string(*(p->MSG), WMGetHandleSize(p->MSG));
 			
 			find_and_replace(output, "\n", "\r");
@@ -148,7 +156,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 		*/
 		} else if (rc < 0 || (rc == 0 && WMGetHandleSize(p->MSG) > 0)) {
 			if(wbi->toPrint == true){
-				snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %ld, disconnecting\r", sockNum );
+				snprintf(report,sizeof(report),"SOCKIT err: problem writing to socket descriptor %d, disconnecting\r", sockNum );
 				XOPNotice(report);
 			}
 			// Closed connection or error 
@@ -157,7 +165,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			goto done;
 		}
 	} else {
-		snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %ld\r", sockNum);
+		snprintf(report,sizeof(report),"SOCKIT err: timeout writing to socket %d\r", sockNum);
 		if(wbi->toPrint == true)
 			XOPNotice(report);
 		err2=1;
@@ -168,7 +176,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 	
 	FD_ZERO(&tempset);
 	timeout.tv_sec = (long) floor(timeoutVal);
-	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
+	timeout.tv_usec = (int)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	FD_SET(sockNum,&tempset);
 	res = select((int) sockNum + 1, &tempset, 0, 0, &timeout);
 	
@@ -183,7 +191,7 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			
 			//if the recv fails then the manpage indicates that rc <= 0, because we are using blocking sockets.
 			if (rc <= 0) {
-				snprintf(report, sizeof(report), "SOCKIT err: socket descriptor %ld, disconnection???\r", sockNum );
+				snprintf(report, sizeof(report), "SOCKIT err: socket descriptor %d, disconnection???\r", sockNum );
 				if(wbi->toPrint == true)
 					XOPNotice(report);
 				needToClose = true;
@@ -211,14 +219,14 @@ ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParams *p){
 			} else {
 				FD_ZERO(&tempset);
 				timeout.tv_sec = (long) floor(timeoutVal);
-				timeout.tv_usec =  (long)((timeoutVal - (double)floor(timeoutVal))*1000000);
+				timeout.tv_usec = (int)((timeoutVal - (double)floor(timeoutVal))*1000000);
 				FD_SET(sockNum, &tempset);
 				res = select(sockNum + 1, &tempset, 0, 0, &timeout);
 			}
 		}while(res > 0);
 		
 	} else if(res == -1) {
-		snprintf(report, sizeof(report), "SOCKIT err: timeout while reading socket descriptor %ld, disconnecting\r", sockNum );
+		snprintf(report, sizeof(report), "SOCKIT err: timeout while reading socket descriptor %d, disconnecting\r", sockNum );
 		if(wbi->toPrint == true)
 			XOPNotice(report);
 		// Closed connection or error 
@@ -275,13 +283,13 @@ done:
 	return err;
 }
 
-int 
+extern "C" int
 SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	int err = 0, err2=0;
 	
 //	extern CurrentConnections *pinstance;
 //	extern pthread_mutex_t readThreadMutex;
-	extern bool SHOULD_IDLE_SKIP;
+//	extern bool SHOULD_IDLE_SKIP;
 	pthread_mutex_lock( &readThreadMutex );
 
 
@@ -289,13 +297,13 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	extern WSADATA globalWsaData;
 #endif
 
-	if(!p->SMAL)
+	if(p->SMAL == 0)
 		SHOULD_IDLE_SKIP = true;
 	
 	string chunk;	
 	Handle retval;
 	
-    int rc = 0;
+    long rc = 0;
 	long charsread = 0;
 	
     SOCKET sockNum = -1;
@@ -317,14 +325,14 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 		goto done;
 	}
 	
-	if(p->TIME){
+	if(p->TIME != 0.0){
 		timeoutVal = fabs(p->TIME);
 	} else {
 		timeoutVal = 1.;
 	}
 	
 	timeout.tv_sec = (long) floor(timeoutVal);
-	timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
+	timeout.tv_usec = (int)((timeoutVal-(double)floor(timeoutVal))*1000000);
 	
 	memset(buf, 0, sizeof(buf));
 	
@@ -349,7 +357,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 		goto done;
 	}
 	if(FD_ISSET(sockNum, &tempset)){
-		rc = send(sockNum, *(p->message), (int) WMGetHandleSize(p->message),0);
+		rc = send(sockNum, *(p->message), (long) WMGetHandleSize(p->message),0);
 		if(rc > 0){
 			//if there is a logfile then append and save
 			wbi->log_msg(buf, 1);
@@ -372,7 +380,7 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 	
 	FD_ZERO(&tempset);
 	timeout.tv_sec = (long) floor(timeoutVal);
-	timeout.tv_usec =  (long)((timeoutVal - (double) floor(timeoutVal)) * 1000000);
+	timeout.tv_usec = (int)((timeoutVal - (double) floor(timeoutVal)) * 1000000);
 	FD_SET(sockNum, &tempset);
 	res = select((int) sockNum+1, &tempset, 0, 0, &timeout);
 	
@@ -395,12 +403,12 @@ SOCKITsendnrecvF(SOCKITsendnrecvFStruct *p){
 			} //else if (rc == 0)
 			//	break;
 			
-			if(p->SMAL){
+			if(p->SMAL == 0){
 				res = 0;
 			} else {
 				FD_ZERO(&tempset);
 				timeout.tv_sec = (long) floor(timeoutVal);
-				timeout.tv_usec =  (long)((timeoutVal-(double)floor(timeoutVal))*1000000);
+				timeout.tv_usec = (int)((timeoutVal-(double)floor(timeoutVal))*1000000);
 				FD_SET(sockNum, &tempset);
 				res = select((int) sockNum + 1, &tempset, 0, 0, &timeout);
 			}

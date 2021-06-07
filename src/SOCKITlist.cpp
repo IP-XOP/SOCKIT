@@ -11,7 +11,8 @@
 #include "CurrentConnections.h"
 #include "SOCKITlist.h"
 
-int ExecuteSOCKITlist(SOCKITlistRuntimeParamsPtr p){
+extern "C" int
+ExecuteSOCKITlist(SOCKITlistRuntimeParamsPtr p){
 	int err = 0;
 
 //	extern CurrentConnections* pinstance;

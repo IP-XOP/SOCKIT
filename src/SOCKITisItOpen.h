@@ -1,6 +1,6 @@
 /*
  *  SOCKITisItOpen.h
- *  iPeek
+ *  SOCKIT
  *
  *  Created by andrew on 28/08/08.
  *  Copyright 2008 __MyCompanyName__. All rights reserved.
@@ -15,5 +15,5 @@ typedef struct SOCKITisItOpenStruct {
 }SOCKITisItOpenStruct, *SOCKITisItOpenStructPtr;
 #pragma pack()
 
-int SOCKITisItOpen(SOCKITisItOpenStructPtr);
+extern "C" int SOCKITisItOpen(SOCKITisItOpenStructPtr);
 

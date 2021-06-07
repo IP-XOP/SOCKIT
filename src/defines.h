@@ -18,7 +18,7 @@
 #include <pthread.h>
 //#include "recursiveMutex.h"
 
-#define SOCKET long
+#define SOCKET int
 #endif
 
 #ifdef WINIGOR
@@ -48,7 +48,7 @@
 #include "XOPStandardHeaders.h"
 
 
-#define REQUIRES_IGOR_600 1 + FIRST_XOP_ERR
+#define REQUIRES_IGOR_800 1 + FIRST_XOP_ERR
 #define NO_WINSOCK 2 + FIRST_XOP_ERR
 #define NO_INPUT_STRING 3 + FIRST_XOP_ERR
 #define BAD_HOST_RESOLV 4 + FIRST_XOP_ERR

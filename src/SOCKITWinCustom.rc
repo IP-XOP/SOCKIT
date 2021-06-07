@@ -1,5 +1,5 @@
 /*
-@copyright: Andrew Nelson and the Australian Nuclear Science and Technology Organisation 2007.
+@copyright: Andrew Nelson and the Australian Nuclear Science and Technology Organisation 2021.
 */
 
 #include "XOPResources.h"			// Defines XOP-specific symbols.
@@ -7,7 +7,7 @@
 1100 STR#							// Custom error messages.
 BEGIN
 /* [1] */
-		"SOCKIT requires Igor Pro 7.00 or later.\0",
+		"SOCKIT requires Igor Pro 8.00 or later.\0",
 		/* [2] */
 		"No winsock lib available.\0",
 		/* [3] */
@@ -52,13 +52,13 @@ BEGIN
 	"\0"							// NOTE: NULL required to terminate the resource.
 END
 
-1100 XOPI							// XOPI - Describes general XOP properties to IGOR.
+1100 XOPI                           // XOPI - Describes general XOP properties to IGOR.
 BEGIN
-	XOP_VERSION,					// Version number of host XOP system.
-	DEV_SYS_CODE,					// Code for development system used to make XOP
-	0,								// True if XOP requires hierarchical menus
-	0,								// True if XOP requires math coprocessor
-	0								// True if XOP requires MMU
+    XOP_VERSION,                    // Version number of host XOP system.
+    DEV_SYS_CODE,                   // Code for development system used to make XOP.
+    XOP_FEATURE_FLAGS,              // Tells Igor about XOP features
+    XOPI_RESERVED,                  // Reserved - must be zero.
+    XOP_TOOLKIT_VERSION             // XOP Toolkit version.
 END
 
 

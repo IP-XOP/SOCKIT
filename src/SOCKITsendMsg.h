@@ -1,6 +1,6 @@
 /*
  *  SOCKITsendmsg.h
- *  iPeek
+ *  SOCKIT
  *
  *  Created by andrew on 19/05/08.
  *  Copyright 2008 __MyCompanyName__. All rights reserved.
@@ -37,7 +37,7 @@ typedef struct SOCKITsendmsgRuntimeParams* SOCKITsendmsgRuntimeParamsPtr;
 #pragma pack()		// Reset structure alignment to default.
 
 int RegisterSOCKITsendmsg(void);
-int ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParamsPtr p);
+extern "C" int ExecuteSOCKITsendmsg(SOCKITsendmsgRuntimeParamsPtr p);
 
 #pragma pack(2)
 // All structures passed to Igor are two-byte aligned.
@@ -49,4 +49,4 @@ typedef struct SOCKITsendmsgFStruct {
 }SOCKITsendmsgFStruct, *SOCKITsendmsgFStructPtr;
 #pragma pack()
 
-int SOCKITsendmsgF(SOCKITsendmsgFStructPtr);
+extern "C" int SOCKITsendmsgF(SOCKITsendmsgFStructPtr);

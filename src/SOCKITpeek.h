@@ -1,6 +1,6 @@
 /*
  *  SOCKITpeek.h
- *  iPeek
+ *  SOCKIT
  *
  *  Created by andrew on 25/04/09.
  *  Copyright 2009 __MyCompanyName__. All rights reserved.
@@ -14,6 +14,6 @@ typedef struct SOCKITpeekStruct {
 	UserFunctionThreadInfoPtr tp;
 	Handle dest;			//the string containing the content
 }SOCKITpeekStruct, *SOCKITpeekStructPtr;
-#pragma pack(2)
+#pragma pack()        // Reset structure alignment to default.
 
-int SOCKITpeek(SOCKITpeekStructPtr p);
+extern "C" int SOCKITpeek(SOCKITpeekStructPtr p);

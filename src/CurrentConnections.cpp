@@ -1,6 +1,6 @@
 /*
  *  Connections.cpp
- *  iPeek
+ *  SOCKIT
  *
  *  Created by andrew on 17/05/08.
  *  Copyright 2008 __MyCompanyName__. All rights reserved.
@@ -64,7 +64,8 @@ void *readerThread(void *){
 	
 	SOCKET maxSockNum;
 	
-	int rc = 0, res = 0, iterations=0;
+    long rc = 0;
+    int res = 0, iterations=0;
 	long charsread = 0;		
 	char buf[BUFLEN];
 	
@@ -201,7 +202,7 @@ int waveBufferInfo::log_msg(const char *msg, int isSend){
 	
 	if(!logFile && strlen(logFilePath)){		
 		GetTheTime(&year, &month, &day, &hour, &minute, &second);	
-		snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%ld-%ld-%ldT%02ld%02ld%02ld_%ld.txt", year, month, day, hour, minute, second, sockNum);
+		snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%ld-%ld-%ldT%02ld%02ld%02ld_%d.txt", year, month, day, hour, minute, second, sockNum);
 		
 		memset(fullfilepath, 0, MAX_PATH_LEN + 1);
 		strncpy(fullfilepath, logFilePath, MAX_PATH_LEN);
@@ -229,12 +230,12 @@ int waveBufferInfo::log_msg(const char *msg, int isSend){
 		time_t theTime;
 		theTime = time(NULL);
 
-		//time to open a new file, max log file size is 50Mb?
+		// Time to open a new file, max log file size is 50 MB?
 		fsize = logFile->tellp();
 		if(fsize > 52428800){
 			logFile->close();
 			GetTheTime(&year, &month, &day, &hour, &minute, &second);	
-			snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%ld-%ld-%ldT%02ld%02ld%02ld_%ld.txt", year, month, day, hour, minute, second, sockNum);
+			snprintf(filename, MAX_FILENAME_LEN * sizeof(char), "LOG%ld-%ld-%ldT%02ld%02ld%02ld_%d.txt", year, month, day, hour, minute, second, sockNum);
 			
 			memset(fullfilepath, 0, MAX_PATH_LEN + 1);
 			strncpy(fullfilepath, logFilePath, MAX_PATH_LEN);
@@ -494,7 +495,7 @@ int CurrentConnections::checkRecvData(){
 				goto done;
 			if(bufferWaves[*iter].toPrint == true){
 				memset(report, 0, sizeof(report));
-				snprintf(report,sizeof(report),"SOCKITmsg: Socket %ld says: \r", *iter);
+				snprintf(report,sizeof(report),"SOCKITmsg: Socket %d says: \r", *iter);
 				XOPNotice(report);
 				
 				string output;
@@ -506,7 +507,7 @@ int CurrentConnections::checkRecvData(){
 			bufferWaves[*iter].readBuffer.clear();
 			if(bufferWaves[*iter].toClose){
 				memset(report, 0, sizeof(report));
-				snprintf(report,sizeof(report),"SOCKITmsg: closing socket %ld\r", *iter);
+				snprintf(report,sizeof(report),"SOCKITmsg: closing socket %d\r", *iter);
 				XOPNotice(report);
 				pinstance->closeWorker(*iter);
 			}

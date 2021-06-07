@@ -31,4 +31,4 @@ typedef struct SOCKITwaveToStringRuntimeParams SOCKITwaveToStringRuntimeParams;
 typedef struct SOCKITwaveToStringRuntimeParams* SOCKITwaveToStringRuntimeParamsPtr;
 #pragma pack()		// Reset structure alignment to default.
 
-int RegisterSOCKITwaveToString(void);
+extern "C" int RegisterSOCKITwaveToString(void);

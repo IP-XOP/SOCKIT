@@ -1,7 +1,17 @@
+/*
+ *  SOCKITcloseConnection.cpp
+ *  SOCKIT
+ *
+ *  Created by andrew on 4/01/10.
+ *  Copyright 2010 __MyCompanyName__. All rights reserved.
+ *
+ */
+
 #include "CurrentConnections.h"
 #include "SOCKITcloseConnection.h"
 
-int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
+extern "C" int
+SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 	int err = 0;
 	
 	SOCKET socketToClose = 0;
@@ -17,7 +27,7 @@ int SOCKITcloseConnection(SOCKITcloseConnectionStruct *p){
 	pthread_mutex_lock( &readThreadMutex );
 
 	
-	if(!p->socketToClose){
+	if(p->socketToClose == 0){
 		err = OH_EXPECTED_NUMBER;
 		goto done;
 	}

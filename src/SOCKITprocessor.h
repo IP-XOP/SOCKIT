@@ -1,6 +1,6 @@
 /*
  *  SOCKITregisterprocessor.h
- *  iPeek
+ *  SOCKIT
  *
  *  Created by andrew on 19/05/08.
  *  Copyright 2008 __MyCompanyName__. All rights reserved.
@@ -15,4 +15,4 @@ typedef struct SOCKITprocessorStruct {
 }SOCKITprocessorStruct, *SOCKITprocessorStructPtr;
 #pragma pack()
 
-int SOCKITregisterProcessor(SOCKITprocessorStruct*);
+extern "C" int SOCKITregisterProcessor(SOCKITprocessorStruct*);

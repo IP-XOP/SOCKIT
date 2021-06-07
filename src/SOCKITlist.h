@@ -21,4 +21,4 @@ typedef struct SOCKITlistRuntimeParams SOCKITlistRuntimeParams;
 typedef struct SOCKITlistRuntimeParams* SOCKITlistRuntimeParamsPtr;
 #pragma pack()
 
-int RegisterSOCKITlist(void);
+extern "C" int RegisterSOCKITlist(void);

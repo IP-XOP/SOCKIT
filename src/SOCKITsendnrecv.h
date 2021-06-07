@@ -1,6 +1,6 @@
 /*
  *  SOCKITsendnrecv.h
- *  iPeek
+ *  SOCKIT
  *
  *  Created by andrew on 19/05/08.
  *  Copyright 2008 __MyCompanyName__. All rights reserved.
@@ -54,7 +54,7 @@ typedef struct SOCKITsendnrecvRuntimeParams* SOCKITsendnrecvRuntimeParamsPtr;
 #pragma pack()		// Reset structure alignment to default.
 
 int RegisterSOCKITsendnrecv(void);
-static int ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParamsPtr p);
+extern "C" int ExecuteSOCKITsendnrecv(SOCKITsendnrecvRuntimeParamsPtr p);
 
 #pragma pack(2)	// All structures passed to Igor are two-byte aligned.
 typedef struct SOCKITsendnrecvFStruct {
@@ -67,4 +67,4 @@ typedef struct SOCKITsendnrecvFStruct {
 }SOCKITsendnrecvFStruct, *SOCKITsendnrecvFStructPtr;
 #pragma pack()
 
-int SOCKITsendnrecvF(SOCKITsendnrecvFStructPtr);
+extern "C" int SOCKITsendnrecvF(SOCKITsendnrecvFStructPtr);
