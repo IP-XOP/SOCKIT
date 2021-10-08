@@ -1,2 +1,11 @@
 Xcode project
-.DS_Store
+*.dmg
+*.zip
+*.svn
+*.DS_Store
+**/Build/
+**/Debug/
+**/DerivedData/
+**/Release/
+**/Archives/
+**/Notarized/
